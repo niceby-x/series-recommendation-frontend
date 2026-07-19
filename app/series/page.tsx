@@ -7,6 +7,7 @@ interface Series {
     episode_count: number;
     status: string;
     synopsis: string | null;
+    poster_url: string | null;
 }
 
 async function getSeries(): Promise<Series[]> {

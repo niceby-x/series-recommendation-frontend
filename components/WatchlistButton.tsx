@@ -41,8 +41,8 @@ export default function WatchlistButton({ seriesId }: { seriesId: number }) {
         return;
       }
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/watchlist/${seriesId}`, {
-        headers: { Authorization: `Bearer ${session.access_token}` },
+      const res = await fetch(process.env.NEXT_PUBLIC_API_URL + '/watchlist/' + seriesId, {
+        headers: { Authorization: 'Bearer ' + session.access_token },
       });
       const json = await res.json();
 
@@ -66,11 +66,11 @@ export default function WatchlistButton({ seriesId }: { seriesId: number }) {
       return;
     }
 
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/watchlist`, {
+    const res = await fetch(process.env.NEXT_PUBLIC_API_URL + '/watchlist', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${session.access_token}`,
+        Authorization: 'Bearer ' + session.access_token,
       },
       body: JSON.stringify({ series_id: seriesId, status }),
     });
@@ -99,9 +99,9 @@ export default function WatchlistButton({ seriesId }: { seriesId: number }) {
       return;
     }
 
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/watchlist/${seriesId}`, {
+    const res = await fetch(process.env.NEXT_PUBLIC_API_URL + '/watchlist/' + seriesId, {
       method: 'DELETE',
-      headers: { Authorization: `Bearer ${session.access_token}` },
+      headers: { Authorization: 'Bearer ' + session.access_token },
     });
 
     if (!res.ok) {
