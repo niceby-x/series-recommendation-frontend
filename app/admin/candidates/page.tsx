@@ -22,6 +22,7 @@ interface Candidate {
 }
 
 type AccessState = 'checking' | 'signed_out' | 'forbidden' | 'ok' | 'error';
+type Tab = 'pending' | 'approved' | 'rejected';
 
 const LONG_RUNNING_THRESHOLD = 60;
 
@@ -29,16 +30,19 @@ function CandidateCard({
   candidate,
   onApprove,
   onReject,
+  onRestore,
   actioning,
   isActive,
 }: {
   candidate: Candidate;
   onApprove: (id: number) => void;
   onReject: (id: number) => void;
+  onRestore: (id: number) => void;
   actioning: boolean;
   isActive: boolean;
 }) {
   const isLongRunning = candidate.episode_count >= LONG_RUNNING_THRESHOLD;
+  const isPending = candidate.review_status === 'pending';
 
   return (
     <div
@@ -82,20 +86,32 @@ function CandidateCard({
         <p className="text-xs text-gray-600">tmdb_id: {candidate.tmdb_id}</p>
 
         <div className="flex gap-2 mt-2">
-          <button
-            onClick={() => onApprove(candidate.id)}
-            disabled={actioning}
-            className="flex-1 bg-green-700 hover:bg-green-600 disabled:bg-green-900 disabled:cursor-not-allowed text-white text-sm py-2 rounded-lg transition-colors"
-          >
-            Approve{isActive ? ' (A)' : ''}
-          </button>
-          <button
-            onClick={() => onReject(candidate.id)}
-            disabled={actioning}
-            className="flex-1 bg-red-900 hover:bg-red-800 disabled:bg-red-950 disabled:cursor-not-allowed text-white text-sm py-2 rounded-lg transition-colors"
-          >
-            Reject{isActive ? ' (R)' : ''}
-          </button>
+          {isPending ? (
+            <>
+              <button
+                onClick={() => onApprove(candidate.id)}
+                disabled={actioning}
+                className="flex-1 bg-green-700 hover:bg-green-600 disabled:bg-green-900 disabled:cursor-not-allowed text-white text-sm py-2 rounded-lg transition-colors"
+              >
+                Approve{isActive ? ' (A)' : ''}
+              </button>
+              <button
+                onClick={() => onReject(candidate.id)}
+                disabled={actioning}
+                className="flex-1 bg-red-900 hover:bg-red-800 disabled:bg-red-950 disabled:cursor-not-allowed text-white text-sm py-2 rounded-lg transition-colors"
+              >
+                Reject{isActive ? ' (R)' : ''}
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={() => onRestore(candidate.id)}
+              disabled={actioning}
+              className="flex-1 bg-blue-900 hover:bg-blue-800 disabled:bg-blue-950 disabled:cursor-not-allowed text-white text-sm py-2 rounded-lg transition-colors"
+            >
+              Restore to pending
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -105,6 +121,7 @@ function CandidateCard({
 export default function AdminCandidatesPage() {
   const [user, setUser] = useState<User | null>(null);
   const [access, setAccess] = useState<AccessState>('checking');
+  const [activeTab, setActiveTab] = useState<Tab>('pending');
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [actioningIds, setActioningIds] = useState<Set<number>>(new Set());
   const [errorMessage, setErrorMessage] = useState('');
@@ -120,14 +137,14 @@ export default function AdminCandidatesPage() {
 
   useEffect(() => {
     if (!user) return;
-    fetchCandidates();
+    fetchCandidates(activeTab);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+  }, [user, activeTab]);
 
-  // Keyboard shortcuts: A approves, R rejects the "active" candidate (the first pending one).
+  // Keyboard shortcuts only apply on the Pending tab: A approves, R rejects the active (first) candidate.
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
-      if (access !== 'ok' || candidates.length === 0) return;
+      if (access !== 'ok' || activeTab !== 'pending' || candidates.length === 0) return;
 
       const activeCandidate = candidates[0];
       if (actioningIds.has(activeCandidate.id)) return;
@@ -144,9 +161,9 @@ export default function AdminCandidatesPage() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [candidates, actioningIds, access]);
+  }, [candidates, actioningIds, access, activeTab]);
 
-  async function fetchCandidates() {
+  async function fetchCandidates(tab: Tab) {
     setAccess('checking');
     setErrorMessage('');
 
@@ -156,7 +173,7 @@ export default function AdminCandidatesPage() {
       return;
     }
 
-    const res = await fetch(process.env.NEXT_PUBLIC_API_URL + '/admin/candidates', {
+    const res = await fetch(process.env.NEXT_PUBLIC_API_URL + '/admin/candidates?status=' + tab, {
       headers: { Authorization: 'Bearer ' + session.access_token },
     });
 
@@ -181,7 +198,7 @@ export default function AdminCandidatesPage() {
     setAccess('ok');
   }
 
-  async function handleAction(id: number, action: 'approve' | 'reject') {
+  async function handleAction(id: number, action: 'approve' | 'reject' | 'restore') {
     setActioningIds((prev) => new Set(prev).add(id));
 
     const { data: { session } } = await supabase.auth.getSession();
@@ -286,12 +303,33 @@ export default function AdminCandidatesPage() {
   return (
     <main className="min-h-screen bg-gray-950 text-white p-8">
       <h1 className="text-4xl font-bold text-blue-400 mb-2">Review Candidates</h1>
+
+      <div className="flex gap-2 mb-6">
+        {(['pending', 'approved', 'rejected'] as Tab[]).map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={
+              'px-4 py-2 rounded-lg text-sm capitalize transition-colors ' +
+              (activeTab === tab
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-900 text-gray-400 hover:bg-gray-800 hover:text-white')
+            }
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
+
       <p className="text-gray-400 mb-1">
-        {candidates.length} pending series from TMDB discovery
+        {candidates.length} {activeTab} series
       </p>
-      <p className="text-gray-500 text-sm mb-6">
-        Keyboard: <span className="text-gray-300">A</span> approves, <span className="text-gray-300">R</span> rejects the highlighted card
-      </p>
+      {activeTab === 'pending' && (
+        <p className="text-gray-500 text-sm mb-6">
+          Keyboard: <span className="text-gray-300">A</span> approves, <span className="text-gray-300">R</span> rejects the highlighted card
+        </p>
+      )}
+      {activeTab !== 'pending' && <div className="mb-6" />}
 
       {errorMessage && <p className="text-red-400 mb-6">{errorMessage}</p>}
 
@@ -300,12 +338,16 @@ export default function AdminCandidatesPage() {
       )}
 
       {access === 'ok' && candidates.length === 0 && (
-        <p className="text-gray-400">No pending candidates right now. Run the discovery script to queue more.</p>
+        <p className="text-gray-400">
+          {activeTab === 'pending'
+            ? 'No pending candidates right now. Run the discovery script to queue more.'
+            : 'Nothing here yet.'}
+        </p>
       )}
 
       {access === 'ok' && candidates.length > 0 && (
         <>
-          {candidates.some((c) => c.episode_count >= LONG_RUNNING_THRESHOLD) && (
+          {activeTab === 'pending' && candidates.some((c) => c.episode_count >= LONG_RUNNING_THRESHOLD) && (
             <div className="mb-6">
               <button
                 onClick={handleBulkRejectLongRunning}
@@ -323,8 +365,9 @@ export default function AdminCandidatesPage() {
                 candidate={candidate}
                 onApprove={(id) => handleAction(id, 'approve')}
                 onReject={(id) => handleAction(id, 'reject')}
+                onRestore={(id) => handleAction(id, 'restore')}
                 actioning={actioningIds.has(candidate.id)}
-                isActive={index === 0}
+                isActive={activeTab === 'pending' && index === 0}
               />
             ))}
           </div>
