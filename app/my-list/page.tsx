@@ -13,6 +13,12 @@ const STATUS_LABELS: Record<Status, string> = {
   completed: 'Completed',
 };
 
+const STATUS_BADGE_STYLES: Record<Status, string> = {
+  plan_to_watch: 'bg-gray-800 text-gray-300',
+  watching: 'bg-blue-900 text-blue-300',
+  completed: 'bg-green-900 text-green-300',
+};
+
 const STATUS_ORDER: Status[] = ['watching', 'plan_to_watch', 'completed'];
 
 interface Series {
@@ -22,6 +28,7 @@ interface Series {
   year: number;
   episode_count: number;
   status: string;
+  poster_url: string | null;
 }
 
 interface WatchlistEntry {
@@ -29,6 +36,66 @@ interface WatchlistEntry {
   status: Status;
   updated_at: string;
   series: Series;
+}
+
+function SkeletonCard() {
+  return (
+    <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden animate-pulse">
+      <div className="aspect-[2/3] bg-gray-800" />
+      <div className="p-4 space-y-2">
+        <div className="h-4 bg-gray-800 rounded w-3/4" />
+        <div className="h-3 bg-gray-800 rounded w-1/2" />
+      </div>
+    </div>
+  );
+}
+
+function SeriesCard({ entry }: { entry: WatchlistEntry }) {
+  return (
+    <Link
+      href={'/series/' + entry.series.id}
+      className="group bg-gray-900 border border-gray-800 rounded-xl overflow-hidden transition-all duration-300 hover:border-gray-700 hover:-translate-y-1 hover:shadow-xl hover:shadow-blue-900/20"
+    >
+      <div className="relative aspect-[2/3] bg-gray-800 overflow-hidden">
+        {entry.series.poster_url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={entry.series.poster_url}
+            alt={entry.series.title}
+            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-gray-600 text-sm px-4 text-center">
+            {entry.series.title}
+          </div>
+        )}
+
+        <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/90 to-transparent" />
+
+        <div className="absolute top-2 left-2 flex gap-2">
+          <span className="text-xs bg-blue-900/90 text-blue-300 px-2 py-1 rounded backdrop-blur-sm">
+            {entry.series.country}
+          </span>
+        </div>
+
+        <span
+          className={
+            'absolute top-2 right-2 text-xs px-2 py-1 rounded backdrop-blur-sm ' +
+            STATUS_BADGE_STYLES[entry.status]
+          }
+        >
+          {STATUS_LABELS[entry.status]}
+        </span>
+      </div>
+
+      <div className="p-4">
+        <h3 className="font-bold leading-snug mb-1 line-clamp-2">{entry.series.title}</h3>
+        <p className="text-sm text-gray-400">
+          {entry.series.year} &middot; {entry.series.episode_count} episodes
+        </p>
+      </div>
+    </Link>
+  );
 }
 
 export default function MyListPage() {
@@ -61,8 +128,8 @@ export default function MyListPage() {
         return;
       }
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/watchlist`, {
-        headers: { Authorization: `Bearer ${session.access_token}` },
+      const res = await fetch(process.env.NEXT_PUBLIC_API_URL + '/watchlist', {
+        headers: { Authorization: 'Bearer ' + session.access_token },
       });
 
       if (!res.ok) {
@@ -101,9 +168,15 @@ export default function MyListPage() {
       <h1 className="text-4xl font-bold text-blue-400 mb-2">My List</h1>
       <p className="text-gray-400 mb-8">Series you&apos;re tracking</p>
 
-      {loading && <p className="text-gray-400">Loading your list...</p>}
-
       {error && <p className="text-red-400">{error}</p>}
+
+      {loading && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <SkeletonCard key={i} />
+          ))}
+        </div>
+      )}
 
       {!loading && !error && entries.length === 0 && (
         <p className="text-gray-400">
@@ -129,24 +202,7 @@ export default function MyListPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {groupEntries.map((entry) => (
-                    <Link
-                      key={entry.id}
-                      href={`/series/${entry.series.id}`}
-                      className="bg-gray-900 border border-gray-800 rounded-xl p-5 hover:border-gray-700 transition-colors"
-                    >
-                      <div className="flex gap-2 mb-3">
-                        <span className="text-xs bg-blue-900 text-blue-300 px-2 py-1 rounded">
-                          {entry.series.country}
-                        </span>
-                        <span className="text-xs text-gray-500">{entry.series.year}</span>
-                      </div>
-
-                      <h3 className="text-lg font-bold mb-1">{entry.series.title}</h3>
-
-                      <p className="text-sm text-gray-400">
-                        {entry.series.episode_count} episodes
-                      </p>
-                    </Link>
+                    <SeriesCard key={entry.id} entry={entry} />
                   ))}
                 </div>
               </section>

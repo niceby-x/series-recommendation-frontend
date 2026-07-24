@@ -38,11 +38,11 @@ export default function RatingForm({ seriesId }: { seriesId: number }) {
       return;
     }
 
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/ratings`, {
+    const res = await fetch(process.env.NEXT_PUBLIC_API_URL + '/ratings', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${session.access_token}`,
+        Authorization: 'Bearer ' + session.access_token,
       },
       body: JSON.stringify({
         series_id: seriesId,
@@ -97,11 +97,12 @@ export default function RatingForm({ seriesId }: { seriesId: number }) {
           <button
             key={n}
             onClick={() => setScore(n)}
-            className={`w-10 h-10 rounded-lg font-medium transition-colors ${
-              score === n
+            className={
+              'w-10 h-10 rounded-lg font-medium transition-colors ' +
+              (score === n
                 ? 'bg-blue-600 text-white'
-                : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-            }`}
+                : 'bg-gray-800 text-gray-300 hover:bg-gray-700')
+            }
           >
             {n}
           </button>
