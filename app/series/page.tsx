@@ -11,7 +11,9 @@ interface Series {
 }
 
 async function getSeries(): Promise<Series[]> {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/series`);
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/series`, {
+    cache: 'no-store',
+  });
   const json = await res.json();
   return json.data;
 }
