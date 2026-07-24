@@ -63,6 +63,7 @@ export default function Navbar() {
   }
 
   const initial = user?.email ? user.email.charAt(0).toUpperCase() : '?';
+  const isAdmin = !!(user?.email && user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL);
 
   return (
     <nav className="sticky top-0 z-50 bg-gray-950/80 backdrop-blur-md border-b border-gray-800 px-6 py-4 flex items-center justify-between">
@@ -77,6 +78,11 @@ export default function Navbar() {
         {user && (
           <Link href="/my-list" className={navLinkClass('/my-list')}>
             My List
+          </Link>
+        )}
+        {isAdmin && (
+          <Link href="/admin/candidates" className={navLinkClass('/admin')}>
+            Admin
           </Link>
         )}
 
