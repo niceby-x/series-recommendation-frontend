@@ -68,7 +68,7 @@ export default function Navbar() {
   return (
     <nav className="sticky top-0 z-50 bg-gray-950/80 backdrop-blur-md border-b border-gray-800 px-6 py-4 flex items-center justify-between">
       <Link href="/" className="text-blue-400 font-bold text-lg">
-        BL Series
+        Blumi
       </Link>
 
       <div className="flex items-center gap-6">

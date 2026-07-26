@@ -32,6 +32,12 @@ interface Candidate {
   media_type: string;
 }
 
+interface Counts {
+  pending: number;
+  approved: number;
+  rejected: number;
+}
+
 type AccessState = 'checking' | 'signed_out' | 'forbidden' | 'ok' | 'error';
 type Tab = 'pending' | 'approved' | 'rejected';
 
@@ -45,9 +51,6 @@ function tmdbUrl(candidate: Candidate): string | null {
   return 'https://www.themoviedb.org/' + path + '/' + candidate.tmdb_id;
 }
 
-// The colored left-edge accent that lets you scan the queue at a glance —
-// red for missing data (needs real attention before approving), amber for
-// long-running (likely not true BL), violet for animated, blue-gray otherwise.
 function accentColor(candidate: Candidate): string {
   const missingData = !candidate.synopsis || !candidate.genre_names?.length || !candidate.cast_json?.length;
   if (missingData) return 'border-l-rose-500';
@@ -65,7 +68,7 @@ function Chip({ tone, children }: { tone: 'blue' | 'slate' | 'violet' | 'amber' 
     rose: 'bg-rose-500/15 text-rose-300',
   };
   return (
-    <span className={'text-[11px] font-medium px-2 py-0.5 rounded-full ' + tones[tone]}>
+    <span className={'text-[11px] font-medium px-2 py-0.5 rounded-full whitespace-nowrap ' + tones[tone]}>
       {children}
     </span>
   );
@@ -92,10 +95,24 @@ function IconButton({
     <button
       onClick={onClick}
       disabled={disabled}
-      className={'text-xs font-medium px-3 py-1.5 rounded-lg transition-colors disabled:cursor-not-allowed ' + tones[tone]}
+      className={'text-xs font-medium px-3 py-1.5 rounded-lg transition-colors disabled:cursor-not-allowed whitespace-nowrap ' + tones[tone]}
     >
       {children}
     </button>
+  );
+}
+
+function StatCard({ label, value, tone }: { label: string; value: number; tone: 'blue' | 'emerald' | 'rose' }) {
+  const tones: Record<string, string> = {
+    blue: 'text-blue-300',
+    emerald: 'text-emerald-300',
+    rose: 'text-rose-300',
+  };
+  return (
+    <div className="bg-white/[0.03] border border-white/5 rounded-xl px-5 py-4 flex-1 min-w-[140px]">
+      <p className="text-slate-500 text-xs font-medium uppercase tracking-wide mb-1">{label}</p>
+      <p className={'text-2xl font-bold tabular-nums ' + tones[tone]}>{value.toLocaleString()}</p>
+    </div>
   );
 }
 
@@ -207,7 +224,7 @@ function EditModal({
   );
 }
 
-function CandidateCard({
+function CandidateRow({
   candidate,
   edited,
   onEdited,
@@ -238,48 +255,58 @@ function CandidateCard({
   return (
     <div
       className={
-        'bg-[#12141c] border border-white/5 border-l-4 rounded-xl p-3.5 flex gap-3.5 transition-all hover:border-white/10 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/20 ' +
+        'bg-[#0e1016] border-l-4 px-3.5 py-3 flex gap-3.5 transition-colors hover:bg-white/[0.02] ' +
         accentColor(candidate) +
-        (isActive ? ' ring-2 ring-blue-500/60' : '')
+        (isActive ? ' bg-blue-500/[0.06] ring-1 ring-inset ring-blue-500/40' : '')
       }
     >
-      <div className="relative w-[76px] h-[108px] flex-shrink-0 bg-white/5 rounded-lg overflow-hidden shadow-md">
+      <div className="relative w-14 h-20 flex-shrink-0 bg-white/5 rounded-md overflow-hidden">
         {candidate.poster_url ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={candidate.poster_url} alt={edited.title} className="w-full h-full object-cover" />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-slate-600 text-[10px] px-1 text-center">
+          <div className="w-full h-full flex items-center justify-center text-slate-600 text-[9px] px-1 text-center">
             {edited.title}
           </div>
         )}
       </div>
 
-      <div className="flex-1 min-w-0 flex flex-col gap-1.5">
-        <h3 className="font-semibold text-[15px] leading-snug tracking-tight truncate text-white">{edited.title}</h3>
-
-        <div className="flex flex-wrap items-center gap-1">
-          <Chip tone="blue">{edited.country}</Chip>
-          <Chip tone="slate">{candidate.media_type === 'movie' ? 'Movie' : 'TV'}</Chip>
-          {candidate.is_animated && <Chip tone="violet">Animated</Chip>}
-          {isLongRunning && <Chip tone="amber">{edited.episode_count} eps</Chip>}
-          {!edited.synopsis && <Chip tone="rose">No synopsis</Chip>}
-          {(!candidate.genre_names || candidate.genre_names.length === 0) && <Chip tone="rose">No genres</Chip>}
-          {(!candidate.cast_json || candidate.cast_json.length === 0) && <Chip tone="rose">No cast</Chip>}
+      <div className="flex-1 min-w-0 grid grid-cols-1 md:grid-cols-[1.3fr_1fr_auto] gap-x-4 gap-y-1 items-center">
+        <div className="min-w-0">
+          <h3 className="font-semibold text-sm leading-snug tracking-tight truncate text-white">{edited.title}</h3>
+          <p className="text-xs text-slate-500 truncate">
+            {edited.country} · {edited.year ?? '—'}
+            {candidate.media_type !== 'movie' ? ' · ' + edited.episode_count + ' eps' : ' · Movie'}
+            {' · ' + edited.status}
+          </p>
+          <div className="flex flex-wrap gap-1 mt-1">
+            <Chip tone="slate">{candidate.media_type === 'movie' ? 'Movie' : 'TV'}</Chip>
+            {candidate.is_animated && <Chip tone="violet">Animated</Chip>}
+            {isLongRunning && <Chip tone="amber">{edited.episode_count} eps</Chip>}
+            {!edited.synopsis && <Chip tone="rose">No synopsis</Chip>}
+            {(!candidate.genre_names || candidate.genre_names.length === 0) && <Chip tone="rose">No genres</Chip>}
+            {(!candidate.cast_json || candidate.cast_json.length === 0) && <Chip tone="rose">No cast</Chip>}
+          </div>
         </div>
 
-        <p className="text-xs text-slate-500">
-          {edited.year ?? '—'}
-          {candidate.media_type !== 'movie' ? ' · ' + edited.episode_count + ' eps' : ''}
-          {candidate.number_of_seasons ? ' (' + candidate.number_of_seasons + ' season' + (candidate.number_of_seasons > 1 ? 's' : '') + ')' : ''}
-          {' · ' + edited.status}
-        </p>
+        <div className="min-w-0 hidden md:block">
+          {candidate.genre_names && candidate.genre_names.length > 0 && (
+            <p className="text-xs text-slate-500 truncate">{candidate.genre_names.join(' · ')}</p>
+          )}
+          {castNames && <p className="text-xs text-slate-600 truncate mt-0.5">Cast: {castNames}</p>}
+          {link && (
+            <a
+              href={link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-slate-500 hover:text-blue-400 transition-colors"
+            >
+              TMDB ↗
+            </a>
+          )}
+        </div>
 
-        {candidate.genre_names && candidate.genre_names.length > 0 && (
-          <p className="text-xs text-slate-500 truncate">{candidate.genre_names.join(' · ')}</p>
-        )}
-        {castNames && <p className="text-xs text-slate-600 truncate">Cast: {castNames}</p>}
-
-        <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+        <div className="flex items-center gap-1.5 flex-wrap">
           {isPending ? (
             <>
               <IconButton onClick={() => onApprove(candidate.id, edited)} disabled={actioning} tone="approve">
@@ -294,18 +321,8 @@ function CandidateCard({
             </>
           ) : (
             <IconButton onClick={() => onRestore(candidate.id)} disabled={actioning} tone="restore">
-              ↺ Restore to pending
+              ↺ Restore
             </IconButton>
-          )}
-          {link && (
-            <a
-              href={link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs text-slate-500 hover:text-blue-400 transition-colors ml-auto"
-            >
-              TMDB ↗
-            </a>
           )}
         </div>
       </div>
@@ -322,6 +339,7 @@ export default function AdminCandidatesPage() {
   const [access, setAccess] = useState<AccessState>('checking');
   const [activeTab, setActiveTab] = useState<Tab>('pending');
   const [candidates, setCandidates] = useState<Candidate[]>([]);
+  const [counts, setCounts] = useState<Counts>({ pending: 0, approved: 0, rejected: 0 });
   const [editedMap, setEditedMap] = useState<Record<number, Candidate>>({});
   const [actioningIds, setActioningIds] = useState<Set<number>>(new Set());
   const [errorMessage, setErrorMessage] = useState('');
@@ -357,6 +375,7 @@ export default function AdminCandidatesPage() {
   useEffect(() => {
     if (!user) return;
     fetchCandidates(activeTab);
+    fetchCounts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, activeTab]);
 
@@ -384,6 +403,20 @@ export default function AdminCandidatesPage() {
     return () => window.removeEventListener('keydown', handleKeyDown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filteredCandidates, actioningIds, access, activeTab, editedMap]);
+
+  async function fetchCounts() {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+
+    const res = await fetch(process.env.NEXT_PUBLIC_API_URL + '/admin/candidates/counts', {
+      headers: { Authorization: 'Bearer ' + session.access_token },
+    });
+
+    if (res.ok) {
+      const json = await res.json();
+      setCounts({ pending: json.pending, approved: json.approved, rejected: json.rejected });
+    }
+  }
 
   async function fetchCandidates(tab: Tab) {
     setAccess('checking');
@@ -456,6 +489,7 @@ export default function AdminCandidatesPage() {
       next.delete(id);
       return next;
     });
+    fetchCounts();
   }
 
   async function handleBulkReject(targets: Candidate[], label: string) {
@@ -498,9 +532,11 @@ export default function AdminCandidatesPage() {
         return next;
       });
     }
+
+    fetchCounts();
   }
 
-  if (access === 'checking') {
+  if (access === 'checking' && candidates.length === 0) {
     return null;
   }
 
@@ -525,102 +561,89 @@ export default function AdminCandidatesPage() {
     );
   }
 
-  const pendingCount = candidates.length;
-  const tabCounts: Record<Tab, number | null> = { pending: activeTab === 'pending' ? pendingCount : null, approved: null, rejected: null };
-
   return (
-    <main className="min-h-screen bg-[#0a0c10] text-white p-6">
-      <h1 className="text-2xl font-bold text-blue-300 tracking-tight mb-4">Review Candidates</h1>
+    <main className="min-h-screen bg-[#0a0c10] text-white">
+      <div className="max-w-[1400px] mx-auto p-6">
+        <div className="mb-1 text-xs font-medium text-blue-400/80 uppercase tracking-wider">Admin</div>
+        <h1 className="text-2xl font-bold text-white tracking-tight mb-5">TMDB Review Queue</h1>
 
-      <div className="inline-flex items-center gap-1 bg-white/5 rounded-full p-1 mb-4">
-        {(['pending', 'approved', 'rejected'] as Tab[]).map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={
-              'px-4 py-1.5 rounded-full text-sm font-medium capitalize transition-colors ' +
-              (activeTab === tab
-                ? 'bg-blue-600 text-white shadow-sm'
-                : 'text-slate-400 hover:text-white')
-            }
-          >
-            {tab}
-          </button>
-        ))}
-      </div>
+        <div className="flex flex-wrap gap-3 mb-6">
+          <StatCard label="Pending" value={counts.pending} tone="blue" />
+          <StatCard label="Approved" value={counts.approved} tone="emerald" />
+          <StatCard label="Rejected" value={counts.rejected} tone="rose" />
+          <StatCard label="Total" value={counts.pending + counts.approved + counts.rejected} tone="blue" />
+        </div>
 
-      <p className="text-slate-500 text-xs mb-4">
-        {filteredCandidates.length} of {candidates.length} shown
-        {activeTab === 'pending' ? (
-          <span className="text-slate-600"> · <span className="text-slate-400 font-medium">A</span> approves, <span className="text-slate-400 font-medium">R</span> rejects the highlighted card</span>
-        ) : ''}
-      </p>
-
-      <div className="bg-white/[0.03] border border-white/5 rounded-xl p-3 flex flex-wrap gap-2 mb-4">
-        <input
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search title..."
-          className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500/60"
-        />
-        <select
-          value={countryFilter}
-          onChange={(e) => setCountryFilter(e.target.value)}
-          className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-blue-500/60"
-        >
-          <option value="All">All countries</option>
-          {COUNTRY_OPTIONS.map((c) => (
-            <option key={c} value={c}>{c}</option>
+        <div className="border-b border-white/10 flex gap-6 mb-4">
+          {(['pending', 'approved', 'rejected'] as Tab[]).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={
+                'pb-3 text-sm font-medium capitalize transition-colors border-b-2 -mb-px flex items-center gap-2 ' +
+                (activeTab === tab
+                  ? 'text-white border-blue-500'
+                  : 'text-slate-500 border-transparent hover:text-slate-300')
+              }
+            >
+              {tab}
+              <span className="text-xs bg-white/10 text-slate-400 px-1.5 py-0.5 rounded-full tabular-nums">
+                {counts[tab]}
+              </span>
+            </button>
           ))}
-        </select>
-        <select
-          value={mediaTypeFilter}
-          onChange={(e) => setMediaTypeFilter(e.target.value)}
-          className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-blue-500/60"
-        >
-          <option value="All">TV + Movies</option>
-          <option value="tv">TV only</option>
-          <option value="movie">Movies only</option>
-        </select>
-        <select
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-          className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-blue-500/60"
-        >
-          <option value="default">Default order</option>
-          <option value="episodes_asc">Episodes: low to high</option>
-          <option value="episodes_desc">Episodes: high to low</option>
-          <option value="year_desc">Year: newest first</option>
-          <option value="year_asc">Year: oldest first</option>
-        </select>
-        <label className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-slate-300 cursor-pointer">
-          <input type="checkbox" checked={hideAnimated} onChange={(e) => setHideAnimated(e.target.checked)} />
-          Hide animated
-        </label>
-      </div>
+        </div>
 
-      {errorMessage && <p className="text-rose-400 mb-4 text-sm">{errorMessage}</p>}
+        <div className="sticky top-0 z-10 bg-[#0a0c10]/95 backdrop-blur-sm pt-2 pb-3 -mt-2">
+          <div className="bg-white/[0.03] border border-white/5 rounded-xl p-3 flex flex-wrap gap-2">
+            <input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search title..."
+              className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500/60"
+            />
+            <select
+              value={countryFilter}
+              onChange={(e) => setCountryFilter(e.target.value)}
+              className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-blue-500/60"
+            >
+              <option value="All">All countries</option>
+              {COUNTRY_OPTIONS.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+            <select
+              value={mediaTypeFilter}
+              onChange={(e) => setMediaTypeFilter(e.target.value)}
+              className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-blue-500/60"
+            >
+              <option value="All">TV + Movies</option>
+              <option value="tv">TV only</option>
+              <option value="movie">Movies only</option>
+            </select>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+              className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-blue-500/60"
+            >
+              <option value="default">Default order</option>
+              <option value="episodes_asc">Episodes: low to high</option>
+              <option value="episodes_desc">Episodes: high to low</option>
+              <option value="year_desc">Year: newest first</option>
+              <option value="year_asc">Year: oldest first</option>
+            </select>
+            <label className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-slate-300 cursor-pointer">
+              <input type="checkbox" checked={hideAnimated} onChange={(e) => setHideAnimated(e.target.checked)} />
+              Hide animated
+            </label>
+            <span className="ml-auto self-center text-xs text-slate-500">
+              {filteredCandidates.length} of {candidates.length} shown
+              {activeTab === 'pending' ? ' · A / R shortcuts active' : ''}
+            </span>
+          </div>
 
-      {access === 'error' && (
-        <p className="text-rose-400 text-sm">Could not load candidates. Try refreshing the page.</p>
-      )}
-
-      {access === 'ok' && candidates.length === 0 && (
-        <p className="text-slate-400 text-sm">
-          {activeTab === 'pending'
-            ? 'No pending candidates right now. Run the discovery script to queue more.'
-            : 'Nothing here yet.'}
-        </p>
-      )}
-
-      {access === 'ok' && candidates.length > 0 && filteredCandidates.length === 0 && (
-        <p className="text-slate-400 text-sm">No candidates match the current filters.</p>
-      )}
-
-      {access === 'ok' && filteredCandidates.length > 0 && (
-        <>
-          {activeTab === 'pending' && (
-            <div className="mb-4 flex flex-wrap gap-2">
+          {activeTab === 'pending' && (filteredCandidates.some((c) => c.episode_count >= LONG_RUNNING_THRESHOLD) || filteredCandidates.some((c) => c.is_animated)) && (
+            <div className="mt-2 flex flex-wrap gap-2">
               {filteredCandidates.some((c) => c.episode_count >= LONG_RUNNING_THRESHOLD) && (
                 <button
                   onClick={() => handleBulkReject(
@@ -645,10 +668,30 @@ export default function AdminCandidatesPage() {
               )}
             </div>
           )}
+        </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        {errorMessage && <p className="text-rose-400 my-3 text-sm">{errorMessage}</p>}
+
+        {access === 'error' && (
+          <p className="text-rose-400 text-sm mt-3">Could not load candidates. Try refreshing the page.</p>
+        )}
+
+        {access === 'ok' && candidates.length === 0 && (
+          <p className="text-slate-400 text-sm mt-3">
+            {activeTab === 'pending'
+              ? 'No pending candidates right now. Run the discovery script to queue more.'
+              : 'Nothing here yet.'}
+          </p>
+        )}
+
+        {access === 'ok' && candidates.length > 0 && filteredCandidates.length === 0 && (
+          <p className="text-slate-400 text-sm mt-3">No candidates match the current filters.</p>
+        )}
+
+        {access === 'ok' && filteredCandidates.length > 0 && (
+          <div className="border border-white/5 rounded-xl overflow-hidden divide-y divide-white/5 mt-3">
             {filteredCandidates.map((candidate, index) => (
-              <CandidateCard
+              <CandidateRow
                 key={candidate.id}
                 candidate={candidate}
                 edited={editedMap[candidate.id] || candidate}
@@ -661,8 +704,8 @@ export default function AdminCandidatesPage() {
               />
             ))}
           </div>
-        </>
-      )}
+        )}
+      </div>
     </main>
   );
 }
