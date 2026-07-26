@@ -4,6 +4,14 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { supabase } from '../../../lib/supabase';
 import type { User } from '@supabase/supabase-js';
+import type { Tag, TagDimension, RomancePace, EmotionalIntensity, EndingType, ContentLevel } from '../../../lib/taxonomy';
+import {
+  ROMANCE_PACE_DISPLAY,
+  EMOTIONAL_INTENSITY_DISPLAY,
+  ENDING_TYPE_DISPLAY,
+  CONTENT_LEVEL_DISPLAY,
+} from '../../../lib/taxonomy';
+import { computeCurationLevel } from '../../../lib/curationLevel';
 
 interface CastEntry {
   name: string;
@@ -30,6 +38,11 @@ interface Candidate {
   genre_names: string[] | null;
   cast_json: CastEntry[] | null;
   media_type: string;
+  romance_pace: string | null;
+  emotional_intensity: string | null;
+  ending_type: string | null;
+  content_level: string | null;
+  tag_ids: number[];
 }
 
 interface Counts {
@@ -59,13 +72,45 @@ function accentColor(candidate: Candidate): string {
   return 'border-l-slate-700';
 }
 
-function Chip({ tone, children }: { tone: 'blue' | 'slate' | 'violet' | 'amber' | 'rose'; children: React.ReactNode }) {
+// Builds { mood: [1,4], trope: [7], ... } from a candidate's flat tag_ids array,
+// using the availableTags lookup fetched once at the page level. Needed by
+// computeCurationLevel, which groups tag presence by dimension.
+function groupTagIdsByDimension(
+  tagIds: number[],
+  availableTags: Record<TagDimension, Tag[]>
+): Partial<Record<TagDimension, number[]>> {
+  const idToDimension = new Map<number, TagDimension>();
+  for (const dimension of Object.keys(availableTags) as TagDimension[]) {
+    for (const tag of availableTags[dimension]) {
+      idToDimension.set(tag.id, dimension);
+    }
+  }
+
+  const grouped: Partial<Record<TagDimension, number[]>> = {};
+  for (const id of tagIds) {
+    const dimension = idToDimension.get(id);
+    if (!dimension) continue;
+    if (!grouped[dimension]) grouped[dimension] = [];
+    grouped[dimension]!.push(id);
+  }
+  return grouped;
+}
+
+function curationBadgeTone(level: 0 | 1 | 2 | 3): 'rose' | 'amber' | 'blue' | 'emerald' {
+  if (level === 0) return 'rose';
+  if (level === 1) return 'amber';
+  if (level === 2) return 'blue';
+  return 'emerald';
+}
+
+function Chip({ tone, children }: { tone: 'blue' | 'slate' | 'violet' | 'amber' | 'rose' | 'emerald'; children: React.ReactNode }) {
   const tones: Record<string, string> = {
     blue: 'bg-blue-500/15 text-blue-300',
     slate: 'bg-slate-500/15 text-slate-300',
     violet: 'bg-violet-500/15 text-violet-300',
     amber: 'bg-amber-500/15 text-amber-300',
     rose: 'bg-rose-500/15 text-rose-300',
+    emerald: 'bg-emerald-500/15 text-emerald-300',
   };
   return (
     <span className={'text-[11px] font-medium px-2 py-0.5 rounded-full whitespace-nowrap ' + tones[tone]}>
@@ -224,6 +269,224 @@ function EditModal({
   );
 }
 
+function TaxonomyModal({
+  candidate,
+  availableTags,
+  onSaved,
+  onClose,
+}: {
+  candidate: Candidate;
+  availableTags: Record<TagDimension, Tag[]>;
+  onSaved: (updates: Partial<Candidate>) => void;
+  onClose: () => void;
+}) {
+  const [romancePace, setRomancePace] = useState(candidate.romance_pace || '');
+  const [emotionalIntensity, setEmotionalIntensity] = useState(candidate.emotional_intensity || '');
+  const [endingType, setEndingType] = useState(candidate.ending_type || '');
+  const [contentLevel, setContentLevel] = useState(candidate.content_level || '');
+  const [selectedTagIds, setSelectedTagIds] = useState<Set<number>>(new Set(candidate.tag_ids));
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
+
+  const curation = computeCurationLevel(
+    {
+      romance_pace: (romancePace || null) as RomancePace | null,
+      emotional_intensity: (emotionalIntensity || null) as EmotionalIntensity | null,
+      ending_type: (endingType || null) as EndingType | null,
+      content_level: (contentLevel || null) as ContentLevel | null,
+    },
+    groupTagIdsByDimension([...selectedTagIds], availableTags)
+  );
+
+  function toggleTag(tagId: number) {
+    setSelectedTagIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(tagId)) {
+        next.delete(tagId);
+      } else {
+        next.add(tagId);
+      }
+      return next;
+    });
+  }
+
+  async function handleSave() {
+    setSaving(true);
+    setSaveError('');
+
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      setSaveError('Session expired — refresh the page.');
+      setSaving(false);
+      return;
+    }
+
+    const res = await fetch(
+      process.env.NEXT_PUBLIC_API_URL + '/admin/candidates/' + candidate.id + '/taxonomy',
+      {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + session.access_token,
+        },
+        body: JSON.stringify({
+          romance_pace: romancePace || null,
+          emotional_intensity: emotionalIntensity || null,
+          ending_type: endingType || null,
+          content_level: contentLevel || null,
+          tag_ids: [...selectedTagIds],
+        }),
+      }
+    );
+
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}));
+      setSaveError(json.message || 'Save failed.');
+      setSaving(false);
+      return;
+    }
+
+    onSaved({
+      romance_pace: romancePace || null,
+      emotional_intensity: emotionalIntensity || null,
+      ending_type: endingType || null,
+      content_level: contentLevel || null,
+      tag_ids: [...selectedTagIds],
+    });
+    setSaving(false);
+    onClose();
+  }
+
+  const dimensionSections: { dimension: TagDimension; label: string; helperText: string }[] = [
+    { dimension: 'mood', label: 'Mood', helperText: '2-4 recommended' },
+    { dimension: 'trope', label: 'Tropes', helperText: '1-3 recommended' },
+    { dimension: 'relationship_dynamic', label: 'Relationship Dynamics', helperText: 'pick what recurs' },
+    { dimension: 'theme', label: 'Themes', helperText: 'optional · Level 2' },
+    { dimension: 'content_warning', label: 'Content Warnings', helperText: 'leave blank unless certain · Level 3' },
+  ];
+
+  return (
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose}>
+      <div
+        className="bg-[#12141c] border border-white/10 rounded-2xl p-6 w-full max-w-xl max-h-[85vh] overflow-y-auto shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="text-base font-semibold text-blue-300">Taxonomy — {candidate.title}</h2>
+          <Chip tone={curationBadgeTone(curation.level)}>Curation Level {curation.level}</Chip>
+        </div>
+
+        {curation.missingForLevel1.length > 0 && (
+          <p className="text-xs text-amber-300/80 mb-4">
+            Missing for Level 1: {curation.missingForLevel1.join(', ')}
+          </p>
+        )}
+
+        <div className="grid grid-cols-2 gap-3 mb-5">
+          <label className="text-xs text-slate-500">
+            Romance Pace *
+            <select
+              value={romancePace}
+              onChange={(e) => setRomancePace(e.target.value)}
+              className="mt-1.5 w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500/60"
+            >
+              <option value="">Select...</option>
+              {Object.entries(ROMANCE_PACE_DISPLAY).map(([key, { emoji, label }]) => (
+                <option key={key} value={key}>{emoji} {label}</option>
+              ))}
+            </select>
+          </label>
+          <label className="text-xs text-slate-500">
+            Ending Type *
+            <select
+              value={endingType}
+              onChange={(e) => setEndingType(e.target.value)}
+              className="mt-1.5 w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500/60"
+            >
+              <option value="">Select...</option>
+              {Object.entries(ENDING_TYPE_DISPLAY).map(([key, { emoji, label }]) => (
+                <option key={key} value={key}>{emoji} {label}</option>
+              ))}
+            </select>
+          </label>
+          <label className="text-xs text-slate-500">
+            Emotional Intensity
+            <select
+              value={emotionalIntensity}
+              onChange={(e) => setEmotionalIntensity(e.target.value)}
+              className="mt-1.5 w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500/60"
+            >
+              <option value="">Select...</option>
+              {Object.entries(EMOTIONAL_INTENSITY_DISPLAY).map(([key, { emoji, label }]) => (
+                <option key={key} value={key}>{emoji} {label}</option>
+              ))}
+            </select>
+          </label>
+          <label className="text-xs text-slate-500">
+            Content Level
+            <select
+              value={contentLevel}
+              onChange={(e) => setContentLevel(e.target.value)}
+              className="mt-1.5 w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500/60"
+            >
+              <option value="">Needs Content Review</option>
+              {Object.entries(CONTENT_LEVEL_DISPLAY).map(([key, { emoji, label }]) => (
+                <option key={key} value={key}>{emoji} {label}</option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        {dimensionSections.map(({ dimension, label, helperText }) => (
+          <div key={dimension} className="mb-4">
+            <div className="flex items-baseline justify-between mb-1.5">
+              <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</span>
+              <span className="text-[11px] text-slate-600">{helperText}</span>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {(availableTags[dimension] || []).map((tag) => {
+                const active = selectedTagIds.has(tag.id);
+                return (
+                  <button
+                    key={tag.id}
+                    type="button"
+                    onClick={() => toggleTag(tag.id)}
+                    className={
+                      'text-xs px-2.5 py-1 rounded-full border transition-colors ' +
+                      (active
+                        ? 'border-blue-500/60 bg-blue-500/15 text-blue-300'
+                        : 'border-white/10 bg-white/5 text-slate-400 hover:border-white/20')
+                    }
+                  >
+                    {tag.display_label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+
+        <div className="flex gap-2 mt-5">
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="flex-1 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-900/50 text-white text-sm font-medium py-2 rounded-lg transition-colors"
+          >
+            {saving ? 'Saving...' : 'Save Taxonomy'}
+          </button>
+          <button
+            onClick={onClose}
+            className="flex-1 bg-white/5 hover:bg-white/10 text-slate-300 text-sm py-2 rounded-lg transition-colors"
+          >
+            Close
+          </button>
+        </div>
+        {saveError && <p className="text-rose-400 text-xs mt-2">{saveError}</p>}
+      </div>
+    </div>
+  );
+}
+
 function CandidateRow({
   candidate,
   edited,
@@ -231,6 +494,8 @@ function CandidateRow({
   onApprove,
   onReject,
   onRestore,
+  onTaxonomySaved,
+  availableTags,
   actioning,
   isActive,
 }: {
@@ -240,17 +505,30 @@ function CandidateRow({
   onApprove: (id: number, overrides: Partial<Candidate>) => void;
   onReject: (id: number) => void;
   onRestore: (id: number) => void;
+  onTaxonomySaved: (id: number, updates: Partial<Candidate>) => void;
+  availableTags: Record<TagDimension, Tag[]>;
   actioning: boolean;
   isActive: boolean;
 }) {
   const isPending = candidate.review_status === 'pending';
   const isLongRunning = edited.episode_count >= LONG_RUNNING_THRESHOLD;
   const [modalOpen, setModalOpen] = useState(false);
+  const [taxonomyModalOpen, setTaxonomyModalOpen] = useState(false);
   const link = tmdbUrl(candidate);
 
   const castNames = candidate.cast_json && candidate.cast_json.length > 0
     ? candidate.cast_json.slice(0, 3).map((c) => c.name).join(', ')
     : null;
+
+  const curation = computeCurationLevel(
+    {
+      romance_pace: candidate.romance_pace as RomancePace | null,
+      emotional_intensity: candidate.emotional_intensity as EmotionalIntensity | null,
+      ending_type: candidate.ending_type as EndingType | null,
+      content_level: candidate.content_level as ContentLevel | null,
+    },
+    groupTagIdsByDimension(candidate.tag_ids || [], availableTags)
+  );
 
   return (
     <div
@@ -286,6 +564,7 @@ function CandidateRow({
             {!edited.synopsis && <Chip tone="rose">No synopsis</Chip>}
             {(!candidate.genre_names || candidate.genre_names.length === 0) && <Chip tone="rose">No genres</Chip>}
             {(!candidate.cast_json || candidate.cast_json.length === 0) && <Chip tone="rose">No cast</Chip>}
+            {isPending && <Chip tone={curationBadgeTone(curation.level)}>Taxonomy L{curation.level}</Chip>}
           </div>
         </div>
 
@@ -318,6 +597,9 @@ function CandidateRow({
               <IconButton onClick={() => setModalOpen(true)} tone="neutral">
                 ✎ Edit
               </IconButton>
+              <IconButton onClick={() => setTaxonomyModalOpen(true)} tone="neutral">
+                🏷 Taxonomy
+              </IconButton>
             </>
           ) : (
             <IconButton onClick={() => onRestore(candidate.id)} disabled={actioning} tone="restore">
@@ -329,6 +611,15 @@ function CandidateRow({
 
       {modalOpen && (
         <EditModal candidate={edited} onSave={onEdited} onClose={() => setModalOpen(false)} />
+      )}
+
+      {taxonomyModalOpen && (
+        <TaxonomyModal
+          candidate={candidate}
+          availableTags={availableTags}
+          onSaved={(updates) => onTaxonomySaved(candidate.id, updates)}
+          onClose={() => setTaxonomyModalOpen(false)}
+        />
       )}
     </div>
   );
@@ -343,6 +634,9 @@ export default function AdminCandidatesPage() {
   const [editedMap, setEditedMap] = useState<Record<number, Candidate>>({});
   const [actioningIds, setActioningIds] = useState<Set<number>>(new Set());
   const [errorMessage, setErrorMessage] = useState('');
+  const [availableTags, setAvailableTags] = useState<Record<TagDimension, Tag[]>>({
+    mood: [], trope: [], relationship_dynamic: [], theme: [], content_warning: [],
+  });
 
   const [searchQuery, setSearchQuery] = useState('');
   const [countryFilter, setCountryFilter] = useState('All');
@@ -378,6 +672,26 @@ export default function AdminCandidatesPage() {
     fetchCounts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, activeTab]);
+
+  useEffect(() => {
+    if (!user) return;
+    fetchAvailableTags();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
+  async function fetchAvailableTags() {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+
+    const res = await fetch(process.env.NEXT_PUBLIC_API_URL + '/admin/tags', {
+      headers: { Authorization: 'Bearer ' + session.access_token },
+    });
+
+    if (res.ok) {
+      const json = await res.json();
+      setAvailableTags(json.data);
+    }
+  }
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -490,6 +804,13 @@ export default function AdminCandidatesPage() {
       return next;
     });
     fetchCounts();
+  }
+
+  // TaxonomyModal already persisted these fields via its own PATCH call —
+  // this just updates local state so the row (and its curation badge)
+  // reflects the save without needing a full refetch of the candidate list.
+  function handleTaxonomySaved(id: number, updates: Partial<Candidate>) {
+    setCandidates((prev) => prev.map((c) => (c.id === id ? { ...c, ...updates } : c)));
   }
 
   async function handleBulkReject(targets: Candidate[], label: string) {
@@ -699,6 +1020,8 @@ export default function AdminCandidatesPage() {
                 onApprove={(id, overrides) => handleAction(id, 'approve', overrides)}
                 onReject={(id) => handleAction(id, 'reject')}
                 onRestore={(id) => handleAction(id, 'restore')}
+                onTaxonomySaved={handleTaxonomySaved}
+                availableTags={availableTags}
                 actioning={actioningIds.has(candidate.id)}
                 isActive={activeTab === 'pending' && index === 0}
               />
