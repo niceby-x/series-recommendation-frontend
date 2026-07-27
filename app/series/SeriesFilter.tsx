@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 
 interface Series {
@@ -19,9 +20,10 @@ interface Props {
 }
 
 export default function SeriesFilter({ seriesList }: Props) {
-  const [search, setSearch] = useState('');
-  const [country, setCountry] = useState('All');
-  const [status, setStatus] = useState('All');
+  const searchParams = useSearchParams();
+  const [search, setSearch] = useState(searchParams.get('q') ?? '');
+  const [country, setCountry] = useState(searchParams.get('country') ?? 'All');
+  const [status, setStatus] = useState(searchParams.get('status') ?? 'All');
 
   const countries = ['All', ...Array.from(new Set(seriesList.map(s => s.country)))];
   const statuses = ['All', 'completed', 'airing', 'upcoming'];

@@ -2,16 +2,26 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
+import { Search, Bookmark, LogOut } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { User } from '@supabase/supabase-js';
+import Logo from './Logo';
 
 export default function Navbar() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [search, setSearch] = useState('');
   const menuRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
+  const router = useRouter();
+  const [lastPathname, setLastPathname] = useState(pathname);
+
+  if (pathname !== lastPathname) {
+    setLastPathname(pathname);
+    setMenuOpen(false);
+  }
 
   useEffect(() => {
     // Get current session on mount
@@ -40,13 +50,15 @@ export default function Navbar() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  useEffect(() => {
-    setMenuOpen(false);
-  }, [pathname]);
-
   async function handleLogout() {
     await supabase.auth.signOut();
     window.location.href = '/';
+  }
+
+  function handleSearchSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const trimmed = search.trim();
+    router.push(trimmed ? `/series?q=${encodeURIComponent(trimmed)}` : '/series');
   }
 
   function isActive(href: string) {
@@ -55,10 +67,8 @@ export default function Navbar() {
 
   function navLinkClass(href: string) {
     return (
-      'relative py-1 transition-colors ' +
-      (isActive(href)
-        ? 'text-white after:absolute after:left-0 after:right-0 after:-bottom-[17px] after:h-[2px] after:bg-blue-500'
-        : 'text-gray-300 hover:text-white')
+      'text-sm font-semibold transition-colors ' +
+      (isActive(href) ? 'text-primary' : 'text-foreground/60 hover:text-foreground')
     );
   }
 
@@ -66,14 +76,17 @@ export default function Navbar() {
   const isAdmin = !!(user?.email && user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL);
 
   return (
-    <nav className="sticky top-0 z-50 bg-gray-950/80 backdrop-blur-md border-b border-gray-800 px-6 py-4 flex items-center justify-between">
-      <Link href="/" className="text-blue-400 font-bold text-lg">
-        Blumi
+    <nav className="sticky top-0 z-50 bg-background/90 backdrop-blur-md border-b border-border px-6 py-3 flex items-center gap-6">
+      <Link href="/" className="shrink-0">
+        <Logo variant="full" theme="brand" size={30} />
       </Link>
 
-      <div className="flex items-center gap-6">
+      <div className="hidden md:flex items-center gap-6 shrink-0">
+        <Link href="/" className={navLinkClass('/')}>
+          Home
+        </Link>
         <Link href="/series" className={navLinkClass('/series')}>
-          Browse
+          Discover
         </Link>
         {user && (
           <Link href="/my-list" className={navLinkClass('/my-list')}>
@@ -85,29 +98,54 @@ export default function Navbar() {
             Admin
           </Link>
         )}
+      </div>
+
+      <form onSubmit={handleSearchSubmit} className="flex-1 max-w-md ml-auto">
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search series, movies, anime..."
+            className="w-full bg-muted text-foreground placeholder:text-muted-foreground rounded-full pl-9 pr-4 py-2 text-sm border border-transparent focus:outline-none focus:border-ring transition-colors"
+          />
+        </div>
+      </form>
+
+      <div className="flex items-center gap-3 shrink-0">
+        {user && (
+          <Link
+            href="/my-list"
+            aria-label="My List"
+            className="hidden sm:flex items-center justify-center size-9 rounded-full text-foreground/70 hover:text-primary hover:bg-muted transition-colors"
+          >
+            <Bookmark className="size-4.5" />
+          </Link>
+        )}
 
         {loading ? null : user ? (
           <div className="relative" ref={menuRef}>
             <button
               onClick={() => setMenuOpen((open) => !open)}
-              className="flex items-center gap-2 rounded-full pl-1 pr-3 py-1 hover:bg-gray-900 transition-colors"
+              className="flex items-center gap-2 rounded-full pl-1 pr-1 py-1 hover:bg-muted transition-colors"
             >
-              <span className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-600 text-white text-sm font-semibold">
+              <span className="flex items-center justify-center w-8 h-8 rounded-full bg-brand-gradient text-white text-sm font-semibold font-heading">
                 {initial}
               </span>
-              <span className="text-gray-300 text-sm hidden sm:inline">{user.email}</span>
             </button>
 
             {menuOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-gray-900 border border-gray-800 rounded-lg shadow-xl overflow-hidden">
-                <div className="px-4 py-3 border-b border-gray-800">
-                  <p className="text-xs text-gray-500">Signed in as</p>
-                  <p className="text-sm text-gray-300 truncate">{user.email}</p>
+              <div className="absolute right-0 mt-2 w-56 bg-popover border border-border rounded-2xl shadow-xl overflow-hidden">
+                <div className="px-4 py-3 border-b border-border">
+                  <p className="text-xs text-muted-foreground">Signed in as</p>
+                  <p className="text-sm text-popover-foreground truncate">{user.email}</p>
                 </div>
                 <button
                   onClick={handleLogout}
-                  className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-white transition-colors"
+                  className="w-full flex items-center gap-2 text-left px-4 py-2.5 text-sm text-popover-foreground hover:bg-muted transition-colors"
                 >
+                  <LogOut className="size-4" />
                   Log out
                 </button>
               </div>
@@ -116,7 +154,7 @@ export default function Navbar() {
         ) : (
           <Link
             href="/login"
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm transition-colors"
+            className="bg-brand-gradient text-white px-5 py-2 rounded-full text-sm font-semibold shadow-sm hover:opacity-90 transition-opacity"
           >
             Sign In
           </Link>
