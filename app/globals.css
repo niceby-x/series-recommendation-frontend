@@ -52,6 +52,7 @@
   --color-brand-lilac: #C8B6F9;
   --color-brand-mauve: #5E4B6B;
   --color-brand-cream: #FFF8F4;
+  --color-brand-gold: #FFD97A;
 
   /* Vivid accents — for high-emphasis elements (CTAs, active states, headline
      highlight text) that need real punch. Kept separate from brand-blush/lilac
@@ -170,7 +171,7 @@
    drifts in a perfectly straight or synced line. */
 @keyframes petal-fall {
   0% {
-    transform: translateY(-12%) rotate(0deg);
+    transform: translateY(-12vh) rotate(0deg);
     opacity: 0;
   }
   8% {
@@ -180,7 +181,7 @@
     opacity: var(--petal-opacity, 0.4);
   }
   100% {
-    transform: translateY(112%) rotate(360deg);
+    transform: translateY(112vh) rotate(360deg);
     opacity: 0;
   }
 }
@@ -211,10 +212,10 @@
 @keyframes glow-pulse {
   0% {
     transform: scale(0.92);
-    opacity: var(--glow-opacity-min, 0.15);
+    opacity: var(--glow-opacity-min, 0.35);
   }
   100% {
     transform: scale(1.12);
-    opacity: var(--glow-opacity-max, 0.32);
+    opacity: var(--glow-opacity-max, 0.65);
   }
 }

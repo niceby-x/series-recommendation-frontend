@@ -11,10 +11,10 @@ const CATEGORIES = [
   { label: 'Trending', href: '/series', icon: Flame },
   { label: 'Top Rated', href: '/series', icon: Star },
   { label: 'Coming Soon', href: '/series?status=upcoming', icon: CalendarClock },
-  { label: 'Thai BL', href: '/series?country=Thailand', flag: '🇹🇭' },
-  { label: 'Korean BL', href: '/series?country=Korea', flag: '🇰🇷' },
-  { label: 'Japanese BL', href: '/series?country=Japan', flag: '🇯🇵' },
-  { label: 'Chinese BL', href: '/series?country=China', flag: '🇨🇳' },
+  { label: 'Thai BL', href: '/series?country=Thailand', flagCode: 'th' },
+  { label: 'Korean BL', href: '/series?country=Korea', flagCode: 'kr' },
+  { label: 'Japanese BL', href: '/series?country=Japan', flagCode: 'jp' },
+  { label: 'Chinese BL', href: '/series?country=China', flagCode: 'cn' },
   { label: 'More', href: '/series', icon: MoreHorizontal },
 ];
 
@@ -28,8 +28,12 @@ export default function CategoryNav() {
           className="flex flex-col items-center gap-1 flex-1 min-w-[80px] text-center group"
         >
           <span className="relative flex items-center justify-center size-9 rounded-full bg-muted text-primary group-hover:bg-accent transition-colors">
-            {category.flag ? (
-              <span className="text-base leading-none">{category.flag}</span>
+            {category.flagCode ? (
+              <img
+                src={`https://flagcdn.com/w40/${category.flagCode}.png`}
+                alt=""
+                className="size-5 rounded-full object-cover"
+              />
             ) : category.icon ? (
               <category.icon className="size-[18px]" strokeWidth={1.75} />
             ) : null}
