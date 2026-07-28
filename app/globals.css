@@ -52,44 +52,54 @@
   --color-brand-lilac: #C8B6F9;
   --color-brand-mauve: #5E4B6B;
   --color-brand-cream: #FFF8F4;
+
+  /* Vivid accents — for high-emphasis elements (CTAs, active states, headline
+     highlight text) that need real punch. Kept separate from brand-blush/lilac
+     above, which stay soft and pastel for badges and backgrounds. */
+  --color-brand-pink-vivid: #F58AB5;
+  --color-brand-purple-vivid: #6B3F75;
+
+  /* Soft elevated shadow — per spec, used on the hero carousel and other
+     prominent raised surfaces. */
+  --shadow-brand: 0 20px 60px rgba(88, 54, 99, 0.12);
 }
 
 :root {
-  --background: #FFF8F4;
-  --foreground: #5E4B6B;
+  --background: #FFF9FA;
+  --foreground: #5B3466;
   --card: #FFFFFF;
-  --card-foreground: #5E4B6B;
+  --card-foreground: #5B3466;
   --popover: #FFFFFF;
-  --popover-foreground: #5E4B6B;
-  --primary: #F7B6C8;
-  --primary-foreground: #4A2F3F;
-  --secondary: #C8B6F9;
-  --secondary-foreground: #3D2E52;
+  --popover-foreground: #5B3466;
+  --primary: #F58AB5;
+  --primary-foreground: #FFFFFF;
+  --secondary: #6B3F75;
+  --secondary-foreground: #FFFFFF;
   --muted: #F7EEF4;
-  --muted-foreground: #8C7A9C;
-  --accent: #EDE3FB;
-  --accent-foreground: #5E4B6B;
+  --muted-foreground: #64657A;
+  --accent: #F1E6ED;
+  --accent-foreground: #5B3466;
   --destructive: #D6456B;
-  --border: #F0DCE4;
+  --border: #F1E6ED;
   --input: #F5E9EE;
-  --ring: #C8B6F9;
-  --chart-1: #F7B6C8;
-  --chart-2: #C8B6F9;
-  --chart-3: #5E4B6B;
-  --chart-4: #F0DCE4;
-  --chart-5: #8C7A9C;
-  --radius: 1rem;
+  --ring: #F58AB5;
+  --chart-1: #F58AB5;
+  --chart-2: #6B3F75;
+  --chart-3: #5B3466;
+  --chart-4: #F1E6ED;
+  --chart-5: #64657A;
+  --radius: 20px;
   --sidebar: #FFFFFF;
-  --sidebar-foreground: #5E4B6B;
-  --sidebar-primary: #F7B6C8;
+  --sidebar-foreground: #5B3466;
+  --sidebar-primary: #F58AB5;
   --sidebar-primary-foreground: #4A2F3F;
   --sidebar-accent: #F7EEF4;
   --sidebar-accent-foreground: #5E4B6B;
   --sidebar-border: #F0DCE4;
   --sidebar-ring: #C8B6F9;
 
-  --font-sans: var(--font-nunito), ui-sans-serif, system-ui, sans-serif;
-  --font-heading: var(--font-fredoka), var(--font-sans);
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-dm-serif), Georgia, serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 
@@ -144,11 +154,11 @@
 
 /* Brand gradient utilities, used for hero CTAs and highlight accents */
 @utility bg-brand-gradient {
-  background-image: linear-gradient(135deg, var(--color-brand-blush), var(--color-brand-lilac));
+  background-image: linear-gradient(135deg, var(--color-brand-pink-vivid), var(--color-brand-purple-vivid));
 }
 
 @utility text-brand-gradient {
-  background-image: linear-gradient(135deg, var(--color-brand-blush), var(--color-brand-lilac));
+  background-image: linear-gradient(135deg, var(--color-brand-pink-vivid), var(--color-brand-purple-vivid));
   background-clip: text;
   -webkit-background-clip: text;
   color: transparent;

@@ -1,7 +1,10 @@
 import Link from 'next/link';
-import Image from 'next/image';
-import { ArrowRight, Sparkles } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import SeriesCard, { type SeriesCardData } from '../components/SeriesCard';
+import HeroCarousel, { type CarouselSlide } from '../components/HeroCarousel';
+import CategoryNav from '../components/CategoryNav';
+import ContinueJourneyRow from '../components/ContinueJourneyRow';
+import PetalDecoration from '../components/PetalDecoration';
 
 const STATUS_LABELS: Record<string, string> = {
   airing: 'On Air',
@@ -9,9 +12,42 @@ const STATUS_LABELS: Record<string, string> = {
   upcoming: 'Coming Soon',
 };
 
-function pickRandom<T>(items: T[]): T {
-  return items[Math.floor(Math.random() * items.length)];
-}
+// MOCK — fills the carousel when the live catalog doesn't have enough titles yet
+// (currently 1 approved series). These slides are visually identical to real ones
+// but never link anywhere (isReal: false). Delete entries here as the real
+// approved catalog grows past what's needed to fill the carousel.
+const MOCK_CAROUSEL_SLIDES: CarouselSlide[] = [
+  {
+    id: 'mock-1',
+    title: 'The Heart\u2019s Bloom',
+    posterUrl: null,
+    badge: 'Editor\u2019s Pick',
+    statusLabel: 'On Air',
+    meta: 'Episode 7 \u00b7 Every Saturday',
+    tags: ['Romance', 'Slow Burn', 'University'],
+    isReal: false,
+  },
+];
+
+// MOCK — pads the Trending grid to a full row. The `ratings` table has zero rows
+// right now, so there's no real rating data to show yet either way. Real series
+// (from getSeries()) always come first; these only fill remaining slots.
+const MOCK_TRENDING: (SeriesCardData & { mockRating: number })[] = [
+  { id: -1, title: 'Only Us', country: 'Thailand', year: 2023, episode_count: 12, status: 'completed', synopsis: null, poster_url: null, mockRating: 9.3 },
+  { id: -2, title: 'Our Skyy 2', country: 'Thailand', year: 2023, episode_count: 10, status: 'completed', synopsis: null, poster_url: null, mockRating: 9.1 },
+  { id: -3, title: 'The Eighth Sense', country: 'Korea', year: 2023, episode_count: 14, status: 'completed', synopsis: null, poster_url: null, mockRating: 9.0 },
+  { id: -4, title: 'Kiseki: Dear to Me', country: 'Japan', year: 2023, episode_count: 8, status: 'completed', synopsis: null, poster_url: null, mockRating: 8.8 },
+  { id: -5, title: 'My Personal Weatherman', country: 'Japan', year: 2023, episode_count: 8, status: 'completed', synopsis: null, poster_url: null, mockRating: 8.7 },
+  { id: -6, title: 'Stay With Me', country: 'China', year: 2023, episode_count: 12, status: 'completed', synopsis: null, poster_url: null, mockRating: 8.6 },
+  { id: -7, title: 'A Shoulder to Cry On', country: 'Korea', year: 2023, episode_count: 10, status: 'completed', synopsis: null, poster_url: null, mockRating: 8.5 },
+];
+
+// PLACEHOLDER — real series don't have genre pills yet because genres live in the
+// separate `series_genres` join table, not denormalized onto `series` (unlike
+// series_candidates.genre_names). Until that join is wired up, real slides fall
+// back to this generic pair rather than showing an empty, sparse-looking card.
+// Replace this the moment real genre data is available per-slide.
+const PLACEHOLDER_GENRE_TAGS = ['Romance', 'Drama'];
 
 async function getSeries(): Promise<SeriesCardData[]> {
   try {
@@ -32,158 +68,122 @@ async function getSeries(): Promise<SeriesCardData[]> {
   }
 }
 
+function pickRandom<T>(arr: T[]): T {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
 export default async function Home() {
   const allSeries = await getSeries();
-  const spotlight = allSeries[0];
-  const recentlyAdded = allSeries.slice(0, 6);
-  const surprisePick = allSeries.length ? pickRandom(allSeries) : null;
+  const surprisePick = allSeries.length > 0 ? pickRandom(allSeries) : null;
 
-  const countries = Array.from(new Set(allSeries.map((s) => s.country))).slice(0, 6);
+  const realSlides: CarouselSlide[] = allSeries.slice(0, 4).map((s) => ({
+    id: s.id,
+    title: s.title,
+    posterUrl: s.poster_url,
+    badge: 'Editor\u2019s Pick',
+    statusLabel: STATUS_LABELS[s.status] ?? s.status,
+    meta: s.year + ' \u00b7 ' + s.country + ' \u00b7 ' + s.episode_count + ' episodes',
+    tags: PLACEHOLDER_GENRE_TAGS, // see note above — real genre join not wired up yet
+    isReal: true,
+  }));
+  const carouselSlides = realSlides.length > 0 ? realSlides : MOCK_CAROUSEL_SLIDES;
+
+  const realTrendingCount = Math.min(allSeries.length, 7);
+  const trendingReal = allSeries.slice(0, realTrendingCount);
+  const trendingMock = MOCK_TRENDING.slice(0, 7 - realTrendingCount);
 
   return (
     <main className="min-h-screen bg-background">
       {/* Hero */}
-      <div className="relative overflow-hidden border-b border-border">
-        <div className="absolute inset-0 bg-gradient-to-br from-brand-blush/15 via-background to-brand-lilac/15" />
-        <div className="relative max-w-6xl mx-auto px-6 md:px-8 py-16 md:py-24 grid md:grid-cols-2 gap-12 items-center">
+      <div className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-brand-blush/35 via-background to-brand-lilac/35" />
+        <PetalDecoration />
+
+        <div className="relative max-w-6xl mx-auto px-6 md:px-8 py-10 md:py-14 grid md:grid-cols-2 gap-10 items-center">
           <div>
-            <h1 className="font-heading text-5xl md:text-6xl font-semibold leading-[1.05] mb-5">
+            <h1 className="font-heading text-[36px] md:text-[48px] leading-[1.1] font-normal mb-4">
               <span className="text-foreground">Where Stories</span>
               <br />
-              <span className="text-brand-gradient">Bloom.</span>
+              <span className="text-primary">Bloom.</span>
             </h1>
-            <p className="text-muted-foreground text-lg mb-8 max-w-md">
+            <p className="text-muted-foreground text-[18px] font-normal mb-5 max-w-md">
               Discover your next favorite BL series, movies, and anime — handpicked with love.
             </p>
-            <div className="flex flex-wrap items-center gap-4 mb-6">
+            <div className="flex flex-wrap items-center gap-4 mb-5">
               <Link
                 href="/series"
-                className="inline-flex items-center gap-2 bg-brand-gradient text-white px-7 py-3 rounded-full font-semibold shadow-sm hover:opacity-90 transition-opacity"
+                className="inline-flex items-center gap-2 bg-brand-gradient text-white text-[16px] font-semibold px-7 py-3 rounded-full shadow-sm hover:opacity-90 transition-opacity"
               >
                 Explore Now
                 <ArrowRight className="size-4" />
               </Link>
-              {surprisePick && (
-                <Link
-                  href={`/series/${surprisePick.id}`}
-                  className="inline-flex items-center gap-2 border border-border bg-card px-7 py-3 rounded-full font-semibold text-foreground hover:bg-muted transition-colors"
-                >
-                  <Sparkles className="size-4 text-primary" />
-                  Surprise Me
-                </Link>
-              )}
+              <Link
+                href={'/series/' + (surprisePick ? surprisePick.id : '')}
+                className="inline-flex items-center gap-2 border border-border bg-card text-[16px] font-semibold px-7 py-3 rounded-full text-foreground hover:bg-muted transition-colors"
+              >
+                🌸 Surprise Me
+              </Link>
             </div>
-            {allSeries.length > 0 && (
+
+            {/* MOCK social proof — replace with a real user count once BLumi has one worth showing */}
+            <div className="flex items-center gap-3">
+              <div className="flex -space-x-2">
+                {['#F7B6C8', '#C8B6F9', '#5E4B6B', '#F0DCE4'].map((color, i) => (
+                  <span
+                    key={i}
+                    className="size-8 rounded-full border-2 border-background"
+                    style={{ backgroundColor: color }}
+                  />
+                ))}
+              </div>
               <p className="text-sm text-muted-foreground">
-                <span className="font-semibold text-foreground">{allSeries.length}+</span> series
-                curated with love, from Thailand to Japan, Korea, and beyond.
+                Loved by <span className="font-semibold text-foreground">12,842+</span> BL fans ❤️
               </p>
-            )}
+            </div>
           </div>
 
-          {/* Spotlight card */}
-          <div className="relative">
-            {spotlight ? (
-              <Link
-                href={`/series/${spotlight.id}`}
-                className="group relative block rounded-3xl overflow-hidden shadow-xl aspect-[4/3] bg-muted"
-              >
-                {spotlight.poster_url ? (
-                  <Image
-                    src={spotlight.poster_url}
-                    alt={spotlight.title}
-                    fill
-                    sizes="(max-width: 768px) 100vw, 50vw"
-                    className="object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-brand-blush/30 to-brand-lilac/30" />
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent" />
-                <span className="absolute top-4 left-4 bg-white/90 text-[11px] font-semibold px-3 py-1 rounded-full text-brand-mauve">
-                  Spotlight
-                </span>
-                <div className="absolute bottom-0 left-0 right-0 p-6">
-                  <span className="inline-block bg-brand-blush text-[#4A2F3F] text-[11px] font-semibold px-2.5 py-1 rounded-full mb-2">
-                    {STATUS_LABELS[spotlight.status] ?? spotlight.status}
-                  </span>
-                  <h2 className="font-heading text-2xl font-semibold text-white mb-1">
-                    {spotlight.title}
-                  </h2>
-                  <p className="text-white/70 text-sm mb-3">
-                    {spotlight.year} • {spotlight.country} • {spotlight.episode_count} episodes
-                  </p>
-                  {spotlight.synopsis && (
-                    <p className="text-white/80 text-sm line-clamp-2 max-w-md">{spotlight.synopsis}</p>
-                  )}
-                </div>
-              </Link>
-            ) : (
-              <div className="rounded-3xl border border-dashed border-border aspect-[4/3] flex items-center justify-center text-muted-foreground text-sm text-center p-8">
-                Couldn&apos;t load a spotlight pick right now.{' '}
-                <Link href="/series" className="text-primary font-semibold ml-1">
-                  Browse the catalog
-                </Link>
-              </div>
-            )}
-          </div>
+          <HeroCarousel slides={carouselSlides} />
+        </div>
+
+        {/* Category quick-nav — inside the hero wrapper so it shares the same
+            gradient/petal background, no visible seam between the two */}
+        <div className="relative max-w-6xl mx-auto px-6 md:px-8 pb-10">
+          <CategoryNav />
         </div>
       </div>
 
-      {/* Quick filters */}
-      {countries.length > 0 && (
-        <div className="max-w-6xl mx-auto px-6 md:px-8 py-8 flex flex-wrap gap-3">
-          <Link
-            href="/series"
-            className="text-sm font-semibold px-4 py-2 rounded-full bg-accent text-accent-foreground hover:opacity-80 transition-opacity"
-          >
-            All
-          </Link>
-          {Object.entries(STATUS_LABELS).map(([status, label]) => (
-            <Link
-              key={status}
-              href={`/series?status=${status}`}
-              className="text-sm font-semibold px-4 py-2 rounded-full bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
-            >
-              {label}
-            </Link>
-          ))}
-          {countries.map((country) => (
-            <Link
-              key={country}
-              href={`/series?country=${encodeURIComponent(country)}`}
-              className="text-sm font-semibold px-4 py-2 rounded-full bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
-            >
-              {country}
-            </Link>
-          ))}
-        </div>
-      )}
-
-      {/* Recently added */}
-      <div className="max-w-6xl mx-auto px-6 md:px-8 py-8 pb-20">
+      {/* Trending This Week */}
+      <div className="max-w-6xl mx-auto px-6 md:px-8 py-8">
         <div className="flex justify-between items-end mb-6">
-          <h2 className="font-heading text-2xl font-semibold text-foreground">From the Catalog</h2>
+          <h2 className="font-heading text-[32px] font-normal text-foreground flex items-center gap-2">
+            🔥 Trending This Week
+          </h2>
           <Link href="/series" className="text-primary text-sm font-semibold hover:opacity-80 transition-opacity">
-            See all →
+            View All →
           </Link>
         </div>
 
-        {recentlyAdded.length === 0 ? (
-          <p className="text-muted-foreground text-sm">
-            Couldn&apos;t load series right now.{' '}
-            <Link href="/series" className="text-primary font-semibold">
-              Browse the full catalog
-            </Link>{' '}
-            instead.
-          </p>
-        ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {recentlyAdded.map((series) => (
-              <SeriesCard key={series.id} series={series} />
-            ))}
-          </div>
-        )}
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+          {trendingReal.map((series, i) => (
+            <SeriesCard key={series.id} series={series} rank={i + 1} rating={null} />
+          ))}
+          {trendingMock.map((series, i) => (
+            <SeriesCard
+              key={series.id}
+              series={series}
+              rank={trendingReal.length + i + 1}
+              rating={series.mockRating}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Continue Your Journey — mock, see ContinueJourneyRow.tsx */}
+      <div className="max-w-6xl mx-auto px-6 md:px-8 py-8 pb-20">
+        <h2 className="font-heading text-[32px] font-normal text-foreground mb-6 flex items-center gap-2">
+          🍃 Continue Your Journey
+        </h2>
+        <ContinueJourneyRow />
       </div>
     </main>
   );

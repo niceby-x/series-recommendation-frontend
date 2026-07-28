@@ -67,7 +67,7 @@ export default function Navbar() {
 
   function navLinkClass(href: string) {
     return (
-      'text-sm font-semibold transition-colors ' +
+      'text-base font-medium transition-colors ' +
       (isActive(href) ? 'text-primary' : 'text-foreground/60 hover:text-foreground')
     );
   }
@@ -78,7 +78,7 @@ export default function Navbar() {
   return (
     <nav className="sticky top-0 z-50 bg-background/90 backdrop-blur-md border-b border-border px-6 py-3 flex items-center gap-6">
       <Link href="/" className="shrink-0">
-        <Logo variant="full" theme="brand" size={30} />
+        <Logo variant="full" theme="brand" size={53} />
       </Link>
 
       <div className="hidden md:flex items-center gap-6 shrink-0">
@@ -86,13 +86,19 @@ export default function Navbar() {
           Home
         </Link>
         <Link href="/series" className={navLinkClass('/series')}>
-          Discover
+          Explore
         </Link>
         {user && (
           <Link href="/my-list" className={navLinkClass('/my-list')}>
-            My List
+            Lists
           </Link>
         )}
+        <Link href="/community" className={navLinkClass('/community')}>
+          Community
+        </Link>
+        <Link href="/about" className={navLinkClass('/about')}>
+          About
+        </Link>
         {isAdmin && (
           <Link href="/admin/candidates" className={navLinkClass('/admin')}>
             Admin
