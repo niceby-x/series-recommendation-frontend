@@ -1,12 +1,16 @@
+import Image from 'next/image';
+
 type LogoTheme = 'brand' | 'light' | 'dark' | 'mono';
 
 interface LogoProps {
   /** icon = mark only. full = mark + "BLumi" wordmark. */
   variant?: 'icon' | 'full';
-  /** brand = pink/lilac gradient petals (default, works on light or dark bg).
+  /** brand = the pink/lilac lotus artwork (default, works on light or dark bg).
    *  light = white mark, for use on dark/colored backgrounds.
    *  dark = deep mauve mark, for use on light backgrounds.
-   *  mono = greyscale, for places brand color shouldn't appear. */
+   *  mono = greyscale, for places brand color shouldn't appear.
+   *  (light/dark/mono fall back to a procedural SVG since the brand artwork
+   *  is a fixed-color raster image and can't be recolored.) */
   theme?: LogoTheme;
   /** Height in pixels of the mark. Wordmark scales with it. */
   size?: number;
@@ -15,7 +19,7 @@ interface LogoProps {
 
 const PETAL_ANGLES = [0, 60, 120, 180, 240, 300];
 
-function Mark({ theme, gradientId }: { theme: LogoTheme; gradientId: string }) {
+function ProceduralMark({ theme, gradientId }: { theme: LogoTheme; gradientId: string }) {
   const solid =
     theme === 'light' ? '#FFFFFF' : theme === 'dark' ? '#5E4B6B' : theme === 'mono' ? '#9CA3AF' : null;
 
@@ -57,6 +61,22 @@ function Mark({ theme, gradientId }: { theme: LogoTheme; gradientId: string }) {
   );
 }
 
+function Mark({ theme, gradientId, size }: { theme: LogoTheme; gradientId: string; size: number }) {
+  if (theme === 'brand') {
+    return (
+      <Image
+        src="/blumi-mark.png"
+        alt=""
+        width={size}
+        height={size}
+        className="w-full h-full object-contain"
+        priority
+      />
+    );
+  }
+  return <ProceduralMark theme={theme} gradientId={gradientId} />;
+}
+
 export default function Logo({ variant = 'full', theme = 'brand', size = 32, className = '' }: LogoProps) {
   const gradientId = `blumi-mark-${theme}`;
   const textColor =
@@ -70,7 +90,7 @@ export default function Logo({ variant = 'full', theme = 'brand', size = 32, cla
         role="img"
         aria-label="BLumi"
       >
-        <Mark theme={theme} gradientId={gradientId} />
+        <Mark theme={theme} gradientId={gradientId} size={size} />
       </span>
     );
   }
@@ -78,7 +98,7 @@ export default function Logo({ variant = 'full', theme = 'brand', size = 32, cla
   return (
     <span className={`inline-flex items-center gap-2 ${className}`} role="img" aria-label="BLumi">
       <span style={{ display: 'inline-block', width: size, height: size, flexShrink: 0 }}>
-        <Mark theme={theme} gradientId={gradientId} />
+        <Mark theme={theme} gradientId={gradientId} size={size} />
       </span>
       <span
         className="font-heading font-semibold tracking-tight"

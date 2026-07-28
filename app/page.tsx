@@ -99,7 +99,7 @@ export default async function Home() {
         <div className="absolute inset-0 bg-gradient-to-br from-brand-blush/35 via-background to-brand-lilac/35" />
         <PetalDecoration />
 
-        <div className="relative max-w-6xl mx-auto px-6 md:px-8 py-10 md:py-14 grid md:grid-cols-2 gap-10 items-center">
+        <div className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-14 py-10 md:py-14 grid md:grid-cols-[1fr_1.15fr] gap-10 items-center">
           <div>
             <h1 className="font-heading text-[36px] md:text-[48px] leading-[1.1] font-normal mb-4">
               <span className="text-foreground">Where Stories</span>
@@ -147,13 +147,13 @@ export default async function Home() {
 
         {/* Category quick-nav — inside the hero wrapper so it shares the same
             gradient/petal background, no visible seam between the two */}
-        <div className="relative max-w-6xl mx-auto px-6 md:px-8 pb-10">
+        <div className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-14 pb-10">
           <CategoryNav />
         </div>
       </div>
 
       {/* Trending This Week */}
-      <div className="max-w-6xl mx-auto px-6 md:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-6 md:px-10 lg:px-14 py-8">
         <div className="flex justify-between items-end mb-6">
           <h2 className="font-heading text-[32px] font-normal text-foreground flex items-center gap-2">
             🔥 Trending This Week
@@ -179,7 +179,7 @@ export default async function Home() {
       </div>
 
       {/* Continue Your Journey — mock, see ContinueJourneyRow.tsx */}
-      <div className="max-w-6xl mx-auto px-6 md:px-8 py-8 pb-20">
+      <div className="max-w-7xl mx-auto px-6 md:px-10 lg:px-14 py-8 pb-20">
         <h2 className="font-heading text-[32px] font-normal text-foreground mb-6 flex items-center gap-2">
           🍃 Continue Your Journey
         </h2>

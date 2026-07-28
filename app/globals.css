@@ -163,3 +163,58 @@
   -webkit-background-clip: text;
   color: transparent;
 }
+
+/* Animated hero petals — see components/PetalDecoration.tsx. Each petal drifts
+   down and rotates (petal-fall) while independently swaying side to side
+   (petal-sway) and gently rising/falling in place (petal-bob), so nothing
+   drifts in a perfectly straight or synced line. */
+@keyframes petal-fall {
+  0% {
+    transform: translateY(-12%) rotate(0deg);
+    opacity: 0;
+  }
+  8% {
+    opacity: var(--petal-opacity, 0.4);
+  }
+  88% {
+    opacity: var(--petal-opacity, 0.4);
+  }
+  100% {
+    transform: translateY(112%) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+@keyframes petal-sway {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(var(--petal-sway, 16px));
+  }
+}
+
+@keyframes petal-bob {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-6px) scale(1.06);
+  }
+}
+
+/* Soft ambient light orbs — the "Lumi" (light) half of the BLumi name,
+   paired with the falling petals for the "Bloom" half. See
+   components/PetalDecoration.tsx. */
+@keyframes glow-pulse {
+  0% {
+    transform: scale(0.92);
+    opacity: var(--glow-opacity-min, 0.15);
+  }
+  100% {
+    transform: scale(1.12);
+    opacity: var(--glow-opacity-max, 0.32);
+  }
+}
