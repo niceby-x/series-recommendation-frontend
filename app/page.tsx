@@ -22,7 +22,7 @@ const MOCK_CAROUSEL_SLIDES: CarouselSlide[] = [
   {
     id: 'mock-1',
     title: 'The Heart\u2019s Bloom',
-    posterUrl: null,
+    imageUrl: null,
     badge: 'Editor\u2019s Pick',
     statusLabel: 'On Air',
     meta: 'Episode 7 \u00b7 Every Saturday',
@@ -35,13 +35,13 @@ const MOCK_CAROUSEL_SLIDES: CarouselSlide[] = [
 // right now, so there's no real rating data to show yet either way. Real series
 // (from getSeries()) always come first; these only fill remaining slots.
 const MOCK_TRENDING: (SeriesCardData & { mockRating: number; mockGenres: string[] })[] = [
-  { id: -10, title: 'We Are', country: 'Thailand', year: 2024, episode_count: 16, status: 'completed', synopsis: null, poster_url: null, mockRating: 9.4, mockGenres: ['Romance', 'School'] },
-  { id: -1, title: 'Revenged Love', country: 'China', year: 2025, episode_count: 24, status: 'completed', synopsis: null, poster_url: null, mockRating: 9.2, mockGenres: ['Drama', 'Enemies to Lovers'] },
-  { id: -2, title: 'Love In The Air', country: 'Thailand', year: 2022, episode_count: 13, status: 'completed', synopsis: null, poster_url: null, mockRating: 9.1, mockGenres: ['Romance', 'Bromance'] },
-  { id: -3, title: 'Perfect 10 Liners', country: 'Thailand', year: 2024, episode_count: 24, status: 'completed', synopsis: null, poster_url: null, mockRating: 9.0, mockGenres: ['Comedy', 'School'] },
-  { id: -4, title: 'Me and Thee', country: 'Thailand', year: 2025, episode_count: 10, status: 'completed', synopsis: null, poster_url: null, mockRating: 8.9, mockGenres: ['Romance', 'Drama'] },
-  { id: -5, title: 'Fourever You', country: 'Thailand', year: 2024, episode_count: 41, status: 'completed', synopsis: null, poster_url: null, mockRating: 8.8, mockGenres: ['Romance', 'Friendship'] },
-  { id: -6, title: 'Pit Babe', country: 'Thailand', year: 2023, episode_count: 26, status: 'completed', synopsis: null, poster_url: null, mockRating: 8.7, mockGenres: ['Action', 'Suspense'] },
+  { id: -10, title: 'We Are', country: 'Thailand', year: 2024, episode_count: 16, status: 'completed', synopsis: null, poster_url: null, backdrop_url: null, mockRating: 9.4, mockGenres: ['Romance', 'School'] },
+  { id: -1, title: 'Revenged Love', country: 'China', year: 2025, episode_count: 24, status: 'completed', synopsis: null, poster_url: null, backdrop_url: null, mockRating: 9.2, mockGenres: ['Drama', 'Enemies to Lovers'] },
+  { id: -2, title: 'Love In The Air', country: 'Thailand', year: 2022, episode_count: 13, status: 'completed', synopsis: null, poster_url: null, backdrop_url: null, mockRating: 9.1, mockGenres: ['Romance', 'Bromance'] },
+  { id: -3, title: 'Perfect 10 Liners', country: 'Thailand', year: 2024, episode_count: 24, status: 'completed', synopsis: null, poster_url: null, backdrop_url: null, mockRating: 9.0, mockGenres: ['Comedy', 'School'] },
+  { id: -4, title: 'Me and Thee', country: 'Thailand', year: 2025, episode_count: 10, status: 'completed', synopsis: null, poster_url: null, backdrop_url: null, mockRating: 8.9, mockGenres: ['Romance', 'Drama'] },
+  { id: -5, title: 'Fourever You', country: 'Thailand', year: 2024, episode_count: 41, status: 'completed', synopsis: null, poster_url: null, backdrop_url: null, mockRating: 8.8, mockGenres: ['Romance', 'Friendship'] },
+  { id: -6, title: 'Pit Babe', country: 'Thailand', year: 2023, episode_count: 26, status: 'completed', synopsis: null, poster_url: null, backdrop_url: null, mockRating: 8.7, mockGenres: ['Action', 'Suspense'] },
 ];
 
 // TEMPORARY — the live catalog's one approved title happens to also be "We Are".
@@ -96,7 +96,10 @@ export default async function Home() {
   const realSlides: CarouselSlide[] = allSeries.slice(0, 4).map((s) => ({
     id: s.id,
     title: s.title,
-    posterUrl: s.poster_url,
+    // Backdrops (landscape) look right in this 16:9 card; poster_url (portrait)
+    // is only a fallback for series the backdrop backfill hasn't reached yet —
+    // see src/backfill-backdrops.ts in the backend repo.
+    imageUrl: s.backdrop_url ?? s.poster_url,
     badge: 'Editor\u2019s Pick',
     statusLabel: STATUS_LABELS[s.status] ?? s.status,
     meta: s.year + ' \u00b7 ' + s.country + ' \u00b7 ' + s.episode_count + ' episodes',
@@ -247,7 +250,7 @@ export default async function Home() {
           continueItems.push({
             id: series.id,
             title: series.title,
-            poster_url: series.poster_url,
+            image_url: series.backdrop_url ?? series.poster_url,
             currentEpisode: Math.min(MOCK_PROGRESS[continueItems.length], series.episode_count),
             totalEpisodes: series.episode_count,
           });
@@ -259,14 +262,20 @@ export default async function Home() {
           continueItems.push({
             id: series.id,
             title: series.title,
-            poster_url: series.poster_url,
+            image_url: series.backdrop_url ?? series.poster_url,
             currentEpisode: Math.min(MOCK_PROGRESS[continueItems.length], series.episode_count),
             totalEpisodes: series.episode_count,
           });
         }
 
-        const watchNext =
+        const watchNextSeries =
           MOCK_TRENDING.find((series) => !usedIds.has(series.id)) ?? MOCK_TRENDING[MOCK_TRENDING.length - 1];
+        const watchNext = {
+          id: watchNextSeries.id,
+          title: watchNextSeries.title,
+          image_url: watchNextSeries.backdrop_url ?? watchNextSeries.poster_url,
+          episode_count: watchNextSeries.episode_count,
+        };
 
         return (
           <div className="max-w-7xl mx-auto px-6 md:px-10 lg:px-14 py-8 pb-20">

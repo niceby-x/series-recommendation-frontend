@@ -14,6 +14,7 @@ export interface SeriesCardData {
   status: string;
   synopsis: string | null;
   poster_url: string | null;
+  backdrop_url: string | null;
 }
 
 const STATUS_LABELS: Record<string, string> = {

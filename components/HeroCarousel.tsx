@@ -9,7 +9,7 @@ import { ChevronLeft, ChevronRight, Play, Star } from 'lucide-react';
 export interface CarouselSlide {
   id: number | string;
   title: string;
-  posterUrl: string | null;
+  imageUrl: string | null; // a TMDB backdrop (landscape), not a poster — see app/page.tsx
   badge: string; // e.g. "Editor's Pick"
   statusLabel: string; // e.g. "On Air"
   meta: string; // e.g. "Episode 7 · Every Saturday"
@@ -40,9 +40,9 @@ export default function HeroCarousel({ slides }: { slides: CarouselSlide[] }) {
 
   const cardBody = (
     <>
-      {slide.posterUrl ? (
+      {slide.imageUrl ? (
         <Image
-          src={slide.posterUrl}
+          src={slide.imageUrl}
           alt={slide.title}
           fill
           sizes="(max-width: 768px) 100vw, 50vw"

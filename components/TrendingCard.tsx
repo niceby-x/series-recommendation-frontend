@@ -47,9 +47,12 @@ export default function TrendingCard({ series, rank, rating, genres, variant }: 
         (isTopRank ? ' shadow-[0_0_45px_-12px_rgba(247,182,200,0.75)] ring-1 ring-brand-blush/40' : '')
       }
     >
-      {series.poster_url ? (
+      {/* Landscape card — a backdrop (16:9) fits the frame far better than a
+          cropped portrait poster. Falls back to poster_url only for series
+          the backdrop backfill hasn't reached yet. */}
+      {series.backdrop_url || series.poster_url ? (
         <Image
-          src={series.poster_url}
+          src={series.backdrop_url ?? (series.poster_url as string)}
           alt={series.title}
           fill
           sizes={isFeatured ? '(max-width: 768px) 100vw, 33vw' : '(max-width: 768px) 50vw, 25vw'}

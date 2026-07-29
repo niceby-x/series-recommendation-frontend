@@ -10,25 +10,25 @@ import { Play } from 'lucide-react';
 interface ContinueItem {
   id: number;
   title: string;
-  poster_url: string | null;
+  image_url: string | null;
   currentEpisode: number;
   totalEpisodes: number;
 }
 
 interface ContinueJourneyRowProps {
   items: ContinueItem[];
-  watchNext: { id: number; title: string; poster_url: string | null; episode_count: number };
+  watchNext: { id: number; title: string; image_url: string | null; episode_count: number };
 }
 
 function CardShell({
   id,
   title,
-  poster_url,
+  image_url,
   children,
 }: {
   id: number;
   title: string;
-  poster_url: string | null;
+  image_url: string | null;
   children: React.ReactNode;
 }) {
   return (
@@ -36,9 +36,9 @@ function CardShell({
       href={'/series/' + id}
       className="group relative shrink-0 w-64 aspect-video rounded-lg overflow-hidden bg-gradient-to-br from-brand-mauve to-[#2E2438] shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
     >
-      {poster_url ? (
+      {image_url ? (
         <Image
-          src={poster_url}
+          src={image_url}
           alt={title}
           fill
           sizes="256px"
@@ -64,7 +64,7 @@ export default function ContinueJourneyRow({ items, watchNext }: ContinueJourney
       {items.map((item) => {
         const progressPct = Math.min(100, Math.round((item.currentEpisode / item.totalEpisodes) * 100));
         return (
-          <CardShell key={item.id} id={item.id} title={item.title} poster_url={item.poster_url}>
+          <CardShell key={item.id} id={item.id} title={item.title} image_url={item.image_url}>
             <div className="absolute inset-x-0 bottom-0 p-3">
               <p className="text-white text-sm font-semibold leading-snug line-clamp-1 mb-1.5 drop-shadow-sm">
                 {item.title}
@@ -83,7 +83,7 @@ export default function ContinueJourneyRow({ items, watchNext }: ContinueJourney
         );
       })}
 
-      <CardShell id={watchNext.id} title={watchNext.title} poster_url={watchNext.poster_url}>
+      <CardShell id={watchNext.id} title={watchNext.title} image_url={watchNext.image_url}>
         <div className="absolute inset-x-0 bottom-0 p-3">
           <p className="text-white text-sm font-semibold leading-snug line-clamp-1 mb-1.5 drop-shadow-sm">
             {watchNext.title}
