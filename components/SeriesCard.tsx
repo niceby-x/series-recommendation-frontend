@@ -28,6 +28,12 @@ const STATUS_CLASSES: Record<string, string> = {
   upcoming: 'bg-white/90 text-foreground',
 };
 
+const RANK_CLASSES: Record<number, string> = {
+  1: 'bg-gradient-to-br from-amber-300 to-amber-500 text-amber-950 ring-2 ring-amber-200',
+  2: 'bg-gradient-to-br from-slate-300 to-slate-400 text-slate-800 ring-2 ring-slate-200',
+  3: 'bg-gradient-to-br from-orange-300 to-orange-500 text-orange-950 ring-2 ring-orange-200',
+};
+
 interface SeriesCardProps {
   series: SeriesCardData;
   rank?: number; // renders a numbered badge, top-left — used on the Trending row
@@ -44,7 +50,7 @@ export default function SeriesCard({ series, rank, rating }: SeriesCardProps) {
   return (
     <Link
       href={'/series/' + series.id}
-      className="group relative block overflow-hidden rounded-lg bg-card border border-border shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+      className="group relative block overflow-hidden rounded-lg bg-card border border-border shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:ring-2 hover:ring-primary/30"
     >
       <div className="relative aspect-[2/3] w-full overflow-hidden bg-muted">
         {series.poster_url ? (
@@ -64,7 +70,12 @@ export default function SeriesCard({ series, rank, rating }: SeriesCardProps) {
         )}
 
         {rank !== undefined ? (
-          <span className="absolute top-3 left-3 flex items-center justify-center size-7 rounded-full bg-brand-gradient text-white text-[13px] font-bold shadow-sm">
+          <span
+            className={
+              'absolute top-3 left-3 flex items-center justify-center size-7 rounded-full text-[13px] font-bold shadow-sm transition-transform group-hover:scale-110 ' +
+              (RANK_CLASSES[rank] ?? 'bg-brand-gradient text-white')
+            }
+          >
             {rank}
           </span>
         ) : (
