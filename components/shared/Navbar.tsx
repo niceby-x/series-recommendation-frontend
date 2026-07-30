@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { Search, Bookmark, Bell, ChevronDown, LogOut, ShieldCheck } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { supabase } from '../../lib/supabase';
 import type { User } from '@supabase/supabase-js';
 import Logo from './Logo';
 

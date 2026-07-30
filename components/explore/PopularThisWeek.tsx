@@ -4,7 +4,7 @@ import { useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Bookmark, ChevronRight, Flame, Star } from 'lucide-react';
-import type { SeriesCardData } from '../SeriesCard';
+import type { SeriesCardData } from '../shared/SeriesCard';
 import { mockGenreLabelsFor, mockRatingFor } from '../../lib/exploreMock';
 
 const TOP_BADGE_CLASSES: Record<number, string> = {
@@ -20,7 +20,7 @@ function PopularCard({ series, rank }: { series: SeriesCardData; rank: number })
 
   return (
     <Link
-      href={`/series/${series.id}`}
+      href={'/series/' + series.id}
       className="group relative shrink-0 w-[190px] snap-start rounded-xl overflow-hidden shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
     >
       <div className="relative aspect-[2/3] w-full bg-muted">

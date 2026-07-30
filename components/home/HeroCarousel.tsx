@@ -72,7 +72,7 @@ export default function HeroCarousel({ slides }: { slides: CarouselSlide[] }) {
             className="absolute inset-0"
           >
             {slide.isReal ? (
-              <Link href={`/series/${slide.id}`} className="absolute inset-0 block">
+              <Link href={'/series/' + slide.id} className="absolute inset-0 block">
                 {cardBody}
               </Link>
             ) : (
@@ -148,10 +148,11 @@ export default function HeroCarousel({ slides }: { slides: CarouselSlide[] }) {
               key={s.id}
               type="button"
               onClick={() => goTo(i)}
-              aria-label={`Go to slide ${i + 1}`}
-              className={`h-1.5 rounded-full transition-all ${
-                i === active ? 'w-6 bg-primary' : 'w-1.5 bg-border'
-              }`}
+              aria-label={'Go to slide ' + (i + 1)}
+              className={
+                'h-1.5 rounded-full transition-all ' +
+                (i === active ? 'w-6 bg-primary' : 'w-1.5 bg-border')
+              }
             />
           ))}
         </div>

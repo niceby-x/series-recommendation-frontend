@@ -1,9 +1,9 @@
 import SeriesFilter from './SeriesFilter';
-import type { SeriesCardData } from '../../components/SeriesCard';
+import type { SeriesCardData } from '../../components/shared/SeriesCard';
 
 async function getSeries(): Promise<SeriesCardData[]> {
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/series`, {
+    const res = await fetch(process.env.NEXT_PUBLIC_API_URL + '/series', {
       cache: 'no-store',
     });
 

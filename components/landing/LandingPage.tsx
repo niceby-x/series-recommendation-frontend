@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import type { SeriesCardData } from '../SeriesCard';
+import type { SeriesCardData } from '../shared/SeriesCard';
 import LandingHero from './LandingHero';
 import LandingStatsBar from './LandingStatsBar';
 import ContinueDiscoveringRow from './ContinueDiscoveringRow';

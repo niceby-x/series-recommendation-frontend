@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import SeriesCard, { type SeriesCardData } from '../../components/SeriesCard';
+import SeriesCard, { type SeriesCardData } from '../../components/shared/SeriesCard';
 import ExploreHero from '../../components/explore/ExploreHero';
 import GenreStrip from '../../components/explore/GenreStrip';
 import PopularThisWeek from '../../components/explore/PopularThisWeek';

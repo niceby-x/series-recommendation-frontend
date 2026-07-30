@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowRight, ListFilter, Star, Play, Plus } from 'lucide-react';
-import type { SeriesCardData } from '../SeriesCard';
+import type { SeriesCardData } from '../shared/SeriesCard';
 
 export default function LandingHero({ feature }: { feature: SeriesCardData | null }) {
   return (

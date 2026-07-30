@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowRight, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
-import type { SeriesCardData } from '../SeriesCard';
+import type { SeriesCardData } from '../shared/SeriesCard';
 
 const AUTOPLAY_MS = 6000;
 
@@ -96,10 +96,11 @@ export default function ExploreHero({ backgrounds }: { backgrounds: SeriesCardDa
                 key={i}
                 type="button"
                 onClick={() => goTo(i)}
-                aria-label={`Slide ${i + 1}`}
-                className={`h-1.5 rounded-full transition-all ${
-                  i === active ? 'w-6 bg-white' : 'w-1.5 bg-white/50'
-                }`}
+                aria-label={'Slide ' + (i + 1)}
+                className={
+                  'h-1.5 rounded-full transition-all ' +
+                  (i === active ? 'w-6 bg-white' : 'w-1.5 bg-white/50')
+                }
               />
             ))}
           </div>

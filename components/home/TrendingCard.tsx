@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Bookmark, Crown, Heart, Star } from 'lucide-react';
-import type { SeriesCardData } from './SeriesCard';
+import type { SeriesCardData } from '../shared/SeriesCard';
 
 // Rank-based pill styling for the "N Trending" badge. Rank 1 gets a warm
 // gold-to-pink gradient with a crown instead of a number; 2 and 3 get their

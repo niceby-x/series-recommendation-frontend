@@ -15,7 +15,7 @@
 // Remove/replace pieces of this file as each of those becomes real,
 // rather than leaving stale mock numbers next to real ones.
 
-import type { SeriesCardData } from '../components/SeriesCard';
+import type { SeriesCardData } from '../components/shared/SeriesCard';
 
 export interface MockTrendingSeries extends SeriesCardData {
   mockRating: number;
@@ -62,20 +62,6 @@ export function displayGenresFor(series: SeriesCardData): string[] {
   return REAL_TRENDING_OVERRIDES[series.title]?.genres ?? PLACEHOLDER_GENRE_TAGS;
 }
 
-// Browse-by-Genre tile counts. Real genre taxonomy exists in the `genres`
-// table (see AGENTS.md), but there's no count-per-genre endpoint yet, so
-// these are illustrative counts, not a live query.
-export interface GenreTileData {
-  name: string;
-  count: number;
-}
-
-export const MOCK_GENRE_CATALOG: GenreTileData[] = [
-  { name: 'Romance', count: 1245 },
-  { name: 'School', count: 892 },
-  { name: 'Fantasy', count: 432 },
-  { name: 'Drama', count: 1523 },
-  { name: 'Comedy', count: 673 },
-  { name: 'Action', count: 312 },
-  { name: 'Slice of Life', count: 554 },
-];
+// Browse-by-Genre tile counts live in lib/exploreMock.ts (`GENRES`) — that's
+// the version actually used by BrowseByGenre.tsx and GenreStrip.tsx. Don't
+// re-add a second genre-count list here; import from exploreMock instead.
