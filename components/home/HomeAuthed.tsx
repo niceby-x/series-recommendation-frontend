@@ -1,12 +1,12 @@
 import Link from 'next/link';
 import { ArrowRight, Flame, Sparkles } from 'lucide-react';
-import type { SeriesCardData } from '../SeriesCard';
-import TrendingCard from '../TrendingCard';
-import TrendingStatsBar from '../TrendingStatsBar';
-import HeroCarousel, { type CarouselSlide } from '../HeroCarousel';
-import CategoryNav from '../CategoryNav';
-import ContinueJourneyRow from '../ContinueJourneyRow';
-import PetalDecoration from '../PetalDecoration';
+import type { SeriesCardData } from '../shared/SeriesCard';
+import TrendingCard from './TrendingCard';
+import TrendingStatsBar from './TrendingStatsBar';
+import HeroCarousel, { type CarouselSlide } from './HeroCarousel';
+import CategoryNav from './CategoryNav';
+import ContinueJourneyRow from './ContinueJourneyRow';
+import PetalDecoration from './PetalDecoration';
 import {
   MOCK_TRENDING,
   REAL_TRENDING_OVERRIDES,

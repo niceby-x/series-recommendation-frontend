@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import RatingForm from '../../../components/RatingForm';
-import WatchlistButton from '@/components/WatchlistButton';
+import RatingForm from '../../../components/shared/RatingForm';
+import WatchlistButton from '@/components/shared/WatchlistButton';
 
 interface Series {
   id: number;

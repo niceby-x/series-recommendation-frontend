@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { supabase } from '../lib/supabase';
+import { supabase } from '../../lib/supabase';
 import type { User } from '@supabase/supabase-js';
 
 type Status = 'plan_to_watch' | 'watching' | 'completed';
@@ -135,11 +135,13 @@ export default function WatchlistButton({ seriesId }: { seriesId: number }) {
       <button
         onClick={() => setMenuOpen(!menuOpen)}
         disabled={updating}
-        className={`px-5 py-2.5 rounded-lg font-medium text-sm transition-colors ${
-          currentStatus
+        className={
+          'px-5 py-2.5 rounded-lg font-medium text-sm transition-colors ' +
+          (currentStatus
             ? 'bg-gray-800 text-white hover:bg-gray-700'
-            : 'bg-blue-600 text-white hover:bg-blue-700'
-        } disabled:opacity-60`}
+            : 'bg-blue-600 text-white hover:bg-blue-700') +
+          ' disabled:opacity-60'
+        }
       >
         {updating
           ? 'Updating...'
@@ -154,9 +156,10 @@ export default function WatchlistButton({ seriesId }: { seriesId: number }) {
             <button
               key={status}
               onClick={() => handleSetStatus(status)}
-              className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-800 transition-colors ${
-                currentStatus === status ? 'text-blue-400' : 'text-gray-300'
-              }`}
+              className={
+                'w-full text-left px-4 py-2 text-sm hover:bg-gray-800 transition-colors ' +
+                (currentStatus === status ? 'text-blue-400' : 'text-gray-300')
+              }
             >
               {STATUS_LABELS[status]}
             </button>

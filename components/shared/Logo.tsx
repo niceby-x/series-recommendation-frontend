@@ -96,7 +96,7 @@ export default function Logo({ variant = 'full', theme = 'brand', size = 32, cla
   }
 
   return (
-    <span className={`inline-flex items-center gap-2 ${className}`} role="img" aria-label="BLumi">
+    <span className={'inline-flex items-center gap-2 ' + className} role="img" aria-label="BLumi">
       <span style={{ display: 'inline-block', width: size, height: size, flexShrink: 0 }}>
         <Mark theme={theme} gradientId={gradientId} size={size} />
       </span>

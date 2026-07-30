@@ -1,5 +1,5 @@
-import type { SeriesCardData } from '../components/SeriesCard';
-import HomeGate from '../components/HomeGate';
+import type { SeriesCardData } from '../components/shared/SeriesCard';
+import HomeGate from '../components/shared/HomeGate';
 import HomeAuthed from '../components/home/HomeAuthed';
 import LandingPage from '../components/landing/LandingPage';
 

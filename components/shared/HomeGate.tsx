@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
-import { supabase } from '../lib/supabase';
+import { supabase } from '../../lib/supabase';
 
 // Both branches are rendered server-side (in app/page.tsx) and passed in as
 // already-built elements -- this component's only job is picking which one
