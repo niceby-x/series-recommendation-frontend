@@ -219,3 +219,14 @@
     opacity: var(--glow-opacity-max, 0.65);
   }
 }
+
+/* Hides scrollbars on horizontally-scrollable rows (Explore page's
+   GenreStrip and PopularThisWeek) while keeping them natively
+   scrollable/swipeable. */
+@utility no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}

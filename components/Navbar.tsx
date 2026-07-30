@@ -16,14 +16,42 @@ const NAV_LINKS = [
   { href: '/about', label: 'About' },
 ];
 
+// Logged-out nav is intentionally different, not just re-skinned: it drops
+// "Lists" (nothing to list before you have an account) and adds a Discover
+// menu. Every item in it is a REAL, working destination -- the trending/
+// new-releases/top-rated links use Explore's actual ?section= filters (see
+// components/explore/ExploreClient.tsx), not placeholder query params
+// nothing reads.
+const DISCOVER_MENU = [
+  { href: '/series', label: 'Browse All' },
+  { href: '/series?section=trending', label: 'Trending' },
+  { href: '/series?section=new-releases', label: 'New Releases' },
+  { href: '/series?section=top-rated', label: 'Top Rated' },
+];
+
+// Moods, Tropes, and Collections aren't real filters/pages yet (see the
+// note on BrowseByMoodGrid/PopularTropesRow in the landing page) -- these
+// honestly point at the plain catalog rather than a param Explore can't
+// read, same convention used everywhere else in the app for not-yet-real
+// features.
+const LOGGED_OUT_LINKS = [
+  { href: '/series', label: 'Moods' },
+  { href: '/series', label: 'Tropes' },
+  { href: '/series', label: 'Collections' },
+  { href: '/community', label: 'Community' },
+  { href: '/about', label: 'About' },
+];
+
 export default function Navbar() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
+  const [discoverOpen, setDiscoverOpen] = useState(false);
   const [search, setSearch] = useState('');
   const menuRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
+  const discoverRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
   const router = useRouter();
   const [lastPathname, setLastPathname] = useState(pathname);
@@ -32,6 +60,7 @@ export default function Navbar() {
     setLastPathname(pathname);
     setMenuOpen(false);
     setNotifOpen(false);
+    setDiscoverOpen(false);
   }
 
   useEffect(() => {
@@ -59,6 +88,9 @@ export default function Navbar() {
       if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
         setNotifOpen(false);
       }
+      if (discoverRef.current && !discoverRef.current.contains(event.target as Node)) {
+        setDiscoverOpen(false);
+      }
     }
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -72,7 +104,7 @@ export default function Navbar() {
   function handleSearchSubmit(e: React.FormEvent) {
     e.preventDefault();
     const trimmed = search.trim();
-    router.push(trimmed ? `/series?q=${encodeURIComponent(trimmed)}` : '/series');
+    router.push(trimmed ? '/series?q=' + encodeURIComponent(trimmed) : '/series');
   }
 
   function isActive(href: string) {
@@ -96,11 +128,44 @@ export default function Navbar() {
       </Link>
 
       <div className="hidden md:flex items-center gap-6 shrink-0">
-        {NAV_LINKS.map(({ href, label }) => (
-          <Link key={href} href={href} className={navLinkClass(href)}>
-            {label}
-          </Link>
-        ))}
+        {user ? (
+          NAV_LINKS.map(({ href, label }) => (
+            <Link key={href} href={href} className={navLinkClass(href)}>
+              {label}
+            </Link>
+          ))
+        ) : (
+          <>
+            <div className="relative" ref={discoverRef}>
+              <button
+                type="button"
+                onClick={() => setDiscoverOpen((open) => !open)}
+                className="flex items-center gap-1 text-sm font-semibold text-foreground/60 hover:text-foreground transition-colors"
+              >
+                Discover
+                <ChevronDown className="size-3.5" />
+              </button>
+              {discoverOpen && (
+                <div className="absolute left-0 mt-2 w-48 bg-popover border border-border rounded-2xl shadow-xl overflow-hidden py-1.5">
+                  {DISCOVER_MENU.map((item) => (
+                    <Link
+                      key={item.label}
+                      href={item.href}
+                      className="block px-4 py-2 text-sm text-popover-foreground hover:bg-muted transition-colors"
+                    >
+                      {item.label}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+            {LOGGED_OUT_LINKS.map(({ href, label }) => (
+              <Link key={label} href={href} className={navLinkClass(href)}>
+                {label}
+              </Link>
+            ))}
+          </>
+        )}
       </div>
 
       <form onSubmit={handleSearchSubmit} className="flex-1 max-w-md ml-auto">
@@ -123,29 +188,33 @@ export default function Navbar() {
       </form>
 
       <div className="flex items-center gap-1 shrink-0">
-        <Link
-          href="/my-list"
-          aria-label="My List"
-          className="hidden sm:flex items-center justify-center size-9 rounded-full text-foreground/70 hover:text-primary hover:bg-muted transition-colors"
-        >
-          <Bookmark className="size-4.5" />
-        </Link>
+        {user && (
+          <>
+            <Link
+              href="/my-list"
+              aria-label="My List"
+              className="hidden sm:flex items-center justify-center size-9 rounded-full text-foreground/70 hover:text-primary hover:bg-muted transition-colors"
+            >
+              <Bookmark className="size-4.5" />
+            </Link>
 
-        <div className="relative" ref={notifRef}>
-          <button
-            onClick={() => setNotifOpen((open) => !open)}
-            aria-label="Notifications"
-            className="hidden sm:flex items-center justify-center size-9 rounded-full text-foreground/70 hover:text-primary hover:bg-muted transition-colors"
-          >
-            <Bell className="size-4.5" />
-          </button>
-          {notifOpen && (
-            <div className="absolute right-0 mt-2 w-64 bg-popover border border-border rounded-2xl shadow-xl overflow-hidden p-4 text-center">
-              <p className="text-sm text-popover-foreground">You&apos;re all caught up! 🌸</p>
-              <p className="text-xs text-muted-foreground mt-1">New episode alerts will show up here.</p>
+            <div className="relative" ref={notifRef}>
+              <button
+                onClick={() => setNotifOpen((open) => !open)}
+                aria-label="Notifications"
+                className="hidden sm:flex items-center justify-center size-9 rounded-full text-foreground/70 hover:text-primary hover:bg-muted transition-colors"
+              >
+                <Bell className="size-4.5" />
+              </button>
+              {notifOpen && (
+                <div className="absolute right-0 mt-2 w-64 bg-popover border border-border rounded-2xl shadow-xl overflow-hidden p-4 text-center">
+                  <p className="text-sm text-popover-foreground">You&apos;re all caught up! 🌸</p>
+                  <p className="text-xs text-muted-foreground mt-1">New episode alerts will show up here.</p>
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </>
+        )}
 
         {loading ? null : user ? (
           <div className="relative ml-1" ref={menuRef}>
@@ -185,12 +254,20 @@ export default function Navbar() {
             )}
           </div>
         ) : (
-          <Link
-            href="/login"
-            className="bg-brand-gradient text-white px-5 py-2 rounded-full text-sm font-semibold shadow-sm hover:opacity-90 transition-opacity ml-1"
-          >
-            Sign In
-          </Link>
+          <div className="flex items-center gap-2 ml-1">
+            <Link
+              href="/login"
+              className="border border-border bg-card text-foreground px-4 py-2 rounded-full text-sm font-semibold hover:bg-muted transition-colors"
+            >
+              Log in
+            </Link>
+            <Link
+              href="/login?mode=register"
+              className="bg-brand-gradient text-white px-5 py-2 rounded-full text-sm font-semibold shadow-sm hover:opacity-90 transition-opacity"
+            >
+              Sign up
+            </Link>
+          </div>
         )}
       </div>
     </nav>

@@ -1,31 +1,33 @@
 import SeriesFilter from './SeriesFilter';
-interface Series {
-    id: number;
-    title: string;
-    country: string;
-    year: number;
-    episode_count: number;
-    status: string;
-    synopsis: string | null;
-    poster_url: string | null;
-}
+import type { SeriesCardData } from '../../components/SeriesCard';
 
-async function getSeries(): Promise<Series[]> {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/series`, {
-    cache: 'no-store',
-  });
-  const json = await res.json();
-  return json.data;
+async function getSeries(): Promise<SeriesCardData[]> {
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/series`, {
+      cache: 'no-store',
+    });
+
+    if (!res.ok) {
+      console.error('Series fetch failed with status ' + res.status);
+      return [];
+    }
+
+    const json = await res.json();
+    return (json.data || []) as SeriesCardData[];
+  } catch (err) {
+    console.error('Series fetch threw an error:', err);
+    return [];
+  }
 }
 
 export default async function SeriesPage() {
-    const seriesList = await getSeries();
+  const seriesList = await getSeries();
 
-    return (
-        <main className="min-h-screen bg-gray-950 text-white p-8">
-            <h1 className="text-3xl font-bold text-blue-400 mb-2">Browse BL Series</h1>
-            <p className="text-gray-400 mb-8">Discover your next favorite BL drama</p>
-            <SeriesFilter seriesList={seriesList}/>
-        </main>
-    );
+  return (
+    <main className="min-h-screen bg-background px-4 md:px-6 lg:px-8 py-6">
+      <div className="max-w-7xl mx-auto">
+        <SeriesFilter seriesList={seriesList} />
+      </div>
+    </main>
+  );
 }

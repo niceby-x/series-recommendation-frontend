@@ -1,135 +1,148 @@
 'use client';
 
-import { useState } from 'react';
-import { useSearchParams } from 'next/navigation';
-import Image from 'next/image';
-
-interface Series {
-  id: number;
-  title: string;
-  country: string;
-  year: number;
-  episode_count: number;
-  status: string;
-  synopsis: string | null;
-  poster_url: string | null;
-}
+import { useMemo, useState } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import SeriesCard, { type SeriesCardData } from '../../components/SeriesCard';
+import ExploreHero from '../../components/explore/ExploreHero';
+import GenreStrip from '../../components/explore/GenreStrip';
+import PopularThisWeek from '../../components/explore/PopularThisWeek';
+import BrowseByGenre from '../../components/explore/BrowseByGenre';
+import ContinueExploring from '../../components/explore/ContinueExploring';
+import ExploreSidebar, { type ExploreFilters, type NavCategory } from '../../components/explore/ExploreSidebar';
+import { mockGenresFor, mockRatingFor } from '../../lib/exploreMock';
 
 interface Props {
-  seriesList: Series[];
+  seriesList: SeriesCardData[];
+}
+
+function pickRandom<T>(items: T[]): T {
+  return items[Math.floor(Math.random() * items.length)];
 }
 
 export default function SeriesFilter({ seriesList }: Props) {
   const searchParams = useSearchParams();
-  const [search, setSearch] = useState(searchParams.get('q') ?? '');
-  const [country, setCountry] = useState(searchParams.get('country') ?? 'All');
-  const [status, setStatus] = useState(searchParams.get('status') ?? 'All');
+  const router = useRouter();
+  const [search] = useState(searchParams.get('q') ?? '');
 
-  const countries = ['All', ...Array.from(new Set(seriesList.map(s => s.country)))];
-  const statuses = ['All', 'completed', 'airing', 'upcoming'];
+  const countries = useMemo(
+    () => ['All', ...Array.from(new Set(seriesList.map((s) => s.country)))],
+    [seriesList]
+  );
+  const years = seriesList.map((s) => s.year);
+  const dataYearMin = years.length ? Math.min(...years) : 2000;
+  const dataYearMax = years.length ? Math.max(...years) : new Date().getFullYear();
 
-  const filtered = seriesList.filter(series => {
-    const matchesSearch = series.title.toLowerCase().includes(search.toLowerCase());
-    const matchesCountry = country === 'All' || series.country === country;
-    const matchesStatus = status === 'All' || series.status === status;
-    return matchesSearch && matchesCountry && matchesStatus;
+  const [filters, setFilters] = useState<ExploreFilters>({
+    navCategory: (searchParams.get('status') === 'upcoming' ? 'coming_soon' : 'all') as NavCategory,
+    country: searchParams.get('country') ?? 'All',
+    genre: 'All',
+    yearMin: dataYearMin,
+    yearMax: dataYearMax,
+    episodes: 'Any',
+    rating: 'Any',
   });
 
+  const isFiltering =
+    search.trim() !== '' ||
+    filters.navCategory !== 'all' ||
+    filters.country !== 'All' ||
+    filters.genre !== 'All' ||
+    filters.yearMin !== dataYearMin ||
+    filters.yearMax !== dataYearMax ||
+    filters.episodes !== 'Any' ||
+    filters.rating !== 'Any';
+
+  const filtered = useMemo(() => {
+    let list = seriesList.filter((series) => {
+      const matchesSearch = series.title.toLowerCase().includes(search.toLowerCase());
+      const matchesCountry = filters.country === 'All' || series.country === filters.country;
+      const matchesGenre = filters.genre === 'All' || mockGenresFor(series.id).includes(filters.genre);
+      const matchesYear = series.year >= filters.yearMin && series.year <= filters.yearMax;
+      const matchesEpisodes =
+        filters.episodes === 'Any' ||
+        (filters.episodes === '1-12' && series.episode_count <= 12) ||
+        (filters.episodes === '13-24' && series.episode_count > 12 && series.episode_count <= 24) ||
+        (filters.episodes === '25+' && series.episode_count > 24);
+      const matchesRating = filters.rating === 'Any' || mockRatingFor(series.id) >= Number(filters.rating);
+      const matchesStatus =
+        filters.navCategory !== 'coming_soon' && filters.navCategory !== 'completed'
+          ? true
+          : filters.navCategory === 'coming_soon'
+            ? series.status === 'upcoming'
+            : series.status === 'completed';
+
+      return matchesSearch && matchesCountry && matchesGenre && matchesYear && matchesEpisodes && matchesRating && matchesStatus;
+    });
+
+    if (filters.navCategory === 'new') {
+      list = [...list].sort((a, b) => b.year - a.year);
+    } else if (filters.navCategory === 'top_rated') {
+      list = [...list].sort((a, b) => mockRatingFor(b.id) - mockRatingFor(a.id));
+    } else if (filters.navCategory === 'hidden_gems') {
+      list = [...list].sort((a, b) => mockRatingFor(a.id) - mockRatingFor(b.id));
+    }
+
+    return list;
+  }, [seriesList, search, filters]);
+
+  function handleSurpriseMe() {
+    if (seriesList.length === 0) return;
+    router.push(`/series/${pickRandom(seriesList).id}`);
+  }
+
+  function handleGenreStripSelect(genreKey: string | null) {
+    setFilters((f) => ({ ...f, genre: genreKey ?? 'All' }));
+  }
+
+  function handleBrowseByGenreSelect(genreKey: string) {
+    setFilters((f) => ({ ...f, genre: genreKey }));
+  }
+
+  function handleContinueExploringSelect(key: string) {
+    const map: Record<string, NavCategory> = {
+      'new-releases': 'new',
+      completed: 'completed',
+      'hidden-gems': 'hidden_gems',
+      'top-rated': 'top_rated',
+    };
+    setFilters((f) => ({ ...f, navCategory: map[key] ?? 'all' }));
+  }
+
   return (
-    <div>
-      {/* Search and filters */}
-      <div className="flex flex-col md:flex-row gap-4 mb-8">
-        <input
-          type="text"
-          placeholder="Search series..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="bg-gray-900 border border-gray-700 text-white rounded-lg px-4 py-2 flex-1 focus:outline-none focus:border-blue-500"
-        />
-        <select
-          value={country}
-          onChange={(e) => setCountry(e.target.value)}
-          className="bg-gray-900 border border-gray-700 text-white rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500"
-        >
-          {countries.map(c => <option key={c} value={c}>{c}</option>)}
-        </select>
-        <select
-          value={status}
-          onChange={(e) => setStatus(e.target.value)}
-          className="bg-gray-900 border border-gray-700 text-white rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500"
-        >
-          {statuses.map(s => <option key={s} value={s}>{s}</option>)}
-        </select>
-      </div>
+    <div className="flex flex-col lg:flex-row lg:items-start gap-8">
+      <ExploreSidebar
+        filters={filters}
+        onChange={setFilters}
+        countries={countries}
+        dataYearMin={dataYearMin}
+        dataYearMax={dataYearMax}
+        onSurpriseMe={handleSurpriseMe}
+      />
 
-      {/* Results count */}
-      <p className="text-gray-500 text-sm mb-6">
-        Showing {filtered.length} of {seriesList.length} series
-      </p>
-
-      {/* Series grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {filtered.length === 0 ? (
-          <p className="text-gray-400 col-span-full">No series found.</p>
+      <div className="flex-1 min-w-0 space-y-8">
+        {isFiltering ? (
+          <div>
+            <p className="text-muted-foreground text-sm mb-6">
+              Showing {filtered.length} of {seriesList.length} series
+            </p>
+            {filtered.length === 0 ? (
+              <p className="text-muted-foreground">No series found. Try adjusting your filters.</p>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
+                {filtered.map((series) => (
+                  <SeriesCard key={series.id} series={series} />
+                ))}
+              </div>
+            )}
+          </div>
         ) : (
-          filtered.map((series) => {
-            const detailHref = '/series/' + series.id;
-            const badgeColorClass = series.status === 'completed'
-              ? 'bg-green-900/80 text-green-300'
-              : 'bg-yellow-900/80 text-yellow-300';
-            const badgeClassName = 'absolute top-2 right-2 text-[10px] font-medium px-2 py-1 rounded-full backdrop-blur-sm ' + badgeColorClass;
-
-            return (
-              <a
-                key={series.id}
-                href={detailHref}
-                className="group relative bg-gray-900 rounded-xl overflow-hidden border border-gray-800 hover:border-blue-500 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-blue-500/20 block"
-              >
-                {/* Poster */}
-                <div className="relative aspect-[2/3] w-full overflow-hidden bg-gray-800">
-                  {series.poster_url ? (
-                    <Image
-                      src={series.poster_url}
-                      alt={series.title}
-                      fill
-                      sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                      className="object-cover transition-transform duration-500 group-hover:scale-110"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900">
-                      <span className="text-gray-600 text-sm px-4 text-center">{series.title}</span>
-                    </div>
-                  )}
-
-                  {/* Status badge */}
-                  <span className={badgeClassName}>
-                    {series.status}
-                  </span>
-
-                  {/* Hover overlay with synopsis */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
-                    <p className="text-xs text-gray-200 line-clamp-5">
-                      {series.synopsis || 'No synopsis available.'}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Info below poster */}
-                <div className="p-3">
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-[10px] bg-blue-900 text-blue-300 px-2 py-0.5 rounded">
-                      {series.country}
-                    </span>
-                    <span className="text-[10px] text-gray-500">{series.year}</span>
-                  </div>
-                  <h2 className="text-sm font-semibold leading-snug line-clamp-2 group-hover:text-blue-400 transition-colors">
-                    {series.title}
-                  </h2>
-                  <p className="text-[11px] text-gray-500 mt-1">{series.episode_count} episodes</p>
-                </div>
-              </a>
-            );
-          })
+          <>
+            <ExploreHero backgrounds={seriesList.slice(0, 4)} />
+            <GenreStrip activeGenre={filters.genre === 'All' ? null : filters.genre} onSelect={handleGenreStripSelect} />
+            <PopularThisWeek items={seriesList.slice(0, 7)} />
+            <BrowseByGenre onSelect={handleBrowseByGenreSelect} />
+            <ContinueExploring onSelect={handleContinueExploringSelect} />
+          </>
         )}
       </div>
     </div>
