@@ -15,11 +15,25 @@ import {
   CURATOR_FEATURE,
   CURATOR_FEATURE_QUOTE,
   CURATOR_LIST,
+  HERO_DECK_FALLBACK,
   type DiscoverCard,
+  type HeroFeature,
 } from '../../lib/landingContent';
 
 export default function LandingPage({ allSeries }: { allSeries: SeriesCardData[] }) {
-  const featureSeries = allSeries[0] ?? null;
+  const realHeroCards: HeroFeature[] = allSeries.slice(0, 3).map((series) => ({
+    id: series.id,
+    title: series.title,
+    country: series.country,
+    year: series.year,
+    rating: 4.8,
+    tags: ['Slow Burn', 'Healing', 'Hopeful'],
+    imageUrl: series.poster_url ?? series.backdrop_url
+  }));
+  const heroDeck: HeroFeature[] = [
+    ...realHeroCards,
+    ...HERO_DECK_FALLBACK.slice(0, Math.max(0, 3 - realHeroCards.length)),
+  ].slice(0, 3);
 
   const realDiscoverCards: DiscoverCard[] = allSeries.slice(0, 5).map((series) => ({
     id: series.id,
@@ -40,7 +54,7 @@ export default function LandingPage({ allSeries }: { allSeries: SeriesCardData[]
 
   return (
     <main className="min-h-screen bg-background">
-      <LandingHero feature={featureSeries} />
+      <LandingHero deck={heroDeck} />
       <LandingStatsBar />
 
       <div className="max-w-7xl mx-auto px-6 md:px-10 lg:px-14 py-14 space-y-14">

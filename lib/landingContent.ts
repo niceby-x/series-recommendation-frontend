@@ -11,19 +11,23 @@
 //                             needs real TMDb posters once these specific
 //                             titles are approved in the catalog
 
+import type { LucideIcon } from 'lucide-react';
+import { Coffee, CloudRain, Leaf, Heart, Wind, Moon } from 'lucide-react';
+
 export interface MoodTile {
   name: string;
   count: number;
   gradient: string; // tailwind gradient classes
+  icon: LucideIcon;
 }
 
 export const MOCK_MOODS: MoodTile[] = [
-  { name: 'Cozy', count: 128, gradient: 'from-[#FBE0C7] to-[#F7B6C8]/50' },
-  { name: 'Emotional', count: 215, gradient: 'from-[#D8E3F7] to-[#C8D9F7]/60' },
-  { name: 'Healing', count: 186, gradient: 'from-[#E3D9F9] to-brand-lilac/50' },
-  { name: 'Heartwarming', count: 243, gradient: 'from-[#F9D6DE] to-brand-blush/60' },
-  { name: 'Angsty', count: 153, gradient: 'from-[#DCD6E3] to-[#C7BFD4]/60' },
-  { name: 'Melancholic', count: 107, gradient: 'from-[#CFC7E8] to-[#8E7FB8]/60' },
+  { name: 'Cozy', count: 128, gradient: 'from-[#FBE0C7] to-[#F7B6C8]/50', icon: Coffee },
+  { name: 'Emotional', count: 215, gradient: 'from-[#D8E3F7] to-[#C8D9F7]/60', icon: CloudRain },
+  { name: 'Healing', count: 186, gradient: 'from-[#E3D9F9] to-brand-lilac/50', icon: Leaf },
+  { name: 'Heartwarming', count: 243, gradient: 'from-[#F9D6DE] to-brand-blush/60', icon: Heart },
+  { name: 'Angsty', count: 153, gradient: 'from-[#DCD6E3] to-[#C7BFD4]/60', icon: Wind },
+  { name: 'Melancholic', count: 107, gradient: 'from-[#CFC7E8] to-[#8E7FB8]/60', icon: Moon },
 ];
 
 export interface TropeChip {
@@ -113,4 +117,40 @@ export const LANDING_STATS = [
   { label: 'Mood Tags', sublabel: 'Find stories that match how you feel', value: '300+' },
   { label: 'Tropes', sublabel: 'From sweet to angsty, we\u2019ve got it all', value: '500+' },
   { label: 'Human Curated', sublabel: 'No algorithms. Just real people.', value: '100%' },
+];
+
+// The hero card-stack carousel. Real catalog series are mapped into this
+// shape first (see LandingPage.tsx); these two fill in any remaining slots
+// so the stack always has 3 cards even before the catalog has enough real
+// titles. imageUrl is intentionally null -- see CURATOR_LIST above for why
+// we don't hand-guess external poster URLs for named real titles.
+export interface HeroFeature {
+  id: number | string;
+  title: string;
+  country: string;
+  year: number;
+  rating: number;
+  tags: string[];
+  imageUrl: string | null;
+}
+
+export const HERO_DECK_FALLBACK: HeroFeature[] = [
+  {
+    id: 'hero-fallback-1',
+    title: 'Cherry Blossoms After Winter',
+    country: 'Korea',
+    year: 2022,
+    rating: 4.8,
+    tags: ['Slow Burn', 'Healing', 'Hopeful'],
+    imageUrl: null,
+  },
+  {
+    id: 'hero-fallback-2',
+    title: 'Neon Nights, Quiet Hearts',
+    country: 'Thailand',
+    year: 2023,
+    rating: 4.7,
+    tags: ['Enemies to Lovers', 'Angsty', 'Bittersweet'],
+    imageUrl: null,
+  },
 ];
