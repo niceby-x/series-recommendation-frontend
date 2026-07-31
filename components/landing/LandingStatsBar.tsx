@@ -5,7 +5,7 @@ const ICONS = [BookOpen, Tag, Heart, Sparkle];
 
 export default function LandingStatsBar() {
   return (
-    <div className="max-w-7xl mx-auto px-6 md:px-10 lg:px-14 -mt-2 md:-mt-6 relative z-10">
+    <div className="max-w-7xl mx-auto px-6 md:px-10 lg:px-14 mt-6 md:mt-10 relative z-10">
       <div className="rounded-2xl border border-border bg-card shadow-[0_10px_30px_rgba(88,54,99,0.08)] px-6 py-7 grid grid-cols-2 md:grid-cols-4 gap-6">
         {LANDING_STATS.map((stat, i) => {
           const Icon = ICONS[i];

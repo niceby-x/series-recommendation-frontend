@@ -49,6 +49,7 @@ export default function Navbar() {
   const [notifOpen, setNotifOpen] = useState(false);
   const [discoverOpen, setDiscoverOpen] = useState(false);
   const [search, setSearch] = useState('');
+  const [searchOpen, setSearchOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
   const discoverRef = useRef<HTMLDivElement>(null);
@@ -168,24 +169,41 @@ export default function Navbar() {
         )}
       </div>
 
-      <form onSubmit={handleSearchSubmit} className="flex-1 max-w-md ml-auto">
-        <div className="relative">
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search series, movies, people..."
-            className="w-full bg-card text-foreground placeholder:text-muted-foreground rounded-full pl-4 pr-10 py-2 text-sm border border-border shadow-sm focus:outline-none focus:border-ring transition-colors"
-          />
+      <div className="flex-1 flex justify-end ml-auto">
+        {searchOpen ? (
+          <form onSubmit={handleSearchSubmit} className="w-full max-w-md">
+            <div className="relative">
+              <input
+                autoFocus
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onBlur={() => {
+                  if (!search.trim()) setSearchOpen(false);
+                }}
+                placeholder="Search series, movies, people..."
+                className="w-full bg-card text-foreground placeholder:text-muted-foreground rounded-full pl-4 pr-10 py-2 text-sm border border-border shadow-sm focus:outline-none focus:border-ring transition-colors"
+              />
+              <button
+                type="submit"
+                aria-label="Search"
+                className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center justify-center size-7 rounded-full text-muted-foreground hover:text-primary transition-colors"
+              >
+                <Search className="size-4" />
+              </button>
+            </div>
+          </form>
+        ) : (
           <button
-            type="submit"
+            type="button"
+            onClick={() => setSearchOpen(true)}
             aria-label="Search"
-            className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center justify-center size-7 rounded-full text-muted-foreground hover:text-primary transition-colors"
+            className="flex items-center justify-center size-9 rounded-full text-foreground/70 hover:text-primary hover:bg-muted transition-colors shrink-0"
           >
-            <Search className="size-4" />
+            <Search className="size-4.5" />
           </button>
-        </div>
-      </form>
+        )}
+      </div>
 
       <div className="flex items-center gap-1 shrink-0">
         {user && (
