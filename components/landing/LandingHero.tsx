@@ -3,7 +3,19 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowRight, ListFilter, Star, ChevronRight, Plus } from 'lucide-react';
+import {
+  ArrowRight,
+  ListFilter,
+  Star,
+  ChevronRight,
+  Plus,
+  Heart,
+  Sparkles,
+  ShieldCheck,
+  Leaf,
+  Flame,
+  GraduationCap,
+} from 'lucide-react';
 import type { HeroFeature } from '../../lib/landingContent';
 import PetalDecoration from '../home/PetalDecoration';
 
@@ -13,10 +25,10 @@ const WORD_ROTATE_MS = 2400;
 // The rotating final word of the headline. Colors pair a brand base tone
 // with brand-gold for the text-shine sweep (see globals.css).
 const ROTATING_WORDS = [
-  { text: 'Bloom', c1: 'var(--color-brand-purple-vivid)' },
-  { text: 'Unfold', c1: 'var(--color-brand-pink-vivid)' },
-  { text: 'Connect', c1: 'var(--color-brand-mauve)' },
-  { text: 'Shine', c1: 'var(--color-brand-gold)' },
+  { text: 'B L O O M', c1: 'var(--color-brand-purple-vivid)' },
+  { text: 'U N F O L D', c1: 'var(--color-brand-pink-vivid)' },
+  { text: 'C O N N E C T', c1: 'var(--color-brand-mauve)' },
+  { text: 'S H I N E', c1: 'var(--color-brand-gold)' },
 ] as const;
 
 // Fixed positions/delays for the sparkle points beside the rotating word —
@@ -37,7 +49,20 @@ const SPARKLES = [
   { left: '92%', top: '15%', size: 3, delay: 1.3, duration: 1.1 },
 ] as const;
 
-// Per-position styling for the card stack. Index 0 is always the front,
+const TRUST_BADGES = [
+  { icon: Heart, label: 'Curated with love' },
+  { icon: Sparkles, label: 'Stories that stay with you' },
+  { icon: ShieldCheck, label: 'Safe Space for everyone' },
+] as const;
+
+// Same honest-link note as BrowseByMoodGrid.tsx -- mood filtering isn't a
+// real Explore filter yet, so these point at the plain catalog for now.
+const TRENDING_MOODS = [
+  { icon: Leaf, label: 'Healing' },
+  { icon: Flame, label: 'Slow Burn' },
+  { icon: GraduationCap, label: 'School Life' },
+  { icon: Heart, label: 'Friends to Lovers' },
+] as const;
 // visible card; 1 and 2 sit behind it, peeking out to the sides.
 const STACK_STYLES = [
   { transform: 'translate(0px, 0px) rotate(0deg) scale(1)', zIndex: 30, opacity: 1 },
@@ -71,16 +96,18 @@ export default function LandingHero({ deck }: { deck: HeroFeature[] }) {
 
   return (
     <div className="relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-brand-blush/40 via-background to-brand-lilac/40" />
-
-      {/* Subtle grain so the gradient doesn't read as a flat digital wash. */}
-      <svg className="absolute inset-0 w-0 h-0" aria-hidden>
-        <filter id="hero-grain">
-          <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" stitchTiles="stitch" result="noise" />
-          <feColorMatrix in="noise" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.035 0" />
-        </filter>
-      </svg>
-      <div className="absolute inset-0 pointer-events-none" style={{ filter: 'url(#hero-grain)' }} aria-hidden />
+      <Image
+        src="/hero-bg-v3.png"
+        alt=""
+        fill
+        priority
+        sizes="100vw"
+        className="object-cover pointer-events-none"
+      />
+      {/* Wash on the left so the headline stays legible over the photo
+          regardless of viewport width/crop -- the photo itself is soft
+          enough on the right that the card doesn't need this. */}
+      <div className="absolute inset-0 bg-gradient-to-r from-background/85 via-background/35 to-transparent pointer-events-none" />
 
       <PetalDecoration />
 
@@ -115,7 +142,8 @@ export default function LandingHero({ deck }: { deck: HeroFeature[] }) {
                       height: s.size,
                       background: '#fffbea',
                       boxShadow: '0 0 5px 1.5px var(--color-brand-gold)',
-                      animation: `sparkle-flicker ${s.duration}s ease-in-out ${s.delay}s infinite`,
+                      animation:
+                        'sparkle-flicker ' + s.duration + 's ease-in-out ' + s.delay + 's infinite',
                     }}
                   />
                 ))}
@@ -126,6 +154,20 @@ export default function LandingHero({ deck }: { deck: HeroFeature[] }) {
             Discover thoughtfully curated BL series, movies, and anime through moods, tropes,
             emotional journeys, and trusted recommendations.
           </p>
+
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-3 mb-7">
+            {TRUST_BADGES.map(({ icon: Icon, label }) => (
+              <div key={label} className="flex items-center gap-2">
+                <span className="flex items-center justify-center size-8 rounded-full bg-white/70 backdrop-blur-sm text-primary shrink-0">
+                  <Icon className="size-4" strokeWidth={1.75} />
+                </span>
+                <span className="text-foreground/80 text-[13.5px] font-medium leading-tight max-w-[110px]">
+                  {label}
+                </span>
+              </div>
+            ))}
+          </div>
+
           <div className="flex flex-wrap items-center gap-4">
             <Link
               href="/series"
@@ -142,9 +184,27 @@ export default function LandingHero({ deck }: { deck: HeroFeature[] }) {
               <ListFilter className="size-4" />
             </Link>
           </div>
+
+          <div className="mt-7">
+            <p className="text-muted-foreground text-[12px] font-bold uppercase tracking-wide mb-2.5">
+              Trending Moods
+            </p>
+            <div className="flex flex-nowrap gap-1.5">
+              {TRENDING_MOODS.map(({ icon: Icon, label }) => (
+                <Link
+                  key={label}
+                  href="/series"
+                  className="inline-flex items-center gap-1 shrink-0 bg-card/80 backdrop-blur-sm border border-border text-foreground text-[12px] font-medium px-2.5 py-1.5 rounded-full hover:bg-card hover:border-ring transition-colors"
+                >
+                  <Icon className="size-3 text-primary" strokeWidth={1.75} />
+                  {label}
+                </Link>
+              ))}
+            </div>
+          </div>
         </div>
 
-        <div className="relative mx-auto w-full max-w-[310px] lg:max-w-[370px] aspect-[3/4]">
+        <div className="relative mx-auto w-full max-w-[300px] lg:max-w-[360px] aspect-[3/4]">
           {/* purely decorative -- peeks out behind the real card stack, no data/interaction */}
           <div className="absolute inset-0 rounded-[28px] bg-brand-blush/45 backdrop-blur-md border-2 border-white/60 -rotate-6 -translate-x-4 translate-y-2 z-[2] pointer-events-none" />
           <div className="absolute inset-0 rounded-[28px] bg-brand-lilac/45 backdrop-blur-md border-2 border-white/50 rotate-9 translate-x-5 translate-y-3 z-[1] pointer-events-none" />
