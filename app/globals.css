@@ -220,6 +220,105 @@
   }
 }
 
+/* Meandering path for the light orbs — makes them drift like fireflies
+   across the whole background rather than pulsing in a fixed spot. Each orb
+   sets its own --drift-x1..5 / --drift-y1..5 waypoints (in vw/vh, so the
+   wander scales with viewport) so paths don't feel synced or mechanical.
+   Lives on a wrapper div; glow-pulse stays on the inner div. */
+@keyframes firefly-drift {
+  0% {
+    transform: translate(0, 0);
+  }
+  20% {
+    transform: translate(var(--drift-x1, 15vw), var(--drift-y1, -10vh));
+  }
+  40% {
+    transform: translate(var(--drift-x2, 25vw), var(--drift-y2, 5vh));
+  }
+  60% {
+    transform: translate(var(--drift-x3, 12vw), var(--drift-y3, 20vh));
+  }
+  80% {
+    transform: translate(var(--drift-x4, -5vw), var(--drift-y4, 8vh));
+  }
+  95% {
+    transform: translate(var(--drift-x5, 3vw), var(--drift-y5, -4vh));
+  }
+  100% {
+    transform: translate(0, 0);
+  }
+}
+
+/* Light sweep across hero headline text — the "Lumi" (light) half of the
+   BLumi name, this time as a shimmer through the letters themselves rather
+   than ambient orbs. Each caller sets --shine-c1 (base) / --shine-c2
+   (highlight) via inline style. See components/landing/LandingHero.tsx. */
+@utility text-shine {
+  background-image: linear-gradient(100deg, var(--shine-c1) 42%, var(--shine-c2) 50%, var(--shine-c1) 58%);
+  background-size: 250% 100%;
+  background-position: 160% 0;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  animation: shine-sweep 3.4s ease-in-out infinite;
+}
+
+@keyframes shine-sweep {
+  0% {
+    background-position: 160% 0;
+  }
+  55% {
+    background-position: -60% 0;
+  }
+  100% {
+    background-position: -60% 0;
+  }
+}
+
+/* Entrance for each rotating headline word (Bloom / Unfold / Connect) —
+   replayed on every word change since React remounts the span via its key. */
+@utility animate-word-in {
+  animation: word-in 0.5s ease-out;
+}
+
+@keyframes word-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Small flickering sparkle points beside the rotating headline word —
+   a second, more literal nod to "Lumi" alongside the glow orbs and
+   text-shine sweep above. */
+@keyframes sparkle-flicker {
+  0%,
+  100% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  15% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+  30% {
+    opacity: 0.2;
+    transform: scale(0.6);
+  }
+  45% {
+    opacity: 0.85;
+    transform: scale(1);
+  }
+  60% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+}
+
 /* Hides scrollbars on horizontally-scrollable rows (Explore page's
    GenreStrip and PopularThisWeek) while keeping them natively
    scrollable/swipeable. */

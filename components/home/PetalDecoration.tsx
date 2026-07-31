@@ -56,11 +56,11 @@ const PETALS = [
 ] as const;
 
 const GLOWS = [
-  { left: '8%', top: '10%', size: 220, duration: 9, delay: 0, hue: 'gold' },
-  { left: '58%', top: '4%', size: 180, duration: 11, delay: 2.5, hue: 'gold' },
-  { left: '82%', top: '38%', size: 260, duration: 8, delay: 1.2, hue: 'gold' },
-  { left: '30%', top: '55%', size: 160, duration: 10, delay: 4, hue: 'gold' },
-  { left: '4%', top: '68%', size: 200, duration: 12, delay: 3, hue: 'gold' },
+  { left: '8%', top: '10%', size: 220, duration: 9, delay: 0, hue: 'gold', driftDuration: 26, driftDelay: 0, dx1: '18vw', dy1: '14vh', dx2: '28vw', dy2: '-8vh', dx3: '10vw', dy3: '-20vh', dx4: '-8vw', dy4: '-4vh', dx5: '4vw', dy5: '10vh' },
+  { left: '58%', top: '4%', size: 180, duration: 11, delay: 2.5, hue: 'gold', driftDuration: 31, driftDelay: 1.5, dx1: '-16vw', dy1: '16vh', dx2: '-24vw', dy2: '32vh', dx3: '-6vw', dy3: '46vh', dx4: '12vw', dy4: '30vh', dx5: '-4vw', dy5: '10vh' },
+  { left: '82%', top: '38%', size: 260, duration: 8, delay: 1.2, hue: 'gold', driftDuration: 23, driftDelay: 3, dx1: '-14vw', dy1: '18vh', dx2: '-22vw', dy2: '-6vh', dx3: '-8vw', dy3: '-26vh', dx4: '6vw', dy4: '-14vh', dx5: '-4vw', dy5: '4vh' },
+  { left: '30%', top: '55%', size: 160, duration: 10, delay: 4, hue: 'gold', driftDuration: 29, driftDelay: 2, dx1: '16vw', dy1: '-20vh', dx2: '26vw', dy2: '-4vh', dx3: '12vw', dy3: '18vh', dx4: '-10vw', dy4: '10vh', dx5: '2vw', dy5: '-8vh' },
+  { left: '4%', top: '68%', size: 200, duration: 12, delay: 3, hue: 'gold', driftDuration: 24, driftDelay: 4.5, dx1: '20vw', dy1: '-12vh', dx2: '34vw', dy2: '2vh', dx3: '18vw', dy3: '20vh', dx4: '30vw', dy4: '-8vh', dx5: '6vw', dy5: '6vh' },
 ] as const;
 
 function PetalShape({ size, hue }: { size: number; hue: 'blush' | 'lilac' }) {
@@ -81,20 +81,39 @@ export default function PetalDecoration() {
       className="pointer-events-none fixed inset-0 overflow-hidden motion-reduce:hidden"
       aria-hidden="true"
     >
-      {/* Lumi — soft glowing light orbs */}
+      {/* Lumi — soft glowing light orbs, drifting like fireflies while they
+          pulse. Outer div handles the meandering path (firefly-drift);
+          inner div keeps its own independent pulse (glow-pulse). */}
       {GLOWS.map((glow, i) => (
         <div
           key={`glow-${i}`}
-          className="absolute rounded-full blur-2xl will-change-transform"
+          className="absolute will-change-transform"
           style={{
             left: glow.left,
             top: glow.top,
-            width: glow.size,
-            height: glow.size,
-            background: `radial-gradient(circle, var(--color-brand-${glow.hue}) 0%, transparent 70%)`,
-            animation: `glow-pulse ${glow.duration}s ease-in-out ${glow.delay}s infinite alternate`,
+            animation: `firefly-drift ${glow.driftDuration}s ease-in-out ${glow.driftDelay}s infinite`,
+            ['--drift-x1' as string]: glow.dx1,
+            ['--drift-y1' as string]: glow.dy1,
+            ['--drift-x2' as string]: glow.dx2,
+            ['--drift-y2' as string]: glow.dy2,
+            ['--drift-x3' as string]: glow.dx3,
+            ['--drift-y3' as string]: glow.dy3,
+            ['--drift-x4' as string]: glow.dx4,
+            ['--drift-y4' as string]: glow.dy4,
+            ['--drift-x5' as string]: glow.dx5,
+            ['--drift-y5' as string]: glow.dy5,
           }}
-        />
+        >
+          <div
+            className="rounded-full blur-2xl will-change-transform"
+            style={{
+              width: glow.size,
+              height: glow.size,
+              background: `radial-gradient(circle, var(--color-brand-${glow.hue}) 0%, transparent 70%)`,
+              animation: `glow-pulse ${glow.duration}s ease-in-out ${glow.delay}s infinite alternate`,
+            }}
+          />
+        </div>
       ))}
 
       {/* Bloom — falling petals */}

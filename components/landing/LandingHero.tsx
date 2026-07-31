@@ -8,6 +8,34 @@ import type { HeroFeature } from '../../lib/landingContent';
 import PetalDecoration from '../home/PetalDecoration';
 
 const AUTO_ADVANCE_MS = 6000;
+const WORD_ROTATE_MS = 2400;
+
+// The rotating final word of the headline. Colors pair a brand base tone
+// with brand-gold for the text-shine sweep (see globals.css).
+const ROTATING_WORDS = [
+  { text: 'Bloom', c1: 'var(--color-brand-purple-vivid)' },
+  { text: 'Unfold', c1: 'var(--color-brand-pink-vivid)' },
+  { text: 'Connect', c1: 'var(--color-brand-mauve)' },
+  { text: 'Shine', c1: 'var(--color-brand-gold)' },
+] as const;
+
+// Fixed positions/delays for the sparkle points beside the rotating word —
+// deterministic (not Math.random on render) to avoid SSR/hydration mismatch.
+// More points, smaller and irregular, with quick staggered timing — reads
+// like sunlight glinting off water rather than slow fairy-dust flicker.
+const SPARKLES = [
+  { left: '2%', top: '15%', size: 3, delay: 0, duration: 1.1 },
+  { left: '14%', top: '55%', size: 2, delay: 0.35, duration: 0.9 },
+  { left: '24%', top: '25%', size: 4, delay: 0.15, duration: 1.3 },
+  { left: '30%', top: '75%', size: 2, delay: 0.7, duration: 1 },
+  { left: '42%', top: '10%', size: 3, delay: 0.5, duration: 1.05 },
+  { left: '50%', top: '60%', size: 5, delay: 0.9, duration: 1.2 },
+  { left: '62%', top: '30%', size: 2, delay: 0.2, duration: 0.85 },
+  { left: '70%', top: '65%', size: 3, delay: 1.1, duration: 1.15 },
+  { left: '78%', top: '20%', size: 4, delay: 0.45, duration: 1 },
+  { left: '88%', top: '50%', size: 2, delay: 0.8, duration: 0.95 },
+  { left: '92%', top: '15%', size: 3, delay: 1.3, duration: 1.1 },
+] as const;
 
 // Per-position styling for the card stack. Index 0 is always the front,
 // visible card; 1 and 2 sit behind it, peeking out to the sides.
@@ -19,6 +47,7 @@ const STACK_STYLES = [
 
 export default function LandingHero({ deck }: { deck: HeroFeature[] }) {
   const [activeIndex, setActiveIndex] = useState(0);
+  const [wordIndex, setWordIndex] = useState(0);
 
   useEffect(() => {
     if (deck.length < 2) return;
@@ -28,6 +57,13 @@ export default function LandingHero({ deck }: { deck: HeroFeature[] }) {
     return () => clearInterval(timer);
   }, [deck.length]);
 
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setWordIndex((i) => (i + 1) % ROTATING_WORDS.length);
+    }, WORD_ROTATE_MS);
+    return () => clearInterval(timer);
+  }, []);
+
   function advance() {
     if (deck.length < 2) return;
     setActiveIndex((i) => (i + 1) % deck.length);
@@ -36,6 +72,16 @@ export default function LandingHero({ deck }: { deck: HeroFeature[] }) {
   return (
     <div className="relative overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-br from-brand-blush/40 via-background to-brand-lilac/40" />
+
+      {/* Subtle grain so the gradient doesn't read as a flat digital wash. */}
+      <svg className="absolute inset-0 w-0 h-0" aria-hidden>
+        <filter id="hero-grain">
+          <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" stitchTiles="stitch" result="noise" />
+          <feColorMatrix in="noise" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.035 0" />
+        </filter>
+      </svg>
+      <div className="absolute inset-0 pointer-events-none" style={{ filter: 'url(#hero-grain)' }} aria-hidden />
+
       <PetalDecoration />
 
       <div className="relative max-w-6xl mx-auto px-6 md:px-10 lg:px-14 py-10 md:py-14 grid md:grid-cols-[1fr_1fr] gap-8 md:gap-10 items-start">
@@ -44,11 +90,37 @@ export default function LandingHero({ deck }: { deck: HeroFeature[] }) {
             <span aria-hidden>🌸</span> CURATED WITH LOVE
           </p>
           <h1 className="font-heading text-[44px] md:text-[60px] leading-[1.05] font-normal mb-4">
-            <span className="text-foreground">Where</span>
+            <span className="text-foreground">Where Stories</span>
             <br />
-            <span className="text-foreground">Stories</span>
-            <br />
-            <span className="text-primary">Bloom</span>
+            <span className="relative inline-block text-[52px] md:text-[72px] leading-none mt-1">
+              <span
+                key={wordIndex}
+                className="text-shine animate-word-in inline-block"
+                style={{
+                  ['--shine-c1' as string]: ROTATING_WORDS[wordIndex].c1,
+                  ['--shine-c2' as string]: 'var(--color-brand-gold)',
+                }}
+              >
+                {ROTATING_WORDS[wordIndex].text}
+              </span>
+              <span className="absolute inset-0 pointer-events-none" aria-hidden>
+                {SPARKLES.map((s, i) => (
+                  <span
+                    key={i}
+                    className="absolute rounded-full"
+                    style={{
+                      left: s.left,
+                      top: s.top,
+                      width: s.size,
+                      height: s.size,
+                      background: '#fffbea',
+                      boxShadow: '0 0 5px 1.5px var(--color-brand-gold)',
+                      animation: `sparkle-flicker ${s.duration}s ease-in-out ${s.delay}s infinite`,
+                    }}
+                  />
+                ))}
+              </span>
+            </span>
           </h1>
           <p className="text-muted-foreground text-[17px] leading-relaxed mb-6 max-w-md">
             Discover thoughtfully curated BL series, movies, and anime through moods, tropes,
@@ -57,14 +129,14 @@ export default function LandingHero({ deck }: { deck: HeroFeature[] }) {
           <div className="flex flex-wrap items-center gap-4">
             <Link
               href="/series"
-              className="inline-flex items-center gap-2 bg-brand-gradient text-white text-[15px] font-semibold px-7 py-3.5 rounded-full shadow-sm hover:opacity-90 transition-opacity"
+              className="inline-flex items-center gap-2 bg-brand-gradient text-white text-[15px] font-semibold px-7 py-3.5 rounded-[10px] shadow-sm hover:opacity-90 transition-opacity"
             >
               Discover Stories
               <ArrowRight className="size-4" />
             </Link>
             <Link
               href="/series"
-              className="inline-flex items-center gap-2 border border-border bg-card text-[15px] font-semibold px-7 py-3.5 rounded-full text-foreground hover:bg-muted transition-colors"
+              className="inline-flex items-center gap-2 border border-border bg-card text-[15px] font-semibold px-7 py-3.5 rounded-[10px] text-foreground hover:bg-muted transition-colors"
             >
               Browse by Mood
               <ListFilter className="size-4" />
