@@ -8,6 +8,7 @@ import {
   ListFilter,
   Star,
   ChevronRight,
+  ChevronLeft,
   Plus,
   Heart,
   Sparkles,
@@ -28,7 +29,7 @@ const ROTATING_WORDS = [
   { text: 'B L O O M', c1: 'var(--color-brand-purple-vivid)' },
   { text: 'U N F O L D', c1: 'var(--color-brand-pink-vivid)' },
   { text: 'C O N N E C T', c1: 'var(--color-brand-mauve)' },
-  { text: 'S H I N E', c1: 'var(--color-brand-gold)' },
+  { text: 'S H I N E', c1: 'var(--color-brand-pink-vivid)' },
 ] as const;
 
 // Fixed positions/delays for the sparkle points beside the rotating word —
@@ -94,8 +95,23 @@ export default function LandingHero({ deck }: { deck: HeroFeature[] }) {
     setActiveIndex((i) => (i + 1) % deck.length);
   }
 
+  function goBack() {
+    if (deck.length < 2) return;
+    setActiveIndex((i) => (i - 1 + deck.length) % deck.length);
+  }
+
   return (
-    <div className="relative overflow-hidden">
+    <div className="relative overflow-hidden h-full">
+      <style>{`
+        @keyframes chevron-nudge-left {
+          0%, 100% { transform: translateX(0); opacity: 0.55; }
+          50% { transform: translateX(-5px); opacity: 1; }
+        }
+        @keyframes chevron-nudge-right {
+          0%, 100% { transform: translateX(0); opacity: 0.55; }
+          50% { transform: translateX(5px); opacity: 1; }
+        }
+      `}</style>
       <Image
         src="/hero-bg-v3.png"
         alt=""
@@ -111,7 +127,7 @@ export default function LandingHero({ deck }: { deck: HeroFeature[] }) {
 
       <PetalDecoration />
 
-      <div className="relative max-w-6xl mx-auto px-6 md:px-10 lg:px-14 py-10 md:py-14 grid md:grid-cols-[1fr_1fr] gap-8 md:gap-10 items-start">
+      <div className="relative max-w-6xl mx-auto px-6 md:px-10 lg:px-14 pt-[104px] md:pt-[120px] pb-[104px] md:pb-[120px] grid md:grid-cols-[1fr_1fr] gap-8 md:gap-10 items-start">
         <div className="pt-2 md:pt-4">
           <p className="flex items-center gap-1.5 text-primary text-[13px] font-bold tracking-wide mb-3">
             <span aria-hidden>🌸</span> CURATED WITH LOVE
@@ -237,8 +253,8 @@ export default function LandingHero({ deck }: { deck: HeroFeature[] }) {
                   )}
                   <div className="absolute inset-0 bg-gradient-to-tr from-black/85 via-black/20 to-transparent" />
 
-                  <span className="absolute top-4 left-4 flex items-center gap-1 bg-brand-gradient text-white text-[12px] font-bold px-3.5 py-1.5 rounded-full shadow-sm">
-                    <Star className="size-3" fill="currentColor" />
+                  <span className="absolute top-3 left-3 flex items-center gap-1 bg-brand-blush/40 backdrop-blur-md border border-white/50 text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-sm">
+                    <Star className="size-2 text-brand-gold" fill="currentColor" />
                     CURATOR&apos;S PICK
                   </span>
 
@@ -281,14 +297,42 @@ export default function LandingHero({ deck }: { deck: HeroFeature[] }) {
           })}
 
           {deck.length > 1 && (
-            <button
-              type="button"
-              onClick={advance}
-              aria-label="Show next pick"
-              className="absolute -top-4 -right-4 z-40 flex items-center justify-center size-11 rounded-full bg-white shadow-md text-primary hover:bg-muted transition-colors"
-            >
-              <ChevronRight className="size-5" />
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={goBack}
+                aria-label="Show previous pick"
+                className="absolute top-1/2 -translate-y-1/2 -left-14 md:-left-16 z-40 flex items-center justify-center size-11 text-brand-mauve drop-shadow-[0_2px_6px_rgba(0,0,0,0.35)] hover:scale-110 hover:text-brand-blush transition-all"
+              >
+                <ChevronLeft
+                  className="size-5 -mr-2.5"
+                  strokeWidth={2.5}
+                  style={{ animation: 'chevron-nudge-left 1.3s ease-in-out infinite' }}
+                />
+                <ChevronLeft
+                  className="size-5"
+                  strokeWidth={2.5}
+                  style={{ animation: 'chevron-nudge-left 1.3s ease-in-out 0.15s infinite' }}
+                />
+              </button>
+              <button
+                type="button"
+                onClick={advance}
+                aria-label="Show next pick"
+                className="absolute top-1/2 -translate-y-1/2 -right-14 md:-right-16 z-40 flex items-center justify-center size-11 text-brand-mauve drop-shadow-[0_2px_6px_rgba(0,0,0,0.35)] hover:scale-110 hover:text-brand-blush transition-all"
+              >
+                <ChevronRight
+                  className="size-5"
+                  strokeWidth={2.5}
+                  style={{ animation: 'chevron-nudge-right 1.3s ease-in-out infinite' }}
+                />
+                <ChevronRight
+                  className="size-5 -ml-2.5"
+                  strokeWidth={2.5}
+                  style={{ animation: 'chevron-nudge-right 1.3s ease-in-out 0.15s infinite' }}
+                />
+              </button>
+            </>
           )}
         </div>
       </div>

@@ -54,10 +54,18 @@ export default function LandingPage({ allSeries }: { allSeries: SeriesCardData[]
 
   return (
     <main className="min-h-screen bg-background">
-      <LandingHero deck={heroDeck} />
-      <LandingStatsBar />
+      {/* Spacer reserves scroll space where the fixed hero visually sits */}
+      <div className="h-[640px] md:h-screen" aria-hidden="true" />
 
-      <div className="max-w-7xl mx-auto px-6 md:px-10 lg:px-14 py-14 space-y-14">
+      {/* Fixed hero — pinned permanently; everything below scrolls over it */}
+      <div className="fixed top-0 left-0 right-0 z-0 h-[640px] md:h-screen">
+        <LandingHero deck={heroDeck} />
+      </div>
+
+      <div className="relative z-10 bg-background">
+        <LandingStatsBar />
+
+        <div className="max-w-7xl mx-auto px-6 md:px-10 lg:px-14 py-14 space-y-14">
         <section>
           <div className="flex items-center justify-between mb-6">
             <h2 className="font-heading text-2xl font-normal text-foreground flex items-center gap-2">
@@ -112,6 +120,7 @@ export default function LandingPage({ allSeries }: { allSeries: SeriesCardData[]
           </h2>
           <HowItWorks />
         </section>
+        </div>
       </div>
 
       <LandingFooter />
