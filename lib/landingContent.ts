@@ -107,16 +107,15 @@ export const CURATOR_LIST: CuratorPick[] = [
   { id: 'curator-3', title: 'Cherry Magic', country: 'Japan', mediaType: 'Series', year: 2020, rating: 4.6, tags: ['Office Romance', 'Magical'], imageUrl: null },
 ];
 
-// Landing-page-only stats. These are placeholder figures -- swap for real
-// counts (or drop the ones that aren't true yet) before this goes live to
-// real visitors. Framed as "curated titles / mood tags / tropes" rather
-// than a user/fan count, which is at least a claim about scope of work
-// rather than a claim about popularity that could be fabricated.
-export const LANDING_STATS = [
-  { label: 'Curated Titles', sublabel: 'Handpicked with care', value: '1,000+' },
-  { label: 'Mood Tags', sublabel: 'Find stories that match how you feel', value: '300+' },
-  { label: 'Tropes', sublabel: 'From sweet to angsty, we\u2019ve got it all', value: '500+' },
-  { label: 'Human Curated', sublabel: 'No algorithms. Just real people.', value: '100%' },
+// Landing-page value-prop tiles (icon + title + description, no numeric
+// claim). Replaces the old numeric LANDING_STATS -- those were placeholder
+// figures we didn't want to ship unverified; these are statements about
+// what the product does, which we can actually stand behind.
+export const LANDING_FEATURES = [
+  { label: 'Curated with Love', sublabel: 'Handpicked series and movies that deserve your time.' },
+  { label: 'Mood & Trope Discovery', sublabel: 'Find the perfect story for your current mood.' },
+  { label: 'Smart Recommendations', sublabel: 'Personalized picks based on what you love.' },
+  { label: 'A Community for Everyone', sublabel: 'Connect, share, and celebrate BL together.' },
 ];
 
 // The hero card-stack carousel. Real catalog series are mapped into this

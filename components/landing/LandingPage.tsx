@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import type { SeriesCardData } from '../shared/SeriesCard';
 import LandingHero from './LandingHero';
@@ -63,21 +64,37 @@ export default function LandingPage({ allSeries }: { allSeries: SeriesCardData[]
       </div>
 
       <div className="relative z-10 bg-background">
-        <LandingStatsBar />
+        {/* Stats bar + Continue Discovering pin together as one unit under
+            the navbar, then get covered as a whole once the "rest of
+            sections" block (z-20 below) scrolls up over them. */}
+        <div className="sticky top-14 z-10 relative overflow-hidden">
+          <Image
+            src="/continue-discovering-bg.png"
+            alt=""
+            fill
+            sizes="100vw"
+            className="object-cover object-top pointer-events-none -z-10"
+          />
+          <div className="absolute inset-0 bg-background/40 -z-10" aria-hidden="true" />
 
-        <div className="max-w-7xl mx-auto px-6 md:px-10 lg:px-14 py-14 space-y-14">
-        <section>
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="font-heading text-2xl font-normal text-foreground flex items-center gap-2">
-              🌸 Continue Discovering
-            </h2>
-            <Link href="/series" className="text-primary text-sm font-semibold hover:opacity-80 transition-opacity">
-              View all »
-            </Link>
-          </div>
-          <ContinueDiscoveringRow cards={discoverCards} />
-        </section>
+          <LandingStatsBar />
 
+          <section className="relative">
+            <div className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-14 pt-10 pb-16 md:pt-12 md:pb-20">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="font-heading text-2xl font-normal text-foreground flex items-center gap-2">
+                  🌸 Continue Discovering
+                </h2>
+                <Link href="/series" className="text-primary text-sm font-semibold hover:opacity-80 transition-opacity">
+                  View all »
+                </Link>
+              </div>
+              <ContinueDiscoveringRow cards={discoverCards} />
+            </div>
+          </section>
+        </div>
+
+        <div className="relative z-20 bg-background rounded-t-3xl max-w-7xl mx-auto px-6 md:px-10 lg:px-14 pt-14 pb-14 space-y-14">
         <section>
           <div className="flex items-center justify-between mb-6">
             <h2 className="font-heading text-2xl font-normal text-foreground flex items-center gap-2">
@@ -120,7 +137,7 @@ export default function LandingPage({ allSeries }: { allSeries: SeriesCardData[]
           </h2>
           <HowItWorks />
         </section>
-        </div>
+          </div>
       </div>
 
       <LandingFooter />
