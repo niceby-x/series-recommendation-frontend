@@ -16,11 +16,12 @@ import {
   Leaf,
   Flame,
   GraduationCap,
+  CalendarClock,
 } from 'lucide-react';
 import type { HeroFeature } from '../../lib/landingContent';
 import PetalDecoration from '../home/PetalDecoration';
 
-const AUTO_ADVANCE_MS = 6000;
+const AUTO_ADVANCE_MS = 7000;
 const WORD_ROTATE_MS = 2400;
 
 // The rotating final word of the headline. Colors pair a brand base tone
@@ -51,9 +52,9 @@ const SPARKLES = [
 ] as const;
 
 const TRUST_BADGES = [
-  { icon: Heart, label: 'Curated with love' },
+  { icon: CalendarClock, label: 'New picks weekly' },
   { icon: Sparkles, label: 'Stories that stay with you' },
-  { icon: ShieldCheck, label: 'Safe Space for everyone' },
+  { icon: ShieldCheck, label: 'Safe space for everyone' },
 ] as const;
 
 // Same honest-link note as BrowseByMoodGrid.tsx -- mood filtering isn't a
@@ -102,16 +103,6 @@ export default function LandingHero({ deck }: { deck: HeroFeature[] }) {
 
   return (
     <div className="relative overflow-hidden h-full">
-      <style>{`
-        @keyframes chevron-nudge-left {
-          0%, 100% { transform: translateX(0); opacity: 0.55; }
-          50% { transform: translateX(-5px); opacity: 1; }
-        }
-        @keyframes chevron-nudge-right {
-          0%, 100% { transform: translateX(0); opacity: 0.55; }
-          50% { transform: translateX(5px); opacity: 1; }
-        }
-      `}</style>
       <Image
         src="/hero-bg-v3.png"
         alt=""
@@ -127,12 +118,12 @@ export default function LandingHero({ deck }: { deck: HeroFeature[] }) {
 
       <PetalDecoration />
 
-      <div className="relative max-w-6xl mx-auto px-6 md:px-10 lg:px-14 pt-[104px] md:pt-[120px] pb-[104px] md:pb-[120px] grid md:grid-cols-[1fr_1fr] gap-8 md:gap-10 items-start">
+      <div className="relative max-w-6xl mx-auto px-6 md:px-10 lg:px-14 pt-[88px] md:pt-[100px] pb-[88px] md:pb-[100px] grid md:grid-cols-[1fr_1fr] gap-8 md:gap-10 items-start">
         <div className="pt-2 md:pt-4 min-w-0">
-          <p className="flex items-center gap-1.5 text-primary text-[13px] font-bold tracking-wide mb-3">
+          <p className="inline-flex items-center gap-1 rounded-full bg-primary/10 border border-primary/20 px-2.5 py-1 text-secondary text-[11px] font-bold tracking-wide mb-2.5">
             <span aria-hidden>🌸</span> CURATED WITH LOVE
           </p>
-          <h1 className="font-heading text-[44px] md:text-[60px] leading-[1.05] font-normal mb-4">
+          <h1 className="font-heading text-[44px] md:text-[60px] leading-[1.05] font-normal mb-3">
             <span className="text-foreground">Where Stories</span>
             <br />
             <span className="relative inline-block text-[52px] md:text-[72px] leading-none mt-1">
@@ -166,18 +157,18 @@ export default function LandingHero({ deck }: { deck: HeroFeature[] }) {
               </span>
             </span>
           </h1>
-          <p className="text-muted-foreground text-[17px] leading-relaxed mb-6 max-w-md">
+          <p className="text-muted-foreground text-[17px] leading-relaxed mb-5 max-w-md">
             Discover thoughtfully curated BL series, movies, and anime through moods, tropes,
             emotional journeys, and trusted recommendations.
           </p>
 
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-3 mb-7">
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2 mb-5">
             {TRUST_BADGES.map(({ icon: Icon, label }) => (
-              <div key={label} className="flex items-center gap-2">
-                <span className="flex items-center justify-center size-8 rounded-full bg-white/70 backdrop-blur-sm text-primary shrink-0">
-                  <Icon className="size-4" strokeWidth={1.75} />
+              <div key={label} className="flex items-center gap-1.5">
+                <span className="flex items-center justify-center size-6 rounded-full bg-white/70 backdrop-blur-sm text-primary shrink-0">
+                  <Icon className="size-3.5" strokeWidth={1.75} />
                 </span>
-                <span className="text-foreground/80 text-[13.5px] font-medium leading-tight max-w-[110px]">
+                <span className="text-foreground/80 text-[13px] font-medium whitespace-nowrap">
                   {label}
                 </span>
               </div>
@@ -187,21 +178,35 @@ export default function LandingHero({ deck }: { deck: HeroFeature[] }) {
           <div className="flex flex-wrap items-center gap-4">
             <Link
               href="/series"
-              className="inline-flex items-center gap-2 bg-brand-gradient text-white text-[15px] font-semibold px-7 py-3.5 rounded-[10px] shadow-sm hover:opacity-90 transition-opacity"
+              className="group relative inline-flex items-center gap-2 overflow-hidden bg-brand-gradient text-white text-[15px] font-semibold px-7 py-2.5 rounded-tl-[20px] rounded-tr-[8px] rounded-br-[20px] rounded-bl-[8px] shadow-[0_8px_20px_rgba(197,84,143,0.35)] hover:opacity-90 hover:shadow-[0_10px_24px_rgba(197,84,143,0.45)] transition-all"
             >
-              Discover Stories
-              <ArrowRight className="size-4" />
+              <svg
+                aria-hidden
+                viewBox="0 0 40 40"
+                className="absolute -top-2 -right-2 size-9 opacity-25 group-hover:opacity-45 group-hover:rotate-[20deg] transition-all duration-500 ease-out pointer-events-none"
+              >
+                <ellipse
+                  cx="20"
+                  cy="20"
+                  rx="7"
+                  ry="12"
+                  fill="#FFFFFF"
+                  transform="rotate(-35 20 20)"
+                />
+              </svg>
+              <span className="relative">Discover Stories</span>
+              <ArrowRight className="relative size-4" />
             </Link>
             <Link
               href="/series"
-              className="inline-flex items-center gap-2 border border-border bg-card text-[15px] font-semibold px-7 py-3.5 rounded-[10px] text-foreground hover:bg-muted transition-colors"
+              className="inline-flex items-center gap-2 border-2 border-border bg-card text-[15px] font-semibold px-7 py-2.5 rounded-2xl text-foreground hover:bg-muted hover:border-ring transition-colors"
             >
               Browse by Mood
               <ListFilter className="size-4" />
             </Link>
           </div>
 
-          <div className="mt-7">
+          <div className="mt-5">
             <p className="text-muted-foreground text-[12px] font-bold uppercase tracking-wide mb-2.5">
               Trending Moods
             </p>
@@ -259,6 +264,10 @@ export default function LandingHero({ deck }: { deck: HeroFeature[] }) {
                     </div>
                   )}
                   <div className="absolute inset-0 bg-gradient-to-tr from-black/85 via-black/20 to-transparent" />
+                  <div className="absolute inset-x-0 bottom-0 h-3/5 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
+                  {isFront && (
+                    <div className="absolute inset-0 card-shine pointer-events-none" aria-hidden />
+                  )}
 
                   <span className="absolute top-3 left-3 flex items-center gap-1 bg-brand-blush/40 backdrop-blur-md border border-white/50 text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-sm">
                     <Star className="size-2 text-brand-gold" fill="currentColor" />
@@ -266,16 +275,16 @@ export default function LandingHero({ deck }: { deck: HeroFeature[] }) {
                   </span>
 
                   <div className="absolute inset-x-0 bottom-0 p-5">
-                    <h3 className="text-white text-[21px] font-semibold leading-tight mb-1.5">
+                    <h3 className="text-white text-[21px] font-medium leading-tight mb-1.5">
                       {card.title}
                     </h3>
-                    <p className="text-white/75 text-[13px] mb-3">
+                    <p className="text-white/75 text-[13px] mb-2.5">
                       {card.country} · Series · {card.year}{' '}
                       <span className="inline-flex items-center gap-0.5 text-brand-gold ml-1">
                         <Star className="size-3" fill="currentColor" /> {card.rating}
                       </span>
                     </p>
-                    <div className="flex flex-wrap gap-1.5 mb-4">
+                    <div className="flex flex-wrap gap-1.5 mb-3">
                       {card.tags.map((tag) => (
                         <span
                           key={tag}
@@ -289,13 +298,18 @@ export default function LandingHero({ deck }: { deck: HeroFeature[] }) {
                       <Link
                         href={'/series/' + card.id}
                         tabIndex={isFront ? 0 : -1}
-                        className="flex-1 text-center bg-brand-gradient text-white text-[14px] font-semibold py-3 rounded-full hover:opacity-90 transition-opacity"
+                        className="flex-1 flex items-center justify-center h-11 bg-brand-gradient text-white text-[13px] font-semibold rounded-full hover:opacity-90 transition-opacity"
                       >
                         View Story
                       </Link>
-                      <span className="flex items-center justify-center size-10 rounded-full bg-white/15 backdrop-blur-sm text-white shrink-0">
+                      <button
+                        type="button"
+                        aria-label="Add to my list"
+                        title="Add to my list"
+                        className="flex items-center justify-center size-11 rounded-full bg-primary/25 backdrop-blur-sm border border-white/30 text-white shrink-0 hover:bg-primary/40 transition-colors"
+                      >
                         <Plus className="size-4" />
-                      </span>
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -309,34 +323,22 @@ export default function LandingHero({ deck }: { deck: HeroFeature[] }) {
                 type="button"
                 onClick={goBack}
                 aria-label="Show previous pick"
-                className="absolute top-1/2 -translate-y-1/2 -left-14 md:-left-16 z-40 flex items-center justify-center size-11 text-brand-mauve drop-shadow-[0_2px_6px_rgba(0,0,0,0.35)] hover:scale-110 hover:text-brand-blush transition-all"
+                className="group absolute top-1/2 -translate-y-1/2 -left-14 md:-left-16 z-40 flex items-center justify-center size-9 rounded-full bg-primary/15 backdrop-blur-sm border border-primary/25 text-brand-mauve shadow-[0_2px_10px_rgba(0,0,0,0.1)] hover:bg-primary/25 hover:scale-110 hover:text-brand-blush focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blush transition-all"
               >
                 <ChevronLeft
-                  className="size-5 -mr-2.5"
+                  className="size-4 group-hover:-translate-x-0.5 transition-transform duration-300"
                   strokeWidth={2.5}
-                  style={{ animation: 'chevron-nudge-left 1.3s ease-in-out infinite' }}
-                />
-                <ChevronLeft
-                  className="size-5"
-                  strokeWidth={2.5}
-                  style={{ animation: 'chevron-nudge-left 1.3s ease-in-out 0.15s infinite' }}
                 />
               </button>
               <button
                 type="button"
                 onClick={advance}
                 aria-label="Show next pick"
-                className="absolute top-1/2 -translate-y-1/2 -right-14 md:-right-16 z-40 flex items-center justify-center size-11 text-brand-mauve drop-shadow-[0_2px_6px_rgba(0,0,0,0.35)] hover:scale-110 hover:text-brand-blush transition-all"
+                className="group absolute top-1/2 -translate-y-1/2 -right-14 md:-right-16 z-40 flex items-center justify-center size-9 rounded-full bg-primary/15 backdrop-blur-sm border border-primary/25 text-brand-mauve shadow-[0_2px_10px_rgba(0,0,0,0.1)] hover:bg-primary/25 hover:scale-110 hover:text-brand-blush focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blush transition-all"
               >
                 <ChevronRight
-                  className="size-5"
+                  className="size-4 group-hover:translate-x-0.5 transition-transform duration-300"
                   strokeWidth={2.5}
-                  style={{ animation: 'chevron-nudge-right 1.3s ease-in-out infinite' }}
-                />
-                <ChevronRight
-                  className="size-5 -ml-2.5"
-                  strokeWidth={2.5}
-                  style={{ animation: 'chevron-nudge-right 1.3s ease-in-out 0.15s infinite' }}
                 />
               </button>
             </>

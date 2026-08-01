@@ -275,6 +275,34 @@
   }
 }
 
+/* Slow diagonal light sweep across the front hero card -- same shimmer
+   technique as text-shine above, just angled/sized for a tall card instead
+   of a text line. Sits on its own overlay layer so it never touches the
+   photo/gradient underneath. See LandingHero.tsx card stack. */
+@utility card-shine {
+  background: linear-gradient(
+    115deg,
+    transparent 42%,
+    rgba(255, 255, 255, 0.09) 48%,
+    rgba(255, 255, 255, 0.18) 50%,
+    rgba(255, 255, 255, 0.09) 52%,
+    transparent 58%
+  );
+  background-size: 250% 100%;
+  background-position: 180% 0;
+  mix-blend-mode: overlay;
+  animation: card-shine-sweep 6s ease-in-out;
+}
+
+@keyframes card-shine-sweep {
+  0% {
+    background-position: 180% 0;
+  }
+  100% {
+    background-position: -80% 0;
+  }
+}
+
 /* Entrance for each rotating headline word (Bloom / Unfold / Connect) —
    replayed on every word change since React remounts the span via its key. */
 @utility animate-word-in {
