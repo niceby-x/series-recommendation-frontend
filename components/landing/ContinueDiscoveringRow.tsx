@@ -3,19 +3,35 @@
 import { useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Star, ChevronRight } from 'lucide-react';
+import { Star, ChevronRight, Flame, Award, Heart, Sparkle, Clapperboard, Tv } from 'lucide-react';
 import type { DiscoverCard } from '../../lib/landingContent';
 
+// Badge icon + color per label, matching the mockup's varied pill styles.
+// Falls back to a plain star/dark pill for any label not in this list (e.g.
+// the real-catalog cards' 'Editor's Pick').
+const BADGE_STYLES: Record<string, { icon: typeof Flame; bg: string }> = {
+  'Trending': { icon: Flame, bg: 'bg-orange-500/90' },
+  'Top Rated': { icon: Award, bg: 'bg-violet-500/90' },
+  'Must Watch': { icon: Heart, bg: 'bg-pink-500/90' },
+  'New Episode': { icon: Sparkle, bg: 'bg-sky-500/90' },
+  'Movie': { icon: Clapperboard, bg: 'bg-rose-900/90' },
+  'Anime': { icon: Tv, bg: 'bg-teal-500/90' },
+};
+const DEFAULT_BADGE = { icon: Star, bg: 'bg-black/70' };
+
 function Card({ card }: { card: DiscoverCard }) {
+  const badgeStyle = BADGE_STYLES[card.badge] ?? DEFAULT_BADGE;
+  const BadgeIcon = badgeStyle.icon;
+
   const inner = (
-    <div className="group relative shrink-0 w-[170px] rounded-2xl overflow-hidden bg-card border border-border shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+    <div className="group relative shrink-0 w-[180px] rounded-[22px] overflow-hidden shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
       <div className="relative aspect-[2/3] w-full bg-muted">
         {card.imageUrl ? (
           <Image
             src={card.imageUrl}
             alt={card.title}
             fill
-            sizes="170px"
+            sizes="180px"
             className="object-cover transition-transform duration-500 group-hover:scale-105"
           />
         ) : (
@@ -23,25 +39,25 @@ function Card({ card }: { card: DiscoverCard }) {
             <span className="text-muted-foreground text-xs">{card.title}</span>
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/5 to-transparent" />
-        <span className="absolute top-2.5 left-2.5 bg-white/90 text-[#4A2F3F] text-[10px] font-bold px-2 py-1 rounded-full">
+
+        {/* Text sits directly on the poster now (mockup), so the gradient
+            needs to be strong enough at the bottom to keep it legible over
+            any image. */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+
+        <span className={`absolute top-2.5 left-2.5 flex items-center gap-1 text-white text-[10px] font-bold px-2 py-1 rounded-full backdrop-blur-sm ${badgeStyle.bg}`}>
+          <BadgeIcon className="size-2.5" />
           {card.badge}
         </span>
-      </div>
-      <div className="p-3">
-        <h3 className="text-foreground text-[13px] font-semibold leading-snug line-clamp-1">{card.title}</h3>
-        <p className="text-muted-foreground text-[11px] mt-0.5 flex items-center gap-1">
-          {card.country} · {card.mediaType}
-          <span className="inline-flex items-center gap-0.5 text-brand-gold ml-1">
-            <Star className="size-3" fill="currentColor" /> {card.rating.toFixed(1)}
-          </span>
-        </p>
-        <div className="flex flex-wrap gap-1 mt-2">
-          {card.tags.slice(0, 2).map((tag) => (
-            <span key={tag} className="bg-muted text-foreground/70 text-[10px] font-medium px-1.5 py-0.5 rounded-full">
-              {tag}
+
+        <div className="absolute inset-x-0 bottom-0 p-3">
+          <h3 className="text-white text-[14px] font-semibold leading-snug line-clamp-2 mb-1">{card.title}</h3>
+          <p className="text-white/75 text-[11px] flex items-center gap-1">
+            {card.country} · {card.mediaType}
+            <span className="inline-flex items-center gap-0.5 text-brand-gold ml-1">
+              <Star className="size-3" fill="currentColor" /> {card.rating.toFixed(1)}
             </span>
-          ))}
+          </p>
         </div>
       </div>
     </div>
