@@ -128,7 +128,7 @@ export default function LandingHero({ deck }: { deck: HeroFeature[] }) {
       <PetalDecoration />
 
       <div className="relative max-w-6xl mx-auto px-6 md:px-10 lg:px-14 pt-[104px] md:pt-[120px] pb-[104px] md:pb-[120px] grid md:grid-cols-[1fr_1fr] gap-8 md:gap-10 items-start">
-        <div className="pt-2 md:pt-4">
+        <div className="pt-2 md:pt-4 min-w-0">
           <p className="flex items-center gap-1.5 text-primary text-[13px] font-bold tracking-wide mb-3">
             <span aria-hidden>🌸</span> CURATED WITH LOVE
           </p>
@@ -205,17 +205,24 @@ export default function LandingHero({ deck }: { deck: HeroFeature[] }) {
             <p className="text-muted-foreground text-[12px] font-bold uppercase tracking-wide mb-2.5">
               Trending Moods
             </p>
-            <div className="flex flex-nowrap gap-1.5">
-              {TRENDING_MOODS.map(({ icon: Icon, label }) => (
-                <Link
-                  key={label}
-                  href="/series"
-                  className="inline-flex items-center gap-1 shrink-0 bg-card/80 backdrop-blur-sm border border-border text-foreground text-[12px] font-medium px-2.5 py-1.5 rounded-full hover:bg-card hover:border-ring transition-colors"
-                >
-                  <Icon className="size-3 text-primary" strokeWidth={1.75} />
-                  {label}
-                </Link>
-              ))}
+            <div className="relative overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_8%,black_92%,transparent)]">
+              {/* Track is rendered twice back-to-back; animate-marquee slides
+                  exactly -50% (one copy's width) so the loop is seamless.
+                  Pauses on hover/focus so the pills stay tappable. */}
+              <div className="flex w-max flex-nowrap gap-1.5 animate-marquee hover:[animation-play-state:paused] focus-within:[animation-play-state:paused]">
+                {[...TRENDING_MOODS, ...TRENDING_MOODS].map(({ icon: Icon, label }, i) => (
+                  <Link
+                    key={`${label}-${i}`}
+                    href="/series"
+                    aria-hidden={i >= TRENDING_MOODS.length}
+                    tabIndex={i >= TRENDING_MOODS.length ? -1 : undefined}
+                    className="inline-flex items-center gap-1 shrink-0 bg-card/80 backdrop-blur-sm border border-border text-foreground text-[12px] font-medium px-2.5 py-1.5 rounded-full hover:bg-card hover:border-ring transition-colors"
+                  >
+                    <Icon className="size-3 text-primary" strokeWidth={1.75} />
+                    {label}
+                  </Link>
+                ))}
+              </div>
             </div>
           </div>
         </div>

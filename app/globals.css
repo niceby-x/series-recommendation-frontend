@@ -319,6 +319,24 @@
   }
 }
 
+/* Continuous horizontal drift for the Trending Moods pill row on the
+   landing hero. The track is rendered twice back-to-back in the
+   component, then this slides exactly -50% (one full copy width) so
+   the loop point is seamless; pauses on hover/focus so the pills
+   stay tappable. */
+@keyframes marquee-x {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@utility animate-marquee {
+  animation: marquee-x 22s linear infinite;
+}
+
 /* Hides scrollbars on horizontally-scrollable rows (Explore page's
    GenreStrip and PopularThisWeek) while keeping them natively
    scrollable/swipeable. */
