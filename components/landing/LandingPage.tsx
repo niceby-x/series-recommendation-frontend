@@ -84,19 +84,11 @@ export default function LandingPage({ allSeries }: { allSeries: SeriesCardData[]
 
   return (
     <main className="min-h-screen bg-background">
-      {/* Spacer reserves scroll space where the fixed hero visually sits */}
-      <div className="h-[640px] md:h-screen" aria-hidden="true" />
+      <LandingHero deck={heroDeck} />
 
-      {/* Fixed hero — pinned permanently; everything below scrolls over it */}
-      <div className="fixed top-0 left-0 right-0 z-0 h-[640px] md:h-screen">
-        <LandingHero deck={heroDeck} />
-      </div>
-
-      <div className="relative z-10 bg-background">
-        {/* Stats bar + Continue Discovering pin together as one unit under
-            the navbar, then get covered as a whole once the "rest of
-            sections" block (z-20 below) scrolls up over them. */}
-        <div className="sticky top-14 z-10 relative overflow-hidden min-h-[640px] md:min-h-screen">
+      <div className="bg-background">
+        {/* Stats bar + Curator's Picks */}
+        <div className="relative overflow-hidden">
           <Image
             src="/continue-discovering-bg.png"
             alt=""
@@ -108,69 +100,78 @@ export default function LandingPage({ allSeries }: { allSeries: SeriesCardData[]
 
           <LandingStatsBar />
 
-          <section className="relative">
-            <div className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-14 pt-10 pb-6 md:pt-12 md:pb-8">
-              <div className="flex items-start justify-between mb-6">
-                <div className="flex items-start gap-2">
-                  <span className="text-lg leading-none mt-0.5" aria-hidden="true">🌸</span>
-                  <div>
-                    <h2 className="font-heading text-2xl font-normal text-foreground">Curator&apos;s Picks</h2>
-                    <p className="text-muted-foreground text-[13px] mt-0.5">Handpicked favorites from our editors</p>
-                  </div>
-                </div>
-                <Link href="/series" className="flex items-center gap-0.5 text-muted-foreground text-sm font-medium hover:text-foreground transition-colors mt-1 shrink-0">
-                  View all picks <ChevronRight className="size-4" />
-                </Link>
+          <section className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-14 pt-10 pb-14">
+            <div className="flex items-start justify-between mb-6">
+              <div>
+                <h2 className="font-heading text-2xl font-normal text-foreground flex items-center gap-2">
+                  🌸 Curator&apos;s Picks
+                </h2>
+                <p className="text-muted-foreground text-sm mt-1">Handpicked favorites from our editors.</p>
               </div>
-              <CuratorsPicks feature={curatorFeature} quote={CURATOR_FEATURE_QUOTE} list={curatorList} />
+              <Link href="/series" className="flex items-center gap-0.5 text-primary text-sm font-semibold hover:opacity-80 transition-opacity mt-1 shrink-0">
+                View all picks <ChevronRight className="size-4" />
+              </Link>
             </div>
+            <CuratorsPicks feature={curatorFeature} quote={CURATOR_FEATURE_QUOTE} list={curatorList} />
           </section>
         </div>
 
-        <div className="relative z-20 bg-background rounded-t-3xl max-w-7xl mx-auto px-6 md:px-10 lg:px-14 pt-8 pb-14 space-y-14">
-        <section>
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="font-heading text-2xl font-normal text-foreground flex items-center gap-2">
-              🌸 Browse by Mood
-            </h2>
-            <Link href="/series" className="text-primary text-sm font-semibold hover:opacity-80 transition-opacity">
-              View all moods »
-            </Link>
-          </div>
-          <BrowseByMoodGrid moods={MOCK_MOODS} />
-        </section>
+        <div className="max-w-7xl mx-auto px-6 md:px-10 lg:px-14 pb-14 space-y-14">
+          <section>
+            <div className="flex items-start justify-between mb-6">
+              <div>
+                <h2 className="font-heading text-2xl font-normal text-foreground flex items-center gap-2">
+                  🌸 Browse by Mood
+                </h2>
+                <p className="text-muted-foreground text-sm mt-1">Find stories that match how you feel right now.</p>
+              </div>
+              <Link href="/series" className="flex items-center gap-0.5 text-primary text-sm font-semibold hover:opacity-80 transition-opacity mt-1 shrink-0">
+                View all moods <ChevronRight className="size-4" />
+              </Link>
+            </div>
+            <BrowseByMoodGrid moods={MOCK_MOODS} />
+          </section>
 
-        <section>
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="font-heading text-2xl font-normal text-foreground flex items-center gap-2">
-              🌸 Popular Tropes
-            </h2>
-            <Link href="/series" className="text-primary text-sm font-semibold hover:opacity-80 transition-opacity">
-              View all tropes »
-            </Link>
-          </div>
-          <PopularTropesRow tropes={MOCK_TROPES} />
-        </section>
+          <section>
+            <div className="flex items-start justify-between mb-6">
+              <div>
+                <h2 className="font-heading text-2xl font-normal text-foreground flex items-center gap-2">
+                  🌸 Popular Tropes
+                </h2>
+                <p className="text-muted-foreground text-sm mt-1">Explore beloved story themes and find your next obsession.</p>
+              </div>
+              <Link href="/series" className="flex items-center gap-0.5 text-primary text-sm font-semibold hover:opacity-80 transition-opacity mt-1 shrink-0">
+                View all tropes <ChevronRight className="size-4" />
+              </Link>
+            </div>
+            <PopularTropesRow tropes={MOCK_TROPES} />
+          </section>
 
-        <section>
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="font-heading text-2xl font-normal text-foreground flex items-center gap-2">
-              🌸 Popular on BLumi
-            </h2>
-            <Link href="/series" className="text-primary text-sm font-semibold hover:opacity-80 transition-opacity">
-              View all »
-            </Link>
-          </div>
-          <ContinueDiscoveringRow cards={discoverCards} />
-        </section>
+          <section>
+            <div className="flex items-start justify-between mb-6">
+              <div>
+                <h2 className="font-heading text-2xl font-normal text-foreground flex items-center gap-2">
+                  🌸 Popular on BLumi
+                </h2>
+                <p className="text-muted-foreground text-sm mt-1">Trending picks the community can&apos;t stop talking about.</p>
+              </div>
+              <Link href="/series" className="flex items-center gap-0.5 text-primary text-sm font-semibold hover:opacity-80 transition-opacity mt-1 shrink-0">
+                View all <ChevronRight className="size-4" />
+              </Link>
+            </div>
+            <ContinueDiscoveringRow cards={discoverCards} />
+          </section>
 
-        <section>
-          <h2 className="font-heading text-2xl font-normal text-foreground flex items-center gap-2 mb-6">
-            🌸 How BLumi Works
-          </h2>
-          <HowItWorks />
-        </section>
-          </div>
+          <section>
+            <div className="mb-6">
+              <h2 className="font-heading text-2xl font-normal text-foreground flex items-center gap-2">
+                🌸 How BLumi Works
+              </h2>
+              <p className="text-muted-foreground text-sm mt-1">A quick look at how to find your next favorite story.</p>
+            </div>
+            <HowItWorks />
+          </section>
+        </div>
       </div>
 
       <LandingFooter />

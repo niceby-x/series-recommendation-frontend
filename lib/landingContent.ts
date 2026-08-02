@@ -11,23 +11,20 @@
 //                             needs real TMDb posters once these specific
 //                             titles are approved in the catalog
 
-import type { LucideIcon } from 'lucide-react';
-import { Coffee, CloudRain, Leaf, Heart, Wind, Moon } from 'lucide-react';
-
 export interface MoodTile {
   name: string;
   count: number;
-  gradient: string; // tailwind gradient classes
-  icon: LucideIcon;
+  gradient: string; // tailwind gradient classes -- used as the art-panel background, and as the fallback when image is null
+  image: string | null; // path under /public, e.g. '/images/moods/cozy.png'
 }
 
 export const MOCK_MOODS: MoodTile[] = [
-  { name: 'Cozy', count: 128, gradient: 'from-[#FBE0C7] to-[#F7B6C8]/50', icon: Coffee },
-  { name: 'Emotional', count: 215, gradient: 'from-[#D8E3F7] to-[#C8D9F7]/60', icon: CloudRain },
-  { name: 'Healing', count: 186, gradient: 'from-[#E3D9F9] to-brand-lilac/50', icon: Leaf },
-  { name: 'Heartwarming', count: 243, gradient: 'from-[#F9D6DE] to-brand-blush/60', icon: Heart },
-  { name: 'Angsty', count: 153, gradient: 'from-[#DCD6E3] to-[#C7BFD4]/60', icon: Wind },
-  { name: 'Melancholic', count: 107, gradient: 'from-[#CFC7E8] to-[#8E7FB8]/60', icon: Moon },
+  { name: 'Cozy', count: 128, gradient: 'from-[#FBE0C7] to-[#F7B6C8]/50', image: '/images/moods/cozy.png' },
+  { name: 'Emotional', count: 215, gradient: 'from-[#D8E3F7] to-[#C8D9F7]/60', image: '/images/moods/emotional.png' },
+  { name: 'Healing', count: 186, gradient: 'from-[#E3D9F9] to-brand-lilac/50', image: '/images/moods/healing.png' },
+  { name: 'Heartwarming', count: 243, gradient: 'from-[#F9D6DE] to-brand-blush/60', image: '/images/moods/heartwarming.png' },
+  { name: 'Angsty', count: 153, gradient: 'from-[#DCD6E3] to-[#C7BFD4]/60', image: '/images/moods/angsty.png' },
+  { name: 'Melancholic', count: 107, gradient: 'from-[#CFC7E8] to-[#8E7FB8]/60', image: '/images/moods/melancholic.png' },
 ];
 
 export interface TropeChip {

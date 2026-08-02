@@ -8,22 +8,33 @@ import type { MoodTile } from '../../lib/landingContent';
 // elsewhere in the app for not-yet-real filters.
 export default function BrowseByMoodGrid({ moods }: { moods: MoodTile[] }) {
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-5">
       {moods.map((mood) => {
-        const Icon = mood.icon;
         return (
           <Link
             key={mood.name}
             href="/series"
             className={
-              'group relative aspect-square rounded-2xl overflow-hidden bg-gradient-to-br shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg ' +
+              'group relative aspect-[4/5] rounded-lg overflow-hidden bg-gradient-to-br shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg ' +
               mood.gradient
             }
           >
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-3">
-              <Icon className="size-6 mb-2 text-[#4A2F3F]" strokeWidth={1.75} aria-hidden />
+            {mood.image && (
+              <img
+                src={mood.image}
+                alt=""
+                className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                aria-hidden
+              />
+            )}
+
+            {/* Soft fade so text stays legible over any part of the illustration */}
+            <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-white/70 to-transparent" aria-hidden />
+
+            {/* Text overlaid bottom-left directly on the art, like the mockup */}
+            <div className="absolute bottom-0 left-0 px-4 pb-4">
               <p className="font-heading text-lg font-normal text-[#4A2F3F]">{mood.name}</p>
-              <p className="text-[#4A2F3F]/70 text-[12px] mt-0.5">{mood.count} stories</p>
+              <p className="text-[#4A2F3F]/60 text-[12px] mt-0.5">{mood.count} stories</p>
             </div>
           </Link>
         );

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { Search, Bookmark, Bell, ChevronDown, LogOut, ShieldCheck } from 'lucide-react';
+import { Search, Bookmark, Bell, ChevronDown, LogOut, ShieldCheck, Menu, X } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import type { User } from '@supabase/supabase-js';
 import Logo from './Logo';
@@ -46,6 +46,7 @@ export default function Navbar() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [discoverOpen, setDiscoverOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -53,6 +54,8 @@ export default function Navbar() {
   const menuRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
   const discoverRef = useRef<HTMLDivElement>(null);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
+  const mobileMenuButtonRef = useRef<HTMLButtonElement>(null);
   const pathname = usePathname();
   const router = useRouter();
   const [lastPathname, setLastPathname] = useState(pathname);
@@ -62,6 +65,7 @@ export default function Navbar() {
     setMenuOpen(false);
     setNotifOpen(false);
     setDiscoverOpen(false);
+    setMobileMenuOpen(false);
   }
 
   useEffect(() => {
@@ -91,6 +95,14 @@ export default function Navbar() {
       }
       if (discoverRef.current && !discoverRef.current.contains(event.target as Node)) {
         setDiscoverOpen(false);
+      }
+      if (
+        mobileMenuRef.current &&
+        !mobileMenuRef.current.contains(event.target as Node) &&
+        mobileMenuButtonRef.current &&
+        !mobileMenuButtonRef.current.contains(event.target as Node)
+      ) {
+        setMobileMenuOpen(false);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
@@ -123,6 +135,7 @@ export default function Navbar() {
   const isAdmin = !!(user?.email && user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL);
 
   return (
+    <>
     <nav className="sticky top-0 z-50 bg-background/90 backdrop-blur-md border-b border-border px-6 py-3 flex items-center gap-6">
       <Link href="/" className="shrink-0">
         <Logo variant="full" theme="brand" size={30} />
@@ -168,6 +181,16 @@ export default function Navbar() {
           </>
         )}
       </div>
+
+      <button
+        ref={mobileMenuButtonRef}
+        type="button"
+        onClick={() => setMobileMenuOpen((open) => !open)}
+        aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+        className="md:hidden flex items-center justify-center size-9 rounded-full text-foreground/70 hover:text-primary hover:bg-muted transition-colors shrink-0"
+      >
+        {mobileMenuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
+      </button>
 
       <div className="flex-1 flex justify-end ml-auto">
         {searchOpen ? (
@@ -289,5 +312,41 @@ export default function Navbar() {
         )}
       </div>
     </nav>
+
+    {mobileMenuOpen && (
+      <div ref={mobileMenuRef} className="md:hidden sticky top-[57px] z-40 bg-background border-b border-border shadow-lg px-6 py-4 flex flex-col gap-1">
+        {user ? (
+          NAV_LINKS.map(({ href, label }) => (
+            <Link
+              key={href}
+              href={href}
+              className={'py-2.5 text-base font-semibold ' + (isActive(href) ? 'text-primary' : 'text-foreground/70')}
+            >
+              {label}
+            </Link>
+          ))
+        ) : (
+          <>
+            <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground pt-1 pb-1">Discover</p>
+            {DISCOVER_MENU.map((item) => (
+              <Link key={item.label} href={item.href} className="py-2 pl-2 text-sm text-foreground/70">
+                {item.label}
+              </Link>
+            ))}
+            <div className="h-px bg-border my-2" aria-hidden="true" />
+            {LOGGED_OUT_LINKS.map(({ href, label }) => (
+              <Link
+                key={label}
+                href={href}
+                className={'py-2.5 text-base font-semibold ' + (isActive(href) ? 'text-primary' : 'text-foreground/70')}
+              >
+                {label}
+              </Link>
+            ))}
+          </>
+        )}
+      </div>
+    )}
+    </>
   );
 }
