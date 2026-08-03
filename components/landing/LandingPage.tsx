@@ -1,4 +1,4 @@
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Flower2 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import type { SeriesCardData } from '../shared/SeriesCard';
@@ -104,7 +104,7 @@ export default function LandingPage({ allSeries }: { allSeries: SeriesCardData[]
             <div className="flex items-start justify-between mb-6">
               <div>
                 <h2 className="font-heading text-2xl font-normal text-foreground flex items-center gap-2">
-                  🌸 Curator&apos;s Picks
+                  <Flower2 className="size-5 text-primary" /> Curator&apos;s Picks
                 </h2>
                 <p className="text-muted-foreground text-sm mt-1">Handpicked favorites from our editors.</p>
               </div>
@@ -121,7 +121,7 @@ export default function LandingPage({ allSeries }: { allSeries: SeriesCardData[]
             <div className="flex items-start justify-between mb-6">
               <div>
                 <h2 className="font-heading text-2xl font-normal text-foreground flex items-center gap-2">
-                  🌸 Browse by Mood
+                  <Flower2 className="size-5 text-primary" /> Browse by Mood
                 </h2>
                 <p className="text-muted-foreground text-sm mt-1">Find stories that match how you feel right now.</p>
               </div>
@@ -136,7 +136,7 @@ export default function LandingPage({ allSeries }: { allSeries: SeriesCardData[]
             <div className="flex items-start justify-between mb-6">
               <div>
                 <h2 className="font-heading text-2xl font-normal text-foreground flex items-center gap-2">
-                  🌸 Popular Tropes
+                  <Flower2 className="size-5 text-primary" /> Popular Tropes
                 </h2>
                 <p className="text-muted-foreground text-sm mt-1">Explore beloved story themes and find your next obsession.</p>
               </div>
@@ -151,7 +151,7 @@ export default function LandingPage({ allSeries }: { allSeries: SeriesCardData[]
             <div className="flex items-start justify-between mb-6">
               <div>
                 <h2 className="font-heading text-2xl font-normal text-foreground flex items-center gap-2">
-                  🌸 Popular on BLumi
+                  <Flower2 className="size-5 text-primary" /> Popular on BLumi
                 </h2>
                 <p className="text-muted-foreground text-sm mt-1">Trending picks the community can&apos;t stop talking about.</p>
               </div>
@@ -165,7 +165,7 @@ export default function LandingPage({ allSeries }: { allSeries: SeriesCardData[]
           <section>
             <div className="mb-6">
               <h2 className="font-heading text-2xl font-normal text-foreground flex items-center gap-2">
-                🌸 How BLumi Works
+                <Flower2 className="size-5 text-primary" /> How BLumi Works
               </h2>
               <p className="text-muted-foreground text-sm mt-1">A quick look at how to find your next favorite story.</p>
             </div>

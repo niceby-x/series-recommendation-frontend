@@ -1,8 +1,10 @@
+import { Flower2 } from 'lucide-react';
+
 export default function CommunityPage() {
   return (
     <main className="min-h-screen bg-background flex items-center justify-center px-6 py-24">
       <div className="text-center max-w-md">
-        <span className="text-4xl mb-4 block">🌸</span>
+        <Flower2 className="size-10 text-primary mx-auto mb-4" strokeWidth={1.5} />
         <h1 className="font-heading text-3xl font-bold text-foreground mb-3">
           Community is blooming soon
         </h1>

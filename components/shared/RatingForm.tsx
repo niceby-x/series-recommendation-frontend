@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { supabase } from '../../lib/supabase';
+import { useAuthModal } from '../../lib/AuthModalContext';
 import type { User } from '@supabase/supabase-js';
 
 export default function RatingForm({ seriesId }: { seriesId: number }) {
+  const { open: openAuthModal } = useAuthModal();
   const [user, setUser] = useState<User | null>(null);
   const [checkingSession, setCheckingSession] = useState(true);
   const [score, setScore] = useState<number>(0);
@@ -71,9 +72,9 @@ export default function RatingForm({ seriesId }: { seriesId: number }) {
     return (
       <div className="bg-gray-900 rounded-xl p-6 border border-gray-800 mt-6">
         <p className="text-gray-400">
-          <Link href="/login" className="text-blue-400 hover:text-blue-300">
+          <button type="button" onClick={() => openAuthModal('login')} className="text-blue-400 hover:text-blue-300">
             Sign in
-          </Link>{' '}
+          </button>{' '}
           to rate this series.
         </p>
       </div>

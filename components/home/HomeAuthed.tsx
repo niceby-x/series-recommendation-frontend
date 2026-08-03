@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { ArrowRight, Flame, Sparkles } from 'lucide-react';
+import { ArrowRight, Flame, Sparkles, Heart, Leaf } from 'lucide-react';
+import FlowerIcon from '../shared/FlowerIcon';
 import type { SeriesCardData } from '../shared/SeriesCard';
 import TrendingCard from './TrendingCard';
 import TrendingStatsBar from './TrendingStatsBar';
@@ -93,7 +94,7 @@ export default function HomeAuthed({ allSeries }: { allSeries: SeriesCardData[] 
                 href={'/series/' + (surprisePick ? surprisePick.id : '')}
                 className="inline-flex items-center gap-2 border border-border bg-card text-[16px] font-semibold px-7 py-3 rounded-full text-foreground hover:bg-muted transition-colors"
               >
-                🌸 Surprise Me
+                <FlowerIcon className="size-4" /> Surprise Me
               </Link>
             </div>
 
@@ -108,8 +109,9 @@ export default function HomeAuthed({ allSeries }: { allSeries: SeriesCardData[] 
                   />
                 ))}
               </div>
-              <p className="text-sm text-muted-foreground">
-                Loved by <span className="font-semibold text-foreground">12,842+</span> BL fans ❤️
+              <p className="text-sm text-muted-foreground flex items-center gap-1">
+                Loved by <span className="font-semibold text-foreground">12,842+</span> BL fans{' '}
+                <Heart className="size-3.5 text-primary" fill="currentColor" />
               </p>
             </div>
           </div>
@@ -232,7 +234,7 @@ export default function HomeAuthed({ allSeries }: { allSeries: SeriesCardData[] 
         return (
           <div className="max-w-7xl mx-auto px-6 md:px-10 lg:px-14 py-8 pb-20">
             <h2 className="font-heading text-[32px] font-normal text-foreground mb-6 flex items-center gap-2">
-              🍃 Continue Your Journey
+              <Leaf className="size-6 text-primary" /> Continue Your Journey
             </h2>
             <ContinueJourneyRow items={continueItems} watchNext={watchNext} />
           </div>

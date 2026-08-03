@@ -18,6 +18,7 @@ import {
   GraduationCap,
   CalendarClock,
 } from 'lucide-react';
+import FlowerIcon from '../shared/FlowerIcon';
 import type { HeroFeature } from '../../lib/landingContent';
 import PetalDecoration from '../home/PetalDecoration';
 
@@ -115,13 +116,16 @@ export default function LandingHero({ deck }: { deck: HeroFeature[] }) {
           regardless of viewport width/crop -- the photo itself is soft
           enough on the right that the card doesn't need this. */}
       <div className="absolute inset-0 bg-gradient-to-r from-background/85 via-background/35 to-transparent pointer-events-none" />
+      {/* Fades the photo's bottom edge into whatever sits below the hero,
+          so there's no hard cut line where the image ends. */}
+      <div className="absolute inset-x-0 bottom-0 h-32 md:h-40 bg-gradient-to-t from-background to-transparent pointer-events-none" />
 
       <PetalDecoration />
 
-      <div className="relative max-w-6xl mx-auto px-6 md:px-10 lg:px-14 pt-[88px] md:pt-[100px] pb-[88px] md:pb-[100px] grid md:grid-cols-[1fr_1fr] gap-8 md:gap-10 items-start">
+      <div className="relative max-w-6xl mx-auto px-6 md:px-10 lg:px-14 pt-[24px] md:pt-[32px] pb-[88px] md:pb-[100px] grid md:grid-cols-[1fr_1fr] gap-8 md:gap-10 items-start">
         <div className="pt-2 md:pt-4 min-w-0">
           <p className="inline-flex items-center gap-1 rounded-full bg-primary/10 border border-primary/20 px-2.5 py-1 text-secondary text-[11px] font-bold tracking-wide mb-2.5">
-            <span aria-hidden>🌸</span> CURATED WITH LOVE
+            <FlowerIcon className="size-3" aria-hidden /> CURATED WITH LOVE
           </p>
           <h1 className="font-heading text-[44px] md:text-[60px] leading-[1.05] font-normal mb-3">
             <span className="text-foreground">Where Stories</span>

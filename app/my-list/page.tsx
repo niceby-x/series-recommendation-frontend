@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { supabase } from '../../lib/supabase';
+import { useAuthModal } from '../../lib/AuthModalContext';
 import type { User } from '@supabase/supabase-js';
 
 type Status = 'plan_to_watch' | 'watching' | 'completed';
@@ -99,6 +100,7 @@ function SeriesCard({ entry }: { entry: WatchlistEntry }) {
 }
 
 export default function MyListPage() {
+  const { open: openAuthModal } = useAuthModal();
   const [user, setUser] = useState<User | null>(null);
   const [checkingSession, setCheckingSession] = useState(true);
   const [entries, setEntries] = useState<WatchlistEntry[]>([]);
@@ -154,9 +156,9 @@ export default function MyListPage() {
     return (
       <main className="min-h-screen bg-gray-950 text-white p-8">
         <p className="text-gray-400">
-          <Link href="/login" className="text-blue-400 hover:text-blue-300">
+          <button type="button" onClick={() => openAuthModal('login')} className="text-blue-400 hover:text-blue-300">
             Sign in
-          </Link>{' '}
+          </button>{' '}
           to see your list.
         </p>
       </main>

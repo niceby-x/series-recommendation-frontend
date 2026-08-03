@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
+import { Calendar, Clapperboard } from 'lucide-react';
 import RatingForm from '../../../components/shared/RatingForm';
 import WatchlistButton from '@/components/shared/WatchlistButton';
 
@@ -74,8 +75,8 @@ export default async function SeriesDetailPage({ params }: { params: Promise<{ i
           )}
 
           <div className="flex gap-6 text-sm text-gray-400 mb-6">
-            <span>📅 {series.year}</span>
-            <span>🎬 {series.episode_count} episodes</span>
+            <span className="flex items-center gap-1.5"><Calendar className="size-4" /> {series.year}</span>
+            <span className="flex items-center gap-1.5"><Clapperboard className="size-4" /> {series.episode_count} episodes</span>
           </div>
 
           <div className="mb-6">

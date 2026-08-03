@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { supabase } from '../../lib/supabase';
+import { useAuthModal } from '../../lib/AuthModalContext';
 import type { User } from '@supabase/supabase-js';
 
 type Status = 'plan_to_watch' | 'watching' | 'completed';
@@ -14,6 +14,7 @@ const STATUS_LABELS: Record<Status, string> = {
 };
 
 export default function WatchlistButton({ seriesId }: { seriesId: number }) {
+  const { open: openAuthModal } = useAuthModal();
   const [user, setUser] = useState<User | null>(null);
   const [checkingSession, setCheckingSession] = useState(true);
   const [currentStatus, setCurrentStatus] = useState<Status | null>(null);
@@ -122,9 +123,9 @@ export default function WatchlistButton({ seriesId }: { seriesId: number }) {
   if (!user) {
     return (
       <p className="text-gray-400 text-sm">
-        <Link href="/login" className="text-blue-400 hover:text-blue-300">
+        <button type="button" onClick={() => openAuthModal('login')} className="text-blue-400 hover:text-blue-300">
           Sign in
-        </Link>{' '}
+        </button>{' '}
         to add this to your watchlist.
       </p>
     );

@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
+import { Check, X, Pencil, Tag as TagIcon } from 'lucide-react';
+import { useAuthModal } from '../../../lib/AuthModalContext';
 import { supabase } from '../../../lib/supabase';
 import type { User } from '@supabase/supabase-js';
 import type { Tag, TagDimension, RomancePace, EmotionalIntensity, EndingType, ContentLevel } from '../../../lib/taxonomy';
@@ -589,16 +590,16 @@ function CandidateRow({
           {isPending ? (
             <>
               <IconButton onClick={() => onApprove(candidate.id, edited)} disabled={actioning} tone="approve">
-                ✓ Approve{isActive ? ' (A)' : ''}
+                <Check className="inline size-3 -mt-0.5 mr-1" /> Approve{isActive ? ' (A)' : ''}
               </IconButton>
               <IconButton onClick={() => onReject(candidate.id)} disabled={actioning} tone="reject">
-                ✕ Reject{isActive ? ' (R)' : ''}
+                <X className="inline size-3 -mt-0.5 mr-1" /> Reject{isActive ? ' (R)' : ''}
               </IconButton>
               <IconButton onClick={() => setModalOpen(true)} tone="neutral">
-                ✎ Edit
+                <Pencil className="inline size-3 -mt-0.5 mr-1" /> Edit
               </IconButton>
               <IconButton onClick={() => setTaxonomyModalOpen(true)} tone="neutral">
-                🏷 Taxonomy
+                <TagIcon className="inline size-3 -mt-0.5 mr-1" /> Taxonomy
               </IconButton>
             </>
           ) : (
@@ -626,6 +627,7 @@ function CandidateRow({
 }
 
 export default function AdminCandidatesPage() {
+  const { open: openAuthModal } = useAuthModal();
   const [user, setUser] = useState<User | null>(null);
   const [access, setAccess] = useState<AccessState>('checking');
   const [activeTab, setActiveTab] = useState<Tab>('pending');
@@ -865,9 +867,9 @@ export default function AdminCandidatesPage() {
     return (
       <main className="min-h-screen bg-[#0a0c10] text-white p-8">
         <p className="text-slate-400">
-          <Link href="/login" className="text-blue-400 hover:text-blue-300">
+          <button type="button" onClick={() => openAuthModal('login')} className="text-blue-400 hover:text-blue-300">
             Sign in
-          </Link>{' '}
+          </button>{' '}
           to access this page.
         </p>
       </main>

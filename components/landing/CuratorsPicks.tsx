@@ -47,7 +47,7 @@ function FeatureCard({ pick, quote }: { pick: CuratorPick; quote: string }) {
           <p className="text-foreground text-[17px] font-medium leading-snug mt-3 mb-3">
             &ldquo;{quote}&rdquo;
           </p>
-          <p className="text-muted-foreground text-[13px]">— BLumi Curator 🌸</p>
+          <p className="text-muted-foreground text-[13px]">— BLumi Curator</p>
         </div>
       </div>
     </div>

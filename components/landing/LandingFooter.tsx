@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Logo from '../shared/Logo';
 import { XIcon, InstagramIcon, DiscordIcon, TikTokIcon } from '../shared/SocialIcons';
 
 // Only /series, /community, and /about exist as real routes right now.
@@ -58,9 +59,7 @@ export default function LandingFooter() {
     <footer className="border-t border-border bg-card/50">
       <div className="max-w-7xl mx-auto px-6 md:px-10 lg:px-14 py-12 grid gap-10 md:grid-cols-[1.4fr_repeat(4,1fr)]">
         <div>
-          <p className="font-heading text-xl font-normal text-foreground flex items-center gap-1.5 mb-2">
-            🌸 BLumi
-          </p>
+          <Logo variant="full" theme="brand" size={22} className="mb-2" />
           <p className="text-muted-foreground text-[13px] mb-4">Where stories bloom.</p>
           <p className="text-muted-foreground text-[12px]">© 2026 BLumi. All rights reserved.</p>
         </div>

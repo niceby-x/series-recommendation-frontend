@@ -4,9 +4,11 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { Search, Bookmark, Bell, ChevronDown, LogOut, ShieldCheck, Menu, X } from 'lucide-react';
+import FlowerIcon from './FlowerIcon';
 import { supabase } from '../../lib/supabase';
 import type { User } from '@supabase/supabase-js';
 import Logo from './Logo';
+import { useAuthModal } from '../../lib/AuthModalContext';
 
 const NAV_LINKS = [
   { href: '/', label: 'Home' },
@@ -43,6 +45,7 @@ const LOGGED_OUT_LINKS = [
 ];
 
 export default function Navbar() {
+  const { open: openAuthModal } = useAuthModal();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -249,7 +252,9 @@ export default function Navbar() {
               </button>
               {notifOpen && (
                 <div className="absolute right-0 mt-2 w-64 bg-popover border border-border rounded-2xl shadow-xl overflow-hidden p-4 text-center">
-                  <p className="text-sm text-popover-foreground">You&apos;re all caught up! 🌸</p>
+                  <p className="text-sm text-popover-foreground flex items-center justify-center gap-1">
+                    You&apos;re all caught up! <FlowerIcon className="size-3.5 text-primary" />
+                  </p>
                   <p className="text-xs text-muted-foreground mt-1">New episode alerts will show up here.</p>
                 </div>
               )}
@@ -296,18 +301,20 @@ export default function Navbar() {
           </div>
         ) : (
           <div className="flex items-center gap-2 ml-1">
-            <Link
-              href="/login"
+            <button
+              type="button"
+              onClick={() => openAuthModal('login')}
               className="border border-border bg-card text-foreground px-4 py-2 rounded-full text-sm font-semibold hover:bg-muted transition-colors"
             >
               Log in
-            </Link>
-            <Link
-              href="/login?mode=register"
+            </button>
+            <button
+              type="button"
+              onClick={() => openAuthModal('register')}
               className="bg-brand-gradient text-white px-5 py-2 rounded-full text-sm font-semibold shadow-sm hover:opacity-90 transition-opacity"
             >
               Sign up
-            </Link>
+            </button>
           </div>
         )}
       </div>

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { DM_Serif_Display, Inter, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Navbar from "../components/shared/Navbar";
+import { AuthModalProvider } from "../lib/AuthModalContext";
 
 const dmSerifDisplay = DM_Serif_Display({
   variable: "--font-dm-serif",
@@ -37,8 +38,10 @@ export default function RootLayout({
       className={dmSerifDisplay.variable + ' ' + inter.variable + ' ' + geistMono.variable + ' h-full antialiased'}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
-        <Navbar />
-        {children}
+        <AuthModalProvider>
+          <Navbar />
+          {children}
+        </AuthModalProvider>
       </body>
     </html>
   );

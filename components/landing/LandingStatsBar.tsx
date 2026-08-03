@@ -1,7 +1,8 @@
-import { Flower2, Heart, Sparkles, Users } from 'lucide-react';
+import { Heart, Sparkles, Users } from 'lucide-react';
 import { LANDING_FEATURES } from '../../lib/landingContent';
+import FlowerIcon from '../shared/FlowerIcon';
 
-const ICONS = [Flower2, Heart, Sparkles, Users];
+const ICONS = [FlowerIcon, Heart, Sparkles, Users];
 
 // Icon treatment per tile -- gradient squircles (not plain circles) so each
 // one reads as a distinct little badge rather than a generic bullet icon.

@@ -1,9 +1,9 @@
 'use client';
 
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Star, ChevronRight, Flame, Award, Heart, Sparkle, Clapperboard, Tv } from 'lucide-react';
+import { Star, ChevronRight, ChevronLeft, Flame, Award, Heart, Sparkle, Clapperboard, Tv } from 'lucide-react';
 import type { DiscoverCard } from '../../lib/landingContent';
 
 // Badge icon + color per label, matching the mockup's varied pill styles.
@@ -24,7 +24,7 @@ function Card({ card }: { card: DiscoverCard }) {
   const BadgeIcon = badgeStyle.icon;
 
   const inner = (
-    <div className="group relative shrink-0 w-[180px] rounded-[22px] overflow-hidden shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+    <div className="group relative shrink-0 w-[180px] snap-start rounded-[22px] overflow-hidden shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
       <div className="relative aspect-[2/3] w-full bg-muted">
         {card.imageUrl ? (
           <Image
@@ -78,29 +78,64 @@ function Card({ card }: { card: DiscoverCard }) {
 
 export default function ContinueDiscoveringRow({ cards }: { cards: DiscoverCard[] }) {
   const scrollerRef = useRef<HTMLDivElement>(null);
+  const [atStart, setAtStart] = useState(true);
+  const [atEnd, setAtEnd] = useState(false);
 
-  function scrollNext() {
-    scrollerRef.current?.scrollBy({ left: 260, behavior: 'smooth' });
+  function updateEdges() {
+    const el = scrollerRef.current;
+    if (!el) return;
+    setAtStart(el.scrollLeft <= 4);
+    // -4px tolerance for sub-pixel rounding at the scroll boundary.
+    setAtEnd(el.scrollLeft + el.clientWidth >= el.scrollWidth - 4);
+  }
+
+  useEffect(() => {
+    updateEdges();
+    const el = scrollerRef.current;
+    if (!el) return;
+    el.addEventListener('scroll', updateEdges, { passive: true });
+    window.addEventListener('resize', updateEdges);
+    return () => {
+      el.removeEventListener('scroll', updateEdges);
+      window.removeEventListener('resize', updateEdges);
+    };
+  }, [cards]);
+
+  function scrollByAmount(direction: 1 | -1) {
+    scrollerRef.current?.scrollBy({ left: direction * 372, behavior: 'smooth' });
   }
 
   return (
     <div className="relative">
       <div
         ref={scrollerRef}
-        className="flex gap-4 overflow-x-auto pb-1 scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="flex gap-4 overflow-x-auto pb-1 scroll-smooth snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {cards.map((card) => (
           <Card key={card.id} card={card} />
         ))}
       </div>
-      <button
-        type="button"
-        onClick={scrollNext}
-        aria-label="Show more"
-        className="hidden md:flex absolute top-1/3 -right-4 -translate-y-1/2 items-center justify-center size-9 rounded-full bg-card border border-border shadow-md text-foreground hover:bg-muted transition-colors"
-      >
-        <ChevronRight className="size-4" />
-      </button>
+
+      {!atStart && (
+        <button
+          type="button"
+          onClick={() => scrollByAmount(-1)}
+          aria-label="Show previous"
+          className="hidden md:flex absolute top-1/2 -left-4 -translate-y-1/2 items-center justify-center size-9 rounded-full bg-card border border-border shadow-md text-foreground hover:bg-muted transition-colors"
+        >
+          <ChevronLeft className="size-4" />
+        </button>
+      )}
+      {!atEnd && (
+        <button
+          type="button"
+          onClick={() => scrollByAmount(1)}
+          aria-label="Show next"
+          className="hidden md:flex absolute top-1/2 -right-4 -translate-y-1/2 items-center justify-center size-9 rounded-full bg-card border border-border shadow-md text-foreground hover:bg-muted transition-colors"
+        >
+          <ChevronRight className="size-4" />
+        </button>
+      )}
     </div>
   );
 }
