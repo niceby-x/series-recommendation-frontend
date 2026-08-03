@@ -5,9 +5,10 @@
 // and illustrations. Deliberately generic (no BLumi-specific styling) so it
 // can wrap any section, card, or grid of children across the landing page.
 //
-// `once: true` on the viewport means the animation only plays the first
-// time each element scrolls in -- reveals should welcome you in, not
-// re-trigger and get annoying on every scroll-back-up.
+// `once: false` on the viewport means the animation re-triggers every time
+// each element enters or leaves the viewport -- content fades/rises in on
+// the way down the page, and fades/drops back out on the way back up (or
+// past it going further down), rather than only playing once.
 //
 // Respects prefers-reduced-motion via useReducedMotion: reduced-motion
 // users get an instant, non-animated appearance instead of the rise/fade.
@@ -61,7 +62,7 @@ export default function ScrollReveal({
       className={className}
       initial="hidden"
       whileInView="visible"
-      viewport={{ once: true, amount }}
+      viewport={{ once: false, amount }}
       variants={variants}
       transition={{
         duration: 0.6,

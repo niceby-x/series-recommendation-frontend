@@ -1,5 +1,6 @@
 'use client';
 
+import { motion } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { X, Mail, Lock, Eye, EyeOff, Check, Heart, Sparkles } from 'lucide-react';
@@ -265,7 +266,7 @@ export default function AuthModal({
     >
       <div
         ref={cardRef}
-        className="relative w-full max-w-3xl max-h-[92vh] overflow-y-auto bg-card rounded-3xl shadow-2xl grid lg:grid-cols-2"
+        className="relative w-full max-w-3xl max-h-[92vh] overflow-y-auto overflow-x-hidden bg-card rounded-xl shadow-2xl grid lg:grid-cols-2"
       >
         <button
           type="button"
@@ -276,8 +277,13 @@ export default function AuthModal({
           <X className="size-4" />
         </button>
 
-        {/* Left: scaled-down brand panel, hidden below lg */}
-        <div className="hidden lg:block relative overflow-hidden rounded-l-3xl">
+        {/* Left: scaled-down brand panel, hidden below lg -- swaps sides
+            with the form panel via layout animation when mode toggles */}
+        <motion.div
+          layout
+          transition={{ type: 'spring', stiffness: 160, damping: 26 }}
+          className={'hidden lg:block relative overflow-hidden ' + (mode === 'register' ? 'order-2' : 'order-1')}
+        >
           <Image src="/hero-bg-v3.png" alt="" fill sizes="380px" className="object-cover" />
           <div className="absolute inset-0 bg-gradient-to-b from-white/10 via-transparent to-black/10" aria-hidden="true" />
 
@@ -301,10 +307,15 @@ export default function AuthModal({
               ))}
             </div>
           </div>
-        </div>
+        </motion.div>
 
-        {/* Right: sliding login/register form */}
-        <div className="p-6 sm:p-7 flex flex-col justify-center">
+        {/* Right: sliding login/register form -- also swaps sides with the
+            brand panel above via the same layout animation */}
+        <motion.div
+          layout
+          transition={{ type: 'spring', stiffness: 160, damping: 26 }}
+          className={'p-6 sm:p-7 flex flex-col justify-center ' + (mode === 'register' ? 'order-1' : 'order-2')}
+        >
           <div className="flex flex-col items-center text-center mb-4">
             <Logo variant="icon" theme="brand" size={36} className="mb-2" />
             <h2 className="font-heading text-xl font-normal text-foreground mb-1">
@@ -317,14 +328,14 @@ export default function AuthModal({
 
           <div className="overflow-hidden">
             <div
-              className="flex w-[200%] transition-transform duration-300 ease-out"
+              className="flex w-[200%] transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
               style={{ transform: mode === 'login' ? 'translateX(0%)' : 'translateX(-50%)' }}
             >
               <div className="w-1/2 shrink-0 pr-1">{renderFields('login')}</div>
               <div className="w-1/2 shrink-0 pl-1">{renderFields('register')}</div>
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
     </div>
   );

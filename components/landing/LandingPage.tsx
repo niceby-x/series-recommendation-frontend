@@ -103,8 +103,8 @@ export default function LandingPage({ allSeries }: { allSeries: SeriesCardData[]
 
           <LandingStatsBar />
 
-          <ScrollReveal>
-            <section className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-14 pt-10 pb-14">
+          <section className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-14 pt-10 pb-14">
+            <ScrollReveal>
               <div className="flex items-start justify-between mb-6">
                 <div>
                   <h2 className="font-heading text-2xl font-normal text-foreground flex items-center gap-2">
@@ -116,14 +116,16 @@ export default function LandingPage({ allSeries }: { allSeries: SeriesCardData[]
                   View all picks <ChevronRight className="size-4" />
                 </Link>
               </div>
+            </ScrollReveal>
+            <ScrollReveal>
               <CuratorsPicks feature={curatorFeature} quote={CURATOR_FEATURE_QUOTE} list={curatorList} />
-            </section>
-          </ScrollReveal>
+            </ScrollReveal>
+          </section>
         </div>
 
         <div className="max-w-7xl mx-auto px-6 md:px-10 lg:px-14 pb-14 space-y-14">
-          <ScrollReveal index={0}>
-            <section>
+          <section>
+            <ScrollReveal>
               <div className="flex items-start justify-between mb-6">
                 <div>
                   <h2 className="font-heading text-2xl font-normal text-foreground flex items-center gap-2">
@@ -135,12 +137,14 @@ export default function LandingPage({ allSeries }: { allSeries: SeriesCardData[]
                   View all moods <ChevronRight className="size-4" />
                 </Link>
               </div>
+            </ScrollReveal>
+            <ScrollReveal>
               <BrowseByMoodGrid moods={MOCK_MOODS} />
-            </section>
-          </ScrollReveal>
+            </ScrollReveal>
+          </section>
 
-          <ScrollReveal index={0}>
-            <section>
+          <section>
+            <ScrollReveal>
               <div className="flex items-start justify-between mb-6">
                 <div>
                   <h2 className="font-heading text-2xl font-normal text-foreground flex items-center gap-2">
@@ -152,12 +156,14 @@ export default function LandingPage({ allSeries }: { allSeries: SeriesCardData[]
                   View all tropes <ChevronRight className="size-4" />
                 </Link>
               </div>
+            </ScrollReveal>
+            <ScrollReveal>
               <PopularTropesRow tropes={MOCK_TROPES} />
-            </section>
-          </ScrollReveal>
+            </ScrollReveal>
+          </section>
 
-          <ScrollReveal index={0}>
-            <section>
+          <section>
+            <ScrollReveal>
               <div className="flex items-start justify-between mb-6">
                 <div>
                   <h2 className="font-heading text-2xl font-normal text-foreground flex items-center gap-2">
@@ -169,22 +175,26 @@ export default function LandingPage({ allSeries }: { allSeries: SeriesCardData[]
                   View all <ChevronRight className="size-4" />
                 </Link>
               </div>
+            </ScrollReveal>
+            <ScrollReveal>
               <ContinueDiscoveringRow cards={discoverCards} />
-            </section>
-          </ScrollReveal>
+            </ScrollReveal>
+          </section>
 
-          <ScrollReveal index={0}>
-            <section className="relative">
-              <BloomLayers />
+          <section className="relative">
+            <BloomLayers />
+            <ScrollReveal>
               <div className="relative mb-6">
                 <h2 className="font-heading text-2xl font-normal text-foreground flex items-center gap-2">
                   <FlowerIcon className="size-5 text-primary" /> How BLumi Works
                 </h2>
                 <p className="text-muted-foreground text-sm mt-1">A quick look at how to find your next favorite story.</p>
               </div>
+            </ScrollReveal>
+            <ScrollReveal>
               <HowItWorks />
-            </section>
-          </ScrollReveal>
+            </ScrollReveal>
+          </section>
         </div>
       </div>
 
