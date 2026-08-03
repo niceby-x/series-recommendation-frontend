@@ -92,7 +92,7 @@ export default function AuthModal({
         setMessage(error.message);
         setMessageType('error');
       } else {
-        window.location.href = '/series';
+        window.location.href = '/';
       }
     }
 
@@ -123,7 +123,7 @@ export default function AuthModal({
     setMessage('');
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: window.location.origin + '/series' },
+      options: { redirectTo: window.location.origin + '/' },
     });
     if (error) {
       setMessage(error.message);

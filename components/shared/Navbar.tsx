@@ -137,6 +137,14 @@ export default function Navbar() {
   const initial = user?.email ? user.email.charAt(0).toUpperCase() : '?';
   const isAdmin = !!(user?.email && user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL);
 
+  // The signed-in homepage (HomeAuthed) ships its own full sidebar + header
+  // (logo, nav, search, notifications, profile menu) so this top navbar
+  // would just duplicate it. Every other authed route still gets this bar
+  // as normal -- only the home path for a logged-in user skips it.
+  if (user && pathname === '/') {
+    return null;
+  }
+
   return (
     <>
     <nav className="sticky top-0 z-50 bg-background/90 backdrop-blur-md border-b border-border px-6 py-3 flex items-center gap-6">
