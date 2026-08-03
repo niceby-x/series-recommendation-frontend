@@ -1,4 +1,5 @@
-import { ChevronRight, Flower2 } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
+import FlowerIcon from '../shared/FlowerIcon';
 import Image from 'next/image';
 import Link from 'next/link';
 import type { SeriesCardData } from '../shared/SeriesCard';
@@ -10,6 +11,8 @@ import PopularTropesRow from './PopularTropesRow';
 import CuratorsPicks from './CuratorsPicks';
 import HowItWorks from './HowItWorks';
 import LandingFooter from './LandingFooter';
+import ScrollReveal from '../shared/ScrollReveal';
+import BloomLayers from './BloomLayers';
 import {
   MOCK_MOODS,
   MOCK_TROPES,
@@ -100,77 +103,88 @@ export default function LandingPage({ allSeries }: { allSeries: SeriesCardData[]
 
           <LandingStatsBar />
 
-          <section className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-14 pt-10 pb-14">
-            <div className="flex items-start justify-between mb-6">
-              <div>
-                <h2 className="font-heading text-2xl font-normal text-foreground flex items-center gap-2">
-                  <Flower2 className="size-5 text-primary" /> Curator&apos;s Picks
-                </h2>
-                <p className="text-muted-foreground text-sm mt-1">Handpicked favorites from our editors.</p>
+          <ScrollReveal>
+            <section className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-14 pt-10 pb-14">
+              <div className="flex items-start justify-between mb-6">
+                <div>
+                  <h2 className="font-heading text-2xl font-normal text-foreground flex items-center gap-2">
+                    <FlowerIcon className="size-5 text-primary" /> Curator&apos;s Picks
+                  </h2>
+                  <p className="text-muted-foreground text-sm mt-1">Handpicked favorites from our editors.</p>
+                </div>
+                <Link href="/series" className="flex items-center gap-0.5 text-primary text-sm font-semibold hover:opacity-80 transition-opacity mt-1 shrink-0">
+                  View all picks <ChevronRight className="size-4" />
+                </Link>
               </div>
-              <Link href="/series" className="flex items-center gap-0.5 text-primary text-sm font-semibold hover:opacity-80 transition-opacity mt-1 shrink-0">
-                View all picks <ChevronRight className="size-4" />
-              </Link>
-            </div>
-            <CuratorsPicks feature={curatorFeature} quote={CURATOR_FEATURE_QUOTE} list={curatorList} />
-          </section>
+              <CuratorsPicks feature={curatorFeature} quote={CURATOR_FEATURE_QUOTE} list={curatorList} />
+            </section>
+          </ScrollReveal>
         </div>
 
         <div className="max-w-7xl mx-auto px-6 md:px-10 lg:px-14 pb-14 space-y-14">
-          <section>
-            <div className="flex items-start justify-between mb-6">
-              <div>
-                <h2 className="font-heading text-2xl font-normal text-foreground flex items-center gap-2">
-                  <Flower2 className="size-5 text-primary" /> Browse by Mood
-                </h2>
-                <p className="text-muted-foreground text-sm mt-1">Find stories that match how you feel right now.</p>
+          <ScrollReveal index={0}>
+            <section>
+              <div className="flex items-start justify-between mb-6">
+                <div>
+                  <h2 className="font-heading text-2xl font-normal text-foreground flex items-center gap-2">
+                    <FlowerIcon className="size-5 text-primary" /> Browse by Mood
+                  </h2>
+                  <p className="text-muted-foreground text-sm mt-1">Find stories that match how you feel right now.</p>
+                </div>
+                <Link href="/series" className="flex items-center gap-0.5 text-primary text-sm font-semibold hover:opacity-80 transition-opacity mt-1 shrink-0">
+                  View all moods <ChevronRight className="size-4" />
+                </Link>
               </div>
-              <Link href="/series" className="flex items-center gap-0.5 text-primary text-sm font-semibold hover:opacity-80 transition-opacity mt-1 shrink-0">
-                View all moods <ChevronRight className="size-4" />
-              </Link>
-            </div>
-            <BrowseByMoodGrid moods={MOCK_MOODS} />
-          </section>
+              <BrowseByMoodGrid moods={MOCK_MOODS} />
+            </section>
+          </ScrollReveal>
 
-          <section>
-            <div className="flex items-start justify-between mb-6">
-              <div>
-                <h2 className="font-heading text-2xl font-normal text-foreground flex items-center gap-2">
-                  <Flower2 className="size-5 text-primary" /> Popular Tropes
-                </h2>
-                <p className="text-muted-foreground text-sm mt-1">Explore beloved story themes and find your next obsession.</p>
+          <ScrollReveal index={0}>
+            <section>
+              <div className="flex items-start justify-between mb-6">
+                <div>
+                  <h2 className="font-heading text-2xl font-normal text-foreground flex items-center gap-2">
+                    <FlowerIcon className="size-5 text-primary" /> Popular Tropes
+                  </h2>
+                  <p className="text-muted-foreground text-sm mt-1">Explore beloved story themes and find your next obsession.</p>
+                </div>
+                <Link href="/series" className="flex items-center gap-0.5 text-primary text-sm font-semibold hover:opacity-80 transition-opacity mt-1 shrink-0">
+                  View all tropes <ChevronRight className="size-4" />
+                </Link>
               </div>
-              <Link href="/series" className="flex items-center gap-0.5 text-primary text-sm font-semibold hover:opacity-80 transition-opacity mt-1 shrink-0">
-                View all tropes <ChevronRight className="size-4" />
-              </Link>
-            </div>
-            <PopularTropesRow tropes={MOCK_TROPES} />
-          </section>
+              <PopularTropesRow tropes={MOCK_TROPES} />
+            </section>
+          </ScrollReveal>
 
-          <section>
-            <div className="flex items-start justify-between mb-6">
-              <div>
-                <h2 className="font-heading text-2xl font-normal text-foreground flex items-center gap-2">
-                  <Flower2 className="size-5 text-primary" /> Popular on BLumi
-                </h2>
-                <p className="text-muted-foreground text-sm mt-1">Trending picks the community can&apos;t stop talking about.</p>
+          <ScrollReveal index={0}>
+            <section>
+              <div className="flex items-start justify-between mb-6">
+                <div>
+                  <h2 className="font-heading text-2xl font-normal text-foreground flex items-center gap-2">
+                    <FlowerIcon className="size-5 text-primary" /> Popular on BLumi
+                  </h2>
+                  <p className="text-muted-foreground text-sm mt-1">Trending picks the community can&apos;t stop talking about.</p>
+                </div>
+                <Link href="/series" className="flex items-center gap-0.5 text-primary text-sm font-semibold hover:opacity-80 transition-opacity mt-1 shrink-0">
+                  View all <ChevronRight className="size-4" />
+                </Link>
               </div>
-              <Link href="/series" className="flex items-center gap-0.5 text-primary text-sm font-semibold hover:opacity-80 transition-opacity mt-1 shrink-0">
-                View all <ChevronRight className="size-4" />
-              </Link>
-            </div>
-            <ContinueDiscoveringRow cards={discoverCards} />
-          </section>
+              <ContinueDiscoveringRow cards={discoverCards} />
+            </section>
+          </ScrollReveal>
 
-          <section>
-            <div className="mb-6">
-              <h2 className="font-heading text-2xl font-normal text-foreground flex items-center gap-2">
-                <Flower2 className="size-5 text-primary" /> How BLumi Works
-              </h2>
-              <p className="text-muted-foreground text-sm mt-1">A quick look at how to find your next favorite story.</p>
-            </div>
-            <HowItWorks />
-          </section>
+          <ScrollReveal index={0}>
+            <section className="relative">
+              <BloomLayers />
+              <div className="relative mb-6">
+                <h2 className="font-heading text-2xl font-normal text-foreground flex items-center gap-2">
+                  <FlowerIcon className="size-5 text-primary" /> How BLumi Works
+                </h2>
+                <p className="text-muted-foreground text-sm mt-1">A quick look at how to find your next favorite story.</p>
+              </div>
+              <HowItWorks />
+            </section>
+          </ScrollReveal>
         </div>
       </div>
 

@@ -4,6 +4,17 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Smooth scrolling for any in-page anchor jumps (e.g. #section links).
+   Paired with ScrollReveal's fade/rise transitions for content already in
+   view -- this handles the "getting there" half, ScrollReveal handles the
+   "arriving" half. Skipped for prefers-reduced-motion, same convention as
+   ScrollReveal and BloomLayers already follow. */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
