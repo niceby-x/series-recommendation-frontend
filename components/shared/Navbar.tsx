@@ -31,13 +31,13 @@ const DISCOVER_MENU = [
   { href: '/series?section=top-rated', label: 'Top Rated' },
 ];
 
-// Moods, Tropes, and Collections aren't real filters/pages yet (see the
-// note on BrowseByMoodGrid/PopularTropesRow in the landing page) -- these
-// honestly point at the plain catalog rather than a param Explore can't
-// read, same convention used everywhere else in the app for not-yet-real
-// features.
+// Tropes and Collections aren't real filters/pages yet (see the note on
+// PopularTropesRow in the landing page) -- these honestly point at the
+// plain catalog rather than a param Explore can't read, same convention
+// used everywhere else in the app for not-yet-real features. Moods is now
+// a real page (app/moods/page.tsx) with its own logged-out preview.
 const LOGGED_OUT_LINKS = [
-  { href: '/series', label: 'Moods' },
+  { href: '/moods', label: 'Moods' },
   { href: '/series', label: 'Tropes' },
   { href: '/series', label: 'Collections' },
   { href: '/community', label: 'Community' },
@@ -139,10 +139,10 @@ export default function Navbar() {
 
   // Pages with their own full sidebar + header (logo, nav, search,
   // notifications, profile menu) -- HomeAuthed for '/', DiscoverAuthed for
-  // '/series' -- so this top navbar would just duplicate them. Every other
-  // authed route still gets this bar as normal. Add new dashboard-style
-  // pages' paths here as they're built.
-  const DASHBOARD_ROUTES = ['/', '/series'];
+  // '/series', MoodsAuthed for '/moods' -- so this top navbar would just
+  // duplicate them. Every other authed route still gets this bar as
+  // normal. Add new dashboard-style pages' paths here as they're built.
+  const DASHBOARD_ROUTES = ['/', '/series', '/moods'];
   if (user && DASHBOARD_ROUTES.includes(pathname)) {
     return null;
   }
