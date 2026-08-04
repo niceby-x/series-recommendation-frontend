@@ -3,11 +3,12 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
-import { DASHBOARD_MOODS } from '../../lib/dashboardContent';
+import { MOCK_MOODS } from '../../lib/landingContent';
 
 // Mood filtering isn't wired into Explore yet -- same honest fallback as
 // BrowseByMoodGrid.tsx: link to the plain catalog rather than a ?mood=
-// param nothing reads.
+// param nothing reads. Uses the same MOCK_MOODS list as the landing
+// page's BrowseByMoodGrid so the two never drift out of sync.
 export default function MoodFeelingRow() {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [atEnd, setAtEnd] = useState(false);
@@ -36,16 +37,15 @@ export default function MoodFeelingRow() {
       <div className="relative">
         <div
           ref={scrollerRef}
-          className="flex gap-4 overflow-x-auto pb-1 scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="flex gap-5 overflow-x-auto pb-1 scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
-          {DASHBOARD_MOODS.map((mood) => {
-            const Icon = mood.icon;
+          {MOCK_MOODS.map((mood) => {
             return (
               <Link
                 key={mood.name}
                 href="/series"
                 className={
-                  'group relative shrink-0 w-[152px] aspect-[4/5] rounded-[20px] overflow-hidden bg-gradient-to-br shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg ' +
+                  'group relative shrink-0 w-[152px] aspect-[4/5] rounded-lg overflow-hidden bg-gradient-to-br shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg ' +
                   mood.gradient
                 }
               >
@@ -58,13 +58,9 @@ export default function MoodFeelingRow() {
                   />
                 )}
 
-                <span className="absolute top-2.5 right-2.5 flex items-center justify-center size-8 rounded-full bg-white/70 backdrop-blur-sm text-[#4A2F3F] shadow-sm">
-                  <Icon className="size-4" />
-                </span>
-
-                <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-white/75 to-transparent" aria-hidden />
-                <div className="absolute bottom-0 left-0 px-3.5 pb-3.5">
-                  <p className="font-heading text-base font-normal text-[#4A2F3F]">{mood.name}</p>
+                <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-white/70 to-transparent" aria-hidden />
+                <div className="absolute bottom-0 left-0 px-4 pb-4">
+                  <p className="font-heading text-lg font-normal text-[#4A2F3F]">{mood.name}</p>
                   <p className="text-[#4A2F3F]/60 text-[12px] mt-0.5">{mood.count} stories</p>
                 </div>
               </Link>

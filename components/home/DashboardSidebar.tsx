@@ -1,27 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import {
-  Home,
-  Compass,
-  Smile,
-  Star,
-  FolderOpen,
-  Sparkles,
-  Users,
-  Bookmark,
-  Heart,
-  History,
-  NotebookPen,
-  ChevronRight,
-  Moon,
-} from 'lucide-react';
+import { usePathname } from 'next/navigation';
+import { Home, Compass, Smile, Star, FolderOpen, Sparkles, Users, Bookmark, Heart, History, NotebookPen } from 'lucide-react';
 import Logo from '../shared/Logo';
-import type { User } from '@supabase/supabase-js';
-import { supabase } from '../../lib/supabase';
-import { MOCK_BLOOM_JOURNEY } from '../../lib/dashboardContent';
 
 // Every link here honestly points at what's real today -- Moods/Tropes/
 // Collections/New Releases aren't wired filters yet, so (same convention
@@ -44,123 +26,97 @@ const LIBRARY_ITEMS = [
   { href: '/my-list', label: 'Notes', icon: NotebookPen },
 ];
 
+// Label span: 0-width + invisible while collapsed so it never affects the
+// row's layout (that's what keeps the icon perfectly centered at rest),
+// then grows in on hover alongside the row switching from centered to
+// left-aligned (see ROW_CLASS).
+const LABEL_CLASS =
+  'whitespace-nowrap overflow-hidden max-w-0 opacity-0 group-hover:max-w-[160px] group-hover:opacity-100 transition-all duration-200';
+
+// Row: icon alone is perfectly centered at rest (justify-center, gap-0 --
+// no invisible label/gap skewing it off-center), then switches to a normal
+// left-aligned icon+label row on hover.
+const ROW_CLASS =
+  'flex items-center justify-center group-hover:justify-start gap-0 group-hover:gap-3 transition-all duration-200';
+
 export default function DashboardSidebar() {
   const pathname = usePathname();
-  const router = useRouter();
-  const [user, setUser] = useState<User | null>(null);
-  // Real toggle -- app/globals.css already ships a full .dark palette, this
-  // just flips the class the same way a theme provider would. Lazy
-  // initializer (not an effect) so it reads the real class on first client
-  // render without a synchronous setState-in-effect.
-  const [darkMode, setDarkMode] = useState(
-    () => typeof document !== 'undefined' && document.documentElement.classList.contains('dark')
-  );
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-    });
-  }, []);
-
-  function toggleDarkMode() {
-    const next = !darkMode;
-    setDarkMode(next);
-    document.documentElement.classList.toggle('dark', next);
-  }
 
   function isActive(href: string) {
     const path = href.split('?')[0];
     return path === '/' ? pathname === '/' : pathname.startsWith(path) && path !== '/series';
   }
 
-  const displayName = user?.email ? user.email.split('@')[0] : 'Guest';
-  const initial = displayName.charAt(0).toUpperCase();
-
   return (
-    <aside className="hidden lg:flex flex-col w-[232px] shrink-0 h-screen sticky top-0 border-r border-border bg-card/60 px-4 py-6">
-      <Link href="/" className="px-2 mb-8">
-        <Logo variant="full" theme="brand" size={30} />
-      </Link>
+    <>
+      {/* Spacer: reserves the collapsed rail's width in the page's flex
+          layout so main/aside content doesn't shift when the real
+          <aside> below expands on hover (it's fixed + overlays instead
+          of pushing content). */}
+      <div className="hidden lg:block w-[76px] shrink-0" aria-hidden />
 
-      <nav className="flex flex-col gap-1">
-        {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
-          const active = isActive(href);
-          return (
+      <aside className="hidden lg:flex group flex-col fixed top-0 left-0 h-screen z-30 w-[76px] hover:w-[232px] overflow-y-auto overflow-x-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden border-r border-border bg-card px-3 py-6 transition-[width] duration-200 ease-out shadow-[4px_0_20px_-8px_rgba(0,0,0,0.06)] hover:shadow-[4px_0_24px_-4px_rgba(0,0,0,0.15)]">
+        <Link href="/" className={ROW_CLASS + ' px-1 mb-4 shrink-0'}>
+          <Logo variant="icon" theme="brand" size={30} className="shrink-0" />
+          <span className={'font-heading font-semibold text-lg text-[#5E4B6B] ' + LABEL_CLASS}>BLumi</span>
+        </Link>
+
+        <div className="mb-4 px-1">
+          <div className="border-t-2 border-foreground/15" />
+        </div>
+
+        <nav className="flex flex-col gap-1">
+          {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+            const active = isActive(href);
+            return (
+              <Link
+                key={label}
+                href={href}
+                title={label}
+                className={
+                  ROW_CLASS +
+                  ' px-2.5 py-2.5 rounded-full text-sm font-semibold ' +
+                  (active
+                    ? 'bg-brand-gradient text-white shadow-sm'
+                    : 'text-foreground/70 hover:bg-muted hover:text-foreground')
+                }
+              >
+                <Icon className="size-4.5 shrink-0" />
+                <span className={LABEL_CLASS}>{label}</span>
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* A real divider line reads as intentional; the blank spacer it
+            replaced just looked like a layout bug. The label above it
+            takes zero height at rest (max-h-0) so the collapsed rail's
+            gap here matches normal icon spacing, not reserved label space. */}
+        <div className="mt-3 mb-3 px-1">
+          <span
+            className={
+              'block text-[11px] font-bold uppercase tracking-wide text-muted-foreground px-1.5 max-h-0 group-hover:max-h-5 mb-0 group-hover:mb-2 overflow-hidden opacity-0 group-hover:opacity-100 transition-all duration-200'
+            }
+          >
+            My Library
+          </span>
+          <div className="border-t-2 border-foreground/15" />
+        </div>
+
+        <nav className="flex flex-col gap-1">
+          {LIBRARY_ITEMS.map(({ href, label, icon: Icon }) => (
             <Link
               key={label}
               href={href}
-              className={
-                'flex items-center gap-3 px-3 py-2.5 rounded-full text-sm font-semibold transition-colors ' +
-                (active
-                  ? 'bg-brand-gradient text-white shadow-sm'
-                  : 'text-foreground/70 hover:bg-muted hover:text-foreground')
-              }
+              title={label}
+              className={ROW_CLASS + ' px-2.5 py-2.5 rounded-full text-sm font-semibold text-foreground/70 hover:bg-muted hover:text-foreground'}
             >
               <Icon className="size-4.5 shrink-0" />
-              {label}
+              <span className={LABEL_CLASS}>{label}</span>
             </Link>
-          );
-        })}
-      </nav>
-
-      <p className="px-3 mt-8 mb-2 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
-        My Library
-      </p>
-      <nav className="flex flex-col gap-1">
-        {LIBRARY_ITEMS.map(({ href, label, icon: Icon }) => (
-          <Link
-            key={label}
-            href={href}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-full text-sm font-semibold text-foreground/70 hover:bg-muted hover:text-foreground transition-colors"
-          >
-            <Icon className="size-4.5 shrink-0" />
-            {label}
-          </Link>
-        ))}
-      </nav>
-
-      <div className="mt-auto pt-6 flex flex-col gap-3">
-        <button
-          type="button"
-          onClick={() => router.push('/my-list')}
-          className="flex items-center gap-2.5 px-2 py-2 rounded-full hover:bg-muted transition-colors text-left"
-        >
-          <span className="flex items-center justify-center size-9 rounded-full bg-brand-gradient text-white text-sm font-semibold font-heading shrink-0">
-            {initial}
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="block text-sm font-semibold text-foreground truncate">{displayName}</span>
-            <span className="flex items-center gap-1 text-[11px] text-muted-foreground truncate">
-              {MOCK_BLOOM_JOURNEY.label}
-              <Sparkles className="size-2.5 text-brand-gold shrink-0" />
-            </span>
-          </span>
-          <ChevronRight className="size-4 text-muted-foreground shrink-0" />
-        </button>
-
-        <button
-          type="button"
-          onClick={toggleDarkMode}
-          aria-pressed={darkMode}
-          className="flex items-center gap-2.5 px-3 py-2 rounded-full hover:bg-muted transition-colors"
-        >
-          <Moon className="size-4 text-foreground/70 shrink-0" />
-          <span className="text-sm font-medium text-foreground/80 flex-1 text-left">Dark Mode</span>
-          <span
-            className={
-              'relative inline-flex h-5 w-9 items-center rounded-full transition-colors shrink-0 ' +
-              (darkMode ? 'bg-brand-gradient' : 'bg-muted-foreground/30')
-            }
-          >
-            <span
-              className={
-                'inline-block size-3.5 rounded-full bg-white shadow-sm transition-transform ' +
-                (darkMode ? 'translate-x-[18px]' : 'translate-x-1')
-              }
-            />
-          </span>
-        </button>
-      </div>
-    </aside>
+          ))}
+        </nav>
+      </aside>
+    </>
   );
 }

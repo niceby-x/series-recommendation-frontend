@@ -2,6 +2,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Star, Bookmark } from 'lucide-react';
 import type { CuratorPick } from '../../lib/landingContent';
+import FlowerIcon from '../shared/FlowerIcon';
 
 function FeatureCard({ pick, synopsis }: { pick: CuratorPick; synopsis: string }) {
   return (
@@ -11,7 +12,9 @@ function FeatureCard({ pick, synopsis }: { pick: CuratorPick; synopsis: string }
           {pick.imageUrl ? (
             <Image src={pick.imageUrl} alt={pick.title} fill sizes="360px" className="object-cover" />
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-brand-mauve to-[#2E2438]" />
+            <div className="w-full h-full bg-gradient-to-br from-brand-mauve to-[#2E2438] flex items-center justify-center">
+              <FlowerIcon className="size-20 text-white/10" />
+            </div>
           )}
           <span className="absolute top-3.5 left-3.5 flex items-center gap-1 bg-black/60 backdrop-blur-sm text-white text-[11px] font-bold px-2.5 py-1 rounded-full">
             <Star className="size-3" fill="currentColor" />
@@ -63,7 +66,9 @@ function ListRow({ pick }: { pick: CuratorPick }) {
         {pick.imageUrl ? (
           <Image src={pick.imageUrl} alt={pick.title} fill sizes="64px" className="object-cover" />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-brand-blush/30 to-brand-lilac/30" />
+          <div className="w-full h-full bg-gradient-to-br from-brand-blush/30 to-brand-lilac/30 flex items-center justify-center">
+            <FlowerIcon className="size-6 text-white/50" />
+          </div>
         )}
       </div>
       <div className="min-w-0 flex-1">

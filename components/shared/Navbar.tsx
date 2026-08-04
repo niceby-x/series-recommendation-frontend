@@ -137,11 +137,13 @@ export default function Navbar() {
   const initial = user?.email ? user.email.charAt(0).toUpperCase() : '?';
   const isAdmin = !!(user?.email && user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL);
 
-  // The signed-in homepage (HomeAuthed) ships its own full sidebar + header
-  // (logo, nav, search, notifications, profile menu) so this top navbar
-  // would just duplicate it. Every other authed route still gets this bar
-  // as normal -- only the home path for a logged-in user skips it.
-  if (user && pathname === '/') {
+  // Pages with their own full sidebar + header (logo, nav, search,
+  // notifications, profile menu) -- HomeAuthed for '/', DiscoverAuthed for
+  // '/series' -- so this top navbar would just duplicate them. Every other
+  // authed route still gets this bar as normal. Add new dashboard-style
+  // pages' paths here as they're built.
+  const DASHBOARD_ROUTES = ['/', '/series'];
+  if (user && DASHBOARD_ROUTES.includes(pathname)) {
     return null;
   }
 

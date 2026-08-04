@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import type { SeriesCardData } from '../shared/SeriesCard';
 import DashboardSidebar from './DashboardSidebar';
-import DashboardTopBar from './DashboardTopBar';
 import DashboardHeader from './DashboardHeader';
 import MoodFeelingRow from './MoodFeelingRow';
 import DashboardDiscoverRow, { type DashboardDiscoverCard } from './DashboardDiscoverRow';
@@ -13,11 +12,14 @@ import RecentActivityCard from './RecentActivityCard';
 import {
   MOCK_TRENDING,
   REAL_TRENDING_OVERRIDES,
+  displayRatingFor,
+  displayGenresFor,
 } from '../../lib/mockCatalogData';
 import {
   MOCK_CONTINUE_DISCOVERING,
   CURATOR_FEATURE,
   CURATOR_LIST,
+  type CuratorPick,
 } from '../../lib/landingContent';
 import { CONTINUE_DISCOVERING_BADGES } from '../../lib/dashboardContent';
 
@@ -90,17 +92,45 @@ export default function HomeAuthed({ allSeries }: { allSeries: SeriesCardData[] 
     })),
   ];
 
+  // Curator's Picks: real series first (feature + 3 list slots, 4 total),
+  // mock fills the rest -- same real-first-then-mock convention as
+  // Continue Discovering and the Trending sidebar above. Real entries get
+  // an actual poster/backdrop image instead of the gradient+watermark
+  // fallback, and the feature's synopsis comes from the series' own data
+  // rather than the hardcoded mock blurb.
+  const realCuratorCount = Math.min(allSeries.length, 4);
+  const realCuratorPicks: CuratorPick[] = allSeries.slice(0, realCuratorCount).map((s) => ({
+    id: s.id,
+    title: s.title,
+    country: s.country,
+    mediaType: 'Series',
+    year: s.year,
+    // No ratings table populated yet -- reuse the same override/fallback
+    // helper the rest of the dashboard uses; 4.5 is a neutral placeholder
+    // for real titles without a hand-set override rating.
+    rating: displayRatingFor(s) ?? 4.5,
+    tags: displayGenresFor(s),
+    imageUrl: s.backdrop_url ?? s.poster_url,
+  }));
+  const mockCuratorFill = [CURATOR_FEATURE, ...CURATOR_LIST].slice(0, 4 - realCuratorPicks.length);
+  const curatorPicks = [...realCuratorPicks, ...mockCuratorFill];
+  const curatorFeature = curatorPicks[0];
+  const curatorListItems = curatorPicks.slice(1);
+  const curatorFeatureSynopsis =
+    realCuratorPicks.length > 0
+      ? allSeries[0].synopsis?.trim() || 'A story worth discovering.'
+      : CURATOR_FEATURE_SYNOPSIS;
+
   return (
     <div className="flex min-h-screen bg-background">
       <DashboardSidebar />
 
       <div className="flex-1 min-w-0 flex justify-center px-5 md:px-8 lg:px-10 py-6 md:py-8">
         <div className="w-full max-w-[1400px]">
-          <DashboardTopBar />
+          <DashboardHeader />
 
           <div className="grid grid-cols-1 xl:grid-cols-[1fr_336px] gap-8 items-start">
             <main className="min-w-0">
-              <DashboardHeader />
               <MoodFeelingRow />
 
               <section className="mb-10">
@@ -113,7 +143,7 @@ export default function HomeAuthed({ allSeries }: { allSeries: SeriesCardData[] 
                 <DashboardDiscoverRow cards={discoverCards} />
               </section>
 
-              <DashboardCuratorsPicks feature={CURATOR_FEATURE} synopsis={CURATOR_FEATURE_SYNOPSIS} list={CURATOR_LIST} />
+              <DashboardCuratorsPicks feature={curatorFeature} synopsis={curatorFeatureSynopsis} list={curatorListItems} />
             </main>
 
             <aside className="flex flex-col gap-5 xl:sticky xl:top-8">

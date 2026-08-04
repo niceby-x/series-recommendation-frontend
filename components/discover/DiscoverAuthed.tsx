@@ -1,0 +1,219 @@
+'use client';
+
+import { useMemo, useState } from 'react';
+import DashboardSidebar from '../home/DashboardSidebar';
+import DashboardHeader from '../home/DashboardHeader';
+import SeriesCard, { type SeriesCardData } from '../shared/SeriesCard';
+import DiscoverFiltersBar, { type DiscoverFilterState } from './DiscoverFiltersBar';
+import DiscoverScrollRow from './DiscoverScrollRow';
+import DiscoverMediaCard, { type DiscoverMediaCardData } from './DiscoverMediaCard';
+import TopRatedSeriesCard, { type TopRatedItem } from './TopRatedSeriesCard';
+import ExploreByGenreCard from './ExploreByGenreCard';
+import PopularTagsCard from './PopularTagsCard';
+import { mockGenresFor, mockRatingFor } from '../../lib/exploreMock';
+
+// The logged-in Discover page. Country/genre/year/sort are REAL, working
+// filters over the real catalog (not decorative) -- reusing the same
+// mockGenresFor/mockRatingFor helpers the existing Explore page uses,
+// since genres and aggregate ratings aren't wired into the /series API
+// yet (see lib/exploreMock.ts). When any filter/sort is non-default, the
+// curated rows below (Trending Now, New Releases, Recommended For You)
+// give way to a single filtered+sorted grid, same isFiltering pattern
+// app/series/SeriesFilter.tsx already uses for the logged-out Explore page.
+export default function DiscoverAuthed({ allSeries }: { allSeries: SeriesCardData[] }) {
+  const countries = useMemo(() => Array.from(new Set(allSeries.map((s) => s.country))).sort(), [allSeries]);
+  const years = useMemo(
+    () => Array.from(new Set(allSeries.map((s) => s.year))).sort((a, b) => b - a),
+    [allSeries]
+  );
+
+  const [filters, setFilters] = useState<DiscoverFilterState>({
+    country: 'All',
+    genre: 'All',
+    year: 'All',
+    sort: 'popular',
+  });
+
+  const isFiltering = filters.country !== 'All' || filters.genre !== 'All' || filters.year !== 'All' || filters.sort !== 'popular';
+
+  const filteredSeries = useMemo(() => {
+    let list = allSeries.filter((s) => {
+      const matchesCountry = filters.country === 'All' || s.country === filters.country;
+      const matchesGenre = filters.genre === 'All' || mockGenresFor(s.id).includes(filters.genre);
+      const matchesYear = filters.year === 'All' || String(s.year) === filters.year;
+      return matchesCountry && matchesGenre && matchesYear;
+    });
+
+    if (filters.sort === 'newest') {
+      list = [...list].sort((a, b) => b.year - a.year);
+    } else if (filters.sort === 'top_rated') {
+      list = [...list].sort((a, b) => mockRatingFor(b.id) - mockRatingFor(a.id));
+    }
+
+    return list;
+  }, [allSeries, filters]);
+
+  // Trending Now: top 4 by mock rating. New Releases: top 4 by year. These
+  // overlap with each other and with Recommended below when the catalog is
+  // small (a handful of seed rows) -- acceptable for now since there's no
+  // real trending/personalization signal yet to keep them apart.
+  const trendingNow: DiscoverMediaCardData[] = useMemo(
+    () =>
+      [...allSeries]
+        .sort((a, b) => mockRatingFor(b.id) - mockRatingFor(a.id))
+        .slice(0, 4)
+        .map((s) => ({
+          id: s.id,
+          title: s.title,
+          country: s.country,
+          mediaType: 'Series',
+          rating: mockRatingFor(s.id),
+          imageUrl: s.backdrop_url ?? s.poster_url,
+          isReal: true,
+        })),
+    [allSeries]
+  );
+
+  const newReleases: DiscoverMediaCardData[] = useMemo(
+    () =>
+      [...allSeries]
+        .sort((a, b) => b.year - a.year)
+        .slice(0, 4)
+        .map((s) => ({
+          id: s.id,
+          title: s.title,
+          country: s.country,
+          mediaType: 'Series',
+          rating: mockRatingFor(s.id),
+          imageUrl: s.backdrop_url ?? s.poster_url,
+          isReal: true,
+        })),
+    [allSeries]
+  );
+
+  // Not real personalization -- there's no recommendation engine yet, this
+  // is just "everything else" so the row isn't a exact duplicate of the
+  // two above when the catalog has enough rows.
+  const recommended = useMemo(() => {
+    const usedIds = new Set([...trendingNow, ...newReleases].map((c) => c.id));
+    const rest = allSeries.filter((s) => !usedIds.has(s.id));
+    return (rest.length > 0 ? rest : allSeries).slice(0, 8);
+  }, [allSeries, trendingNow, newReleases]);
+
+  const topRated: TopRatedItem[] = useMemo(
+    () =>
+      [...allSeries]
+        .sort((a, b) => mockRatingFor(b.id) - mockRatingFor(a.id))
+        .slice(0, 5)
+        .map((s, i) => ({
+          id: s.id,
+          title: s.title,
+          country: s.country,
+          mediaType: 'Series',
+          rating: mockRatingFor(s.id),
+          imageUrl: s.backdrop_url ?? s.poster_url,
+          trend: i % 3 === 0 ? 'down' : i % 3 === 1 ? 'flat' : 'up',
+          isReal: true,
+        })),
+    [allSeries]
+  );
+
+  return (
+    <div className="flex min-h-screen bg-background">
+      <DashboardSidebar />
+
+      <div className="flex-1 min-w-0 flex justify-center px-5 md:px-8 lg:px-10 py-6 md:py-8">
+        <div className="w-full max-w-[1400px]">
+          <DashboardHeader title="Discover" subtitle="Find your next favorite series" />
+
+          <div className="grid grid-cols-1 xl:grid-cols-[1fr_336px] gap-8 items-start">
+            <main className="min-w-0">
+              <DiscoverFiltersBar filters={filters} onChange={setFilters} countries={countries} years={years} />
+
+              {isFiltering ? (
+                <section>
+                  <p className="text-muted-foreground text-sm mb-6">
+                    Showing {filteredSeries.length} of {allSeries.length} series
+                  </p>
+                  {filteredSeries.length === 0 ? (
+                    <p className="text-muted-foreground">No series found. Try adjusting your filters.</p>
+                  ) : (
+                    <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
+                      {filteredSeries.map((series) => (
+                        <SeriesCard key={series.id} series={series} rating={mockRatingFor(series.id)} />
+                      ))}
+                    </div>
+                  )}
+                </section>
+              ) : (
+                <>
+                  <section className="mb-10">
+                    <div className="flex justify-between items-end mb-4">
+                      <h2 className="font-heading text-[22px] font-normal text-foreground">Trending Now</h2>
+                      <button
+                        type="button"
+                        onClick={() => setFilters((f) => ({ ...f, sort: 'top_rated' }))}
+                        className="text-primary text-sm font-semibold hover:opacity-80 transition-opacity shrink-0"
+                      >
+                        View all
+                      </button>
+                    </div>
+                    <DiscoverScrollRow>
+                      {trendingNow.map((card, i) => (
+                        <DiscoverMediaCard key={card.id} card={card} rank={i + 1} />
+                      ))}
+                    </DiscoverScrollRow>
+                  </section>
+
+                  <section className="mb-10">
+                    <div className="flex justify-between items-end mb-4">
+                      <h2 className="font-heading text-[22px] font-normal text-foreground">New Releases</h2>
+                      <button
+                        type="button"
+                        onClick={() => setFilters((f) => ({ ...f, sort: 'newest' }))}
+                        className="text-primary text-sm font-semibold hover:opacity-80 transition-opacity shrink-0"
+                      >
+                        View all
+                      </button>
+                    </div>
+                    <DiscoverScrollRow>
+                      {newReleases.map((card) => (
+                        <DiscoverMediaCard key={card.id} card={card} isNew />
+                      ))}
+                    </DiscoverScrollRow>
+                  </section>
+
+                  <section>
+                    <div className="flex justify-between items-end mb-4">
+                      <h2 className="font-heading text-[22px] font-normal text-foreground">Recommended For You</h2>
+                      <button
+                        type="button"
+                        onClick={() => setFilters((f) => ({ ...f, sort: 'popular' }))}
+                        className="text-primary text-sm font-semibold hover:opacity-80 transition-opacity shrink-0"
+                      >
+                        View all
+                      </button>
+                    </div>
+                    <DiscoverScrollRow>
+                      {recommended.map((series) => (
+                        <div key={series.id} className="shrink-0 w-[160px] snap-start">
+                          <SeriesCard series={series} rating={mockRatingFor(series.id)} />
+                        </div>
+                      ))}
+                    </DiscoverScrollRow>
+                  </section>
+                </>
+              )}
+            </main>
+
+            <aside className="flex flex-col gap-5 xl:sticky xl:top-8">
+              <TopRatedSeriesCard items={topRated} />
+              <ExploreByGenreCard onSelect={(genre) => setFilters((f) => ({ ...f, genre }))} />
+              <PopularTagsCard />
+            </aside>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
