@@ -21,23 +21,23 @@ const NAV_LINKS = [
 // Logged-out nav is intentionally different, not just re-skinned: it drops
 // "Lists" (nothing to list before you have an account) and adds a Discover
 // menu. Every item in it is a REAL, working destination -- the trending/
-// new-releases/top-rated links use Explore's actual ?section= filters (see
+// top-rated links use Explore's actual ?section= filters (see
 // components/explore/ExploreClient.tsx), not placeholder query params
 // nothing reads.
 const DISCOVER_MENU = [
   { href: '/series', label: 'Browse All' },
   { href: '/series?section=trending', label: 'Trending' },
-  { href: '/series?section=new-releases', label: 'New Releases' },
   { href: '/series?section=top-rated', label: 'Top Rated' },
 ];
 
-// Moods, Tropes, and Collections are now real pages (app/moods/page.tsx,
-// app/tropes/page.tsx, app/collections/page.tsx) with their own logged-out
-// previews.
+// Moods, Tropes, Collections, and New Releases are now real pages
+// (app/moods/page.tsx, app/tropes/page.tsx, app/collections/page.tsx,
+// app/new-releases/page.tsx) with their own logged-out previews.
 const LOGGED_OUT_LINKS = [
   { href: '/moods', label: 'Moods' },
   { href: '/tropes', label: 'Tropes' },
   { href: '/collections', label: 'Collections' },
+  { href: '/new-releases', label: 'New Releases' },
   { href: '/community', label: 'Community' },
   { href: '/about', label: 'About' },
 ];
@@ -138,10 +138,11 @@ export default function Navbar() {
   // Pages with their own full sidebar + header (logo, nav, search,
   // notifications, profile menu) -- HomeAuthed for '/', DiscoverAuthed for
   // '/series', MoodsAuthed for '/moods', TropesAuthed for '/tropes',
-  // CollectionsAuthed for '/collections' -- so this top navbar would just
-  // duplicate them. Every other authed route still gets this bar as
-  // normal. Add new dashboard-style pages' paths here as they're built.
-  const DASHBOARD_ROUTES = ['/', '/series', '/moods', '/tropes', '/collections'];
+  // CollectionsAuthed for '/collections', NewReleasesAuthed for
+  // '/new-releases' -- so this top navbar would just duplicate them. Every
+  // other authed route still gets this bar as normal. Add new
+  // dashboard-style pages' paths here as they're built.
+  const DASHBOARD_ROUTES = ['/', '/series', '/moods', '/tropes', '/collections', '/new-releases'];
   if (user && DASHBOARD_ROUTES.includes(pathname)) {
     return null;
   }
