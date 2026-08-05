@@ -1,6 +1,6 @@
 'use client';
 
-import BrowseByMoodGrid from '../landing/BrowseByMoodGrid';
+import BrowseByMoodGrid from '../shared/BrowseByMoodGrid';
 import { MOCK_MOODS } from '../../lib/landingContent';
 import { useAuthModal } from '../../lib/AuthModalContext';
 

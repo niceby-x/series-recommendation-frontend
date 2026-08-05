@@ -2,8 +2,8 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import { ChevronDown, Plus, FolderOpen } from 'lucide-react';
-import DashboardSidebar from '../home/DashboardSidebar';
-import DashboardHeader from '../home/DashboardHeader';
+import DashboardSidebar from '../dashboard/DashboardSidebar';
+import DashboardHeader from '../dashboard/DashboardHeader';
 import CollectionFilterChips from './CollectionFilterChips';
 import CollectionCard from './CollectionCard';
 import CollectionListItem from './CollectionListItem';

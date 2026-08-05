@@ -1,11 +1,11 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import DashboardSidebar from '../home/DashboardSidebar';
-import DashboardHeader from '../home/DashboardHeader';
+import DashboardSidebar from '../dashboard/DashboardSidebar';
+import DashboardHeader from '../dashboard/DashboardHeader';
 import SeriesCard, { type SeriesCardData } from '../shared/SeriesCard';
 import DiscoverFiltersBar, { type DiscoverFilterState } from './DiscoverFiltersBar';
-import DiscoverScrollRow from './DiscoverScrollRow';
+import ScrollRow from '../dashboard/ScrollRow';
 import DiscoverMediaCard, { type DiscoverMediaCardData } from './DiscoverMediaCard';
 import TopRatedSeriesCard, { type TopRatedItem } from './TopRatedSeriesCard';
 import ExploreByGenreCard from './ExploreByGenreCard';
@@ -19,7 +19,7 @@ import { mockGenresFor, mockRatingFor } from '../../lib/exploreMock';
 // yet (see lib/exploreMock.ts). When any filter/sort is non-default, the
 // curated rows below (Trending Now, New Releases, Recommended For You)
 // give way to a single filtered+sorted grid, same isFiltering pattern
-// app/series/SeriesFilter.tsx already uses for the logged-out Explore page.
+// SeriesFilter.tsx (the logged-out Explore page) already uses.
 export default function DiscoverAuthed({ allSeries }: { allSeries: SeriesCardData[] }) {
   const countries = useMemo(() => Array.from(new Set(allSeries.map((s) => s.country))).sort(), [allSeries]);
   const years = useMemo(
@@ -158,11 +158,11 @@ export default function DiscoverAuthed({ allSeries }: { allSeries: SeriesCardDat
                         View all
                       </button>
                     </div>
-                    <DiscoverScrollRow>
+                    <ScrollRow>
                       {trendingNow.map((card, i) => (
                         <DiscoverMediaCard key={card.id} card={card} rank={i + 1} />
                       ))}
-                    </DiscoverScrollRow>
+                    </ScrollRow>
                   </section>
 
                   <section className="mb-10">
@@ -176,11 +176,11 @@ export default function DiscoverAuthed({ allSeries }: { allSeries: SeriesCardDat
                         View all
                       </button>
                     </div>
-                    <DiscoverScrollRow>
+                    <ScrollRow>
                       {newReleases.map((card) => (
                         <DiscoverMediaCard key={card.id} card={card} isNew />
                       ))}
-                    </DiscoverScrollRow>
+                    </ScrollRow>
                   </section>
 
                   <section>
@@ -194,13 +194,13 @@ export default function DiscoverAuthed({ allSeries }: { allSeries: SeriesCardDat
                         View all
                       </button>
                     </div>
-                    <DiscoverScrollRow>
+                    <ScrollRow>
                       {recommended.map((series) => (
                         <div key={series.id} className="shrink-0 w-[160px] snap-start">
                           <SeriesCard series={series} rating={mockRatingFor(series.id)} />
                         </div>
                       ))}
-                    </DiscoverScrollRow>
+                    </ScrollRow>
                   </section>
                 </>
               )}

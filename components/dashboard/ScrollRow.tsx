@@ -3,7 +3,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
-export default function DiscoverScrollRow({ children }: { children: React.ReactNode }) {
+// Shared horizontal-scroll wrapper with edge arrows -- used by Discover,
+// Tropes, and New Releases (originally lived in components/discover/ as
+// DiscoverScrollRow, renamed+moved here once a third page started using
+// it and the old name/location stopped being accurate).
+export default function ScrollRow({ children }: { children: React.ReactNode }) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [atStart, setAtStart] = useState(true);
   const [atEnd, setAtEnd] = useState(false);

@@ -6,9 +6,9 @@ import type { SeriesCardData } from '../shared/SeriesCard';
 import LandingHero from './LandingHero';
 import LandingStatsBar from './LandingStatsBar';
 import ContinueDiscoveringRow from './ContinueDiscoveringRow';
-import BrowseByMoodGrid from './BrowseByMoodGrid';
+import BrowseByMoodGrid from '../shared/BrowseByMoodGrid';
 import PopularTropesRow from './PopularTropesRow';
-import CuratorsPicks from './CuratorsPicks';
+import CuratorsPicks from './LandingCuratorsPicks';
 import HowItWorks from './HowItWorks';
 import LandingFooter from './LandingFooter';
 import ScrollReveal from '../shared/ScrollReveal';
@@ -26,7 +26,13 @@ import {
   type CuratorPick,
 } from '../../lib/landingContent';
 
-export default function LandingPage({ allSeries }: { allSeries: SeriesCardData[] }) {
+// Home's logged-out branch. Named/located to match the XLanding.tsx
+// convention every other page (Moods/Tropes/Collections/New Releases)
+// follows -- this predates that convention (it's the original landing
+// page), moved here for consistency. Its own sub-components keep their
+// original file names (LandingHero.tsx etc.) since renaming every single
+// one wasn't necessary for the folder-level consistency goal.
+export default function HomeLanding({ allSeries }: { allSeries: SeriesCardData[] }) {
   const realHeroCards: HeroFeature[] = allSeries.slice(0, 3).map((series) => ({
     id: series.id,
     title: series.title,

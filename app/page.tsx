@@ -1,7 +1,7 @@
 import type { SeriesCardData } from '../components/shared/SeriesCard';
 import HomeGate from '../components/shared/HomeGate';
 import HomeAuthed from '../components/home/HomeAuthed';
-import LandingPage from '../components/landing/LandingPage';
+import HomeLanding from '../components/home/HomeLanding';
 
 async function getSeries(): Promise<SeriesCardData[]> {
   try {
@@ -23,7 +23,7 @@ async function getSeries(): Promise<SeriesCardData[]> {
 }
 
 // Fetched once here and handed to both branches -- logged-out visitors get
-// LandingPage (convert-a-stranger), logged-in users get HomeAuthed (today's
+// HomeLanding (convert-a-stranger), logged-in users get HomeAuthed (today's
 // homepage, with personalized-feeling rows). HomeGate is the client-side
 // switch between them; see that file for why this isn't done server-side.
 export default async function Home() {
@@ -31,7 +31,7 @@ export default async function Home() {
 
   return (
     <HomeGate
-      landing={<LandingPage allSeries={allSeries} />}
+      landing={<HomeLanding allSeries={allSeries} />}
       authed={<HomeAuthed allSeries={allSeries} />}
     />
   );

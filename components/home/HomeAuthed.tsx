@@ -1,13 +1,13 @@
 import Link from 'next/link';
 import type { SeriesCardData } from '../shared/SeriesCard';
-import DashboardSidebar from './DashboardSidebar';
-import DashboardHeader from './DashboardHeader';
+import DashboardSidebar from '../dashboard/DashboardSidebar';
+import DashboardHeader from '../dashboard/DashboardHeader';
 import MoodFeelingRow from './MoodFeelingRow';
 import DashboardDiscoverRow, { type DashboardDiscoverCard } from './DashboardDiscoverRow';
 import DashboardCuratorsPicks from './DashboardCuratorsPicks';
 import BloomJourneyCard from './BloomJourneyCard';
 import WeeklyJourneyCard from './WeeklyJourneyCard';
-import TrendingSidebarCard, { type TrendingSidebarItem } from './TrendingSidebarCard';
+import TrendingSidebarCard, { type TrendingSidebarItem } from '../dashboard/TrendingSidebarCard';
 import RecentActivityCard from './RecentActivityCard';
 import {
   MOCK_TRENDING,

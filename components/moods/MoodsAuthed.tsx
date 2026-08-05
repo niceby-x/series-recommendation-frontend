@@ -2,8 +2,8 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import DashboardSidebar from '../home/DashboardSidebar';
-import DashboardHeader from '../home/DashboardHeader';
+import DashboardSidebar from '../dashboard/DashboardSidebar';
+import DashboardHeader from '../dashboard/DashboardHeader';
 import type { SeriesCardData } from '../shared/SeriesCard';
 import MoodFilterChips from './MoodFilterChips';
 import MoodCard from './MoodCard';

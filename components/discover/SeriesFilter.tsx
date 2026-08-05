@@ -2,13 +2,13 @@
 
 import { useMemo, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import SeriesCard, { type SeriesCardData } from '../../components/shared/SeriesCard';
-import ExploreHero from '../../components/explore/ExploreHero';
-import GenreStrip from '../../components/explore/GenreStrip';
-import PopularThisWeek from '../../components/explore/PopularThisWeek';
-import BrowseByGenre from '../../components/explore/BrowseByGenre';
-import ContinueExploring from '../../components/explore/ContinueExploring';
-import ExploreSidebar, { type ExploreFilters, type NavCategory } from '../../components/explore/ExploreSidebar';
+import SeriesCard, { type SeriesCardData } from '../shared/SeriesCard';
+import ExploreHero from '../explore/ExploreHero';
+import GenreStrip from '../explore/GenreStrip';
+import PopularThisWeek from '../explore/PopularThisWeek';
+import BrowseByGenre from '../explore/BrowseByGenre';
+import ContinueExploring from '../explore/ContinueExploring';
+import ExploreSidebar, { type ExploreFilters, type NavCategory } from '../explore/ExploreSidebar';
 import { mockGenresFor, mockRatingFor } from '../../lib/exploreMock';
 
 interface Props {

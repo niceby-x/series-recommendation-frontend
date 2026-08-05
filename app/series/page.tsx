@@ -1,8 +1,7 @@
-import { Suspense } from 'react';
-import SeriesFilter from './SeriesFilter';
 import type { SeriesCardData } from '../../components/shared/SeriesCard';
 import HomeGate from '../../components/shared/HomeGate';
 import DiscoverAuthed from '../../components/discover/DiscoverAuthed';
+import DiscoverLanding from '../../components/discover/DiscoverLanding';
 
 async function getSeries(): Promise<SeriesCardData[]> {
   try {
@@ -23,28 +22,11 @@ async function getSeries(): Promise<SeriesCardData[]> {
   }
 }
 
-// Same split as app/page.tsx: logged-out visitors keep the existing
-// Explore page (SeriesFilter + its sidebar of real filters), logged-in
-// users get the new sidebar-dashboard Discover page. HomeGate is generic
-// (picks a branch based on auth), not actually home-specific.
+// Same HomeGate split as app/page.tsx, app/moods/page.tsx, etc: logged-out
+// visitors get DiscoverLanding (the existing real Explore page), logged-in
+// users get the sidebar-dashboard DiscoverAuthed.
 export default async function SeriesPage() {
   const seriesList = await getSeries();
 
-  return (
-    <HomeGate
-      landing={
-        <main className="min-h-screen bg-background px-4 md:px-6 lg:px-8 py-6">
-          <div className="max-w-7xl mx-auto">
-            {/* SeriesFilter reads the URL via useSearchParams(), which requires a
-                Suspense boundary in the App Router — without this, Next.js can't
-                prerender this page and the build fails outright. */}
-            <Suspense fallback={null}>
-              <SeriesFilter seriesList={seriesList} />
-            </Suspense>
-          </div>
-        </main>
-      }
-      authed={<DiscoverAuthed allSeries={seriesList} />}
-    />
-  );
+  return <HomeGate landing={<DiscoverLanding seriesList={seriesList} />} authed={<DiscoverAuthed allSeries={seriesList} />} />;
 }

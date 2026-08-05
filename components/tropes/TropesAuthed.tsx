@@ -2,9 +2,9 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import DashboardSidebar from '../home/DashboardSidebar';
-import DashboardHeader from '../home/DashboardHeader';
-import DiscoverScrollRow from '../discover/DiscoverScrollRow';
+import DashboardSidebar from '../dashboard/DashboardSidebar';
+import DashboardHeader from '../dashboard/DashboardHeader';
+import ScrollRow from '../dashboard/ScrollRow';
 import TropeFilterChips from './TropeFilterChips';
 import PopularTropeCard from './PopularTropeCard';
 import CategoryCard from './CategoryCard';
@@ -41,11 +41,11 @@ export default function TropesAuthed() {
                     View all
                   </Link>
                 </div>
-                <DiscoverScrollRow>
+                <ScrollRow>
                   {POPULAR_TROPES.map((trope) => (
                     <PopularTropeCard key={trope.key} trope={trope} />
                   ))}
-                </DiscoverScrollRow>
+                </ScrollRow>
               </section>
 
               <section className="mb-10">
@@ -69,11 +69,11 @@ export default function TropesAuthed() {
                     View all
                   </Link>
                 </div>
-                <DiscoverScrollRow>
+                <ScrollRow>
                   {NEW_TROPES.map((trope) => (
                     <NewTropeCard key={trope.key} trope={trope} />
                   ))}
-                </DiscoverScrollRow>
+                </ScrollRow>
               </section>
             </main>
 

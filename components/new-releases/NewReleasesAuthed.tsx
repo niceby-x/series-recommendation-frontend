@@ -2,11 +2,11 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import DashboardSidebar from '../home/DashboardSidebar';
-import DashboardHeader from '../home/DashboardHeader';
+import DashboardSidebar from '../dashboard/DashboardSidebar';
+import DashboardHeader from '../dashboard/DashboardHeader';
 import SeriesCard, { type SeriesCardData } from '../shared/SeriesCard';
-import DiscoverScrollRow from '../discover/DiscoverScrollRow';
-import TrendingSidebarCard, { type TrendingSidebarItem } from '../home/TrendingSidebarCard';
+import ScrollRow from '../dashboard/ScrollRow';
+import TrendingSidebarCard, { type TrendingSidebarItem } from '../dashboard/TrendingSidebarCard';
 import ReleaseFilterChips from './ReleaseFilterChips';
 import NewReleaseHero from './NewReleaseHero';
 import JustReleasedCard from './JustReleasedCard';
@@ -164,7 +164,7 @@ export default function NewReleasesAuthed({ allSeries }: { allSeries: SeriesCard
                         View all
                       </button>
                     </div>
-                    <DiscoverScrollRow>
+                    <ScrollRow>
                       {justReleased.map(({ series, rating, daysAgo }) => (
                         <JustReleasedCard
                           key={series.id}
@@ -178,7 +178,7 @@ export default function NewReleasesAuthed({ allSeries }: { allSeries: SeriesCard
                           }}
                         />
                       ))}
-                    </DiscoverScrollRow>
+                    </ScrollRow>
                   </section>
 
                   <section>
@@ -192,11 +192,11 @@ export default function NewReleasesAuthed({ allSeries }: { allSeries: SeriesCard
                         View all
                       </button>
                     </div>
-                    <DiscoverScrollRow>
+                    <ScrollRow>
                       {MOCK_UPCOMING.map((item) => (
                         <UpcomingReleaseCard key={item.key} item={item} />
                       ))}
-                    </DiscoverScrollRow>
+                    </ScrollRow>
                   </section>
                 </>
               )}
