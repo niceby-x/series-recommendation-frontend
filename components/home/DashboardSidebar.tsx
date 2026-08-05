@@ -5,16 +5,16 @@ import { usePathname } from 'next/navigation';
 import { Home, Compass, Smile, Star, FolderOpen, Sparkles, Users, Bookmark, Heart, History, NotebookPen } from 'lucide-react';
 import Logo from '../shared/Logo';
 
-// Every link here honestly points at what's real today -- Tropes/
-// Collections/New Releases aren't wired filters yet, so (same convention
-// as Navbar's LOGGED_OUT_LINKS / BrowseByMoodGrid) they land on the plain
-// catalog rather than a query param nothing reads. Moods is now a real
-// page (app/moods/page.tsx).
+// Every link here honestly points at what's real today -- Collections/New
+// Releases aren't wired filters yet, so (same convention as Navbar's
+// LOGGED_OUT_LINKS / BrowseByMoodGrid) they land on the plain catalog
+// rather than a query param nothing reads. Moods and Tropes are now real
+// pages (app/moods/page.tsx, app/tropes/page.tsx).
 const NAV_ITEMS = [
   { href: '/', label: 'Home', icon: Home },
   { href: '/series', label: 'Discover', icon: Compass },
   { href: '/moods', label: 'Moods', icon: Smile },
-  { href: '/series', label: 'Tropes', icon: Star },
+  { href: '/tropes', label: 'Tropes', icon: Star },
   { href: '/series', label: 'Collections', icon: FolderOpen },
   { href: '/series?section=new-releases', label: 'New Releases', icon: Sparkles },
   { href: '/community', label: 'Community', icon: Users },
