@@ -202,7 +202,7 @@ export default function DashboardHeader({ title, subtitle }: { title?: string; s
               </div>
               {isAdmin && (
                 <Link
-                  href="/admin/candidates"
+                  href="/admin"
                   className="w-full flex items-center gap-2 text-left px-4 py-2.5 text-sm text-popover-foreground hover:bg-muted transition-colors"
                 >
                   <ShieldCheck className="size-4" />

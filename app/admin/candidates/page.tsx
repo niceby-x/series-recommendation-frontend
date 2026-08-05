@@ -5,6 +5,7 @@ import { Check, X, Pencil, Tag as TagIcon } from 'lucide-react';
 import { useAuthModal } from '../../../lib/AuthModalContext';
 import { supabase } from '../../../lib/supabase';
 import type { User } from '@supabase/supabase-js';
+import AdminSidebar from '../../../components/admin/AdminSidebar';
 import type { Tag, TagDimension, RomancePace, EmotionalIntensity, EndingType, ContentLevel } from '../../../lib/taxonomy';
 import {
   ROMANCE_PACE_DISPLAY,
@@ -106,12 +107,12 @@ function curationBadgeTone(level: 0 | 1 | 2 | 3): 'rose' | 'amber' | 'blue' | 'e
 
 function Chip({ tone, children }: { tone: 'blue' | 'slate' | 'violet' | 'amber' | 'rose' | 'emerald'; children: React.ReactNode }) {
   const tones: Record<string, string> = {
-    blue: 'bg-blue-500/15 text-blue-300',
-    slate: 'bg-slate-500/15 text-slate-300',
-    violet: 'bg-violet-500/15 text-violet-300',
-    amber: 'bg-amber-500/15 text-amber-300',
-    rose: 'bg-rose-500/15 text-rose-300',
-    emerald: 'bg-emerald-500/15 text-emerald-300',
+    blue: 'bg-sky-100 text-sky-700',
+    slate: 'bg-muted text-muted-foreground',
+    violet: 'bg-violet-100 text-violet-700',
+    amber: 'bg-amber-100 text-amber-700',
+    rose: 'bg-rose-100 text-rose-700',
+    emerald: 'bg-emerald-100 text-emerald-700',
   };
   return (
     <span className={'text-[11px] font-medium px-2 py-0.5 rounded-full whitespace-nowrap ' + tones[tone]}>
@@ -132,10 +133,10 @@ function IconButton({
   children: React.ReactNode;
 }) {
   const tones: Record<string, string> = {
-    approve: 'bg-emerald-600/90 hover:bg-emerald-500 text-white disabled:bg-emerald-900/50',
-    reject: 'bg-rose-600/90 hover:bg-rose-500 text-white disabled:bg-rose-900/50',
-    neutral: 'bg-white/5 hover:bg-white/10 text-slate-300 disabled:bg-white/5',
-    restore: 'bg-blue-600/90 hover:bg-blue-500 text-white disabled:bg-blue-900/50',
+    approve: 'bg-emerald-600/90 hover:bg-emerald-500 text-white disabled:opacity-40',
+    reject: 'bg-rose-600/90 hover:bg-rose-500 text-white disabled:opacity-40',
+    neutral: 'bg-muted/60 hover:bg-muted text-foreground/80 disabled:bg-muted/60',
+    restore: 'bg-blue-600/90 hover:bg-blue-500 text-white disabled:opacity-40',
   };
   return (
     <button
@@ -150,13 +151,13 @@ function IconButton({
 
 function StatCard({ label, value, tone }: { label: string; value: number; tone: 'blue' | 'emerald' | 'rose' }) {
   const tones: Record<string, string> = {
-    blue: 'text-blue-300',
-    emerald: 'text-emerald-300',
-    rose: 'text-rose-300',
+    blue: 'text-primary',
+    emerald: 'text-emerald-600',
+    rose: 'text-rose-600',
   };
   return (
-    <div className="bg-white/[0.03] border border-white/5 rounded-xl px-5 py-4 flex-1 min-w-[140px]">
-      <p className="text-slate-500 text-xs font-medium uppercase tracking-wide mb-1">{label}</p>
+    <div className="bg-card border border-border/60 shadow-sm rounded-xl px-5 py-4 flex-1 min-w-[140px]">
+      <p className="text-muted-foreground text-xs font-medium uppercase tracking-wide mb-1">{label}</p>
       <p className={'text-2xl font-bold tabular-nums ' + tones[tone]}>{value.toLocaleString()}</p>
     </div>
   );
@@ -180,73 +181,73 @@ function EditModal({
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose}>
       <div
-        className="bg-[#12141c] border border-white/10 rounded-2xl p-6 w-full max-w-md max-h-[85vh] overflow-y-auto shadow-2xl"
+        className="bg-card border border-border rounded-2xl p-6 w-full max-w-md max-h-[85vh] overflow-y-auto shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-base font-semibold text-blue-300 mb-5">Edit before approving</h2>
+        <h2 className="text-base font-semibold text-primary mb-5">Edit before approving</h2>
 
         <div className="flex flex-col gap-4">
-          <label className="text-xs text-slate-500">
+          <label className="text-xs text-muted-foreground">
             Title
             <input
               value={form.title}
               onChange={(e) => field('title', e.target.value)}
-              className="mt-1.5 w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500/60 focus:bg-white/[0.07]"
+              className="mt-1.5 w-full bg-muted/60 border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary/60 focus:bg-muted"
             />
           </label>
 
           <div className="grid grid-cols-2 gap-3">
-            <label className="text-xs text-slate-500">
+            <label className="text-xs text-muted-foreground">
               Country
               <select
                 value={form.country}
                 onChange={(e) => field('country', e.target.value)}
-                className="mt-1.5 w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500/60"
+                className="mt-1.5 w-full bg-muted/60 border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary/60"
               >
                 {COUNTRY_OPTIONS.map((c) => (
                   <option key={c} value={c}>{c}</option>
                 ))}
               </select>
             </label>
-            <label className="text-xs text-slate-500">
+            <label className="text-xs text-muted-foreground">
               Status
               <select
                 value={form.status}
                 onChange={(e) => field('status', e.target.value)}
-                className="mt-1.5 w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500/60"
+                className="mt-1.5 w-full bg-muted/60 border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary/60"
               >
                 {STATUS_OPTIONS.map((s) => (
                   <option key={s} value={s}>{s}</option>
                 ))}
               </select>
             </label>
-            <label className="text-xs text-slate-500">
+            <label className="text-xs text-muted-foreground">
               Year
               <input
                 type="number"
                 value={form.year ?? ''}
                 onChange={(e) => field('year', e.target.value ? parseInt(e.target.value) : null)}
-                className="mt-1.5 w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500/60"
+                className="mt-1.5 w-full bg-muted/60 border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary/60"
               />
             </label>
-            <label className="text-xs text-slate-500">
+            <label className="text-xs text-muted-foreground">
               Episodes
               <input
                 type="number"
                 value={form.episode_count}
                 onChange={(e) => field('episode_count', parseInt(e.target.value) || 0)}
-                className="mt-1.5 w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500/60"
+                className="mt-1.5 w-full bg-muted/60 border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary/60"
               />
             </label>
           </div>
 
-          <label className="text-xs text-slate-500">
+          <label className="text-xs text-muted-foreground">
             Synopsis
             <textarea
               value={form.synopsis}
               onChange={(e) => field('synopsis', e.target.value)}
               rows={4}
-              className="mt-1.5 w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-slate-300 resize-none focus:outline-none focus:border-blue-500/60"
+              className="mt-1.5 w-full bg-muted/60 border border-border rounded-lg px-3 py-2 text-sm text-foreground/80 resize-none focus:outline-none focus:border-primary/60"
             />
           </label>
         </div>
@@ -254,13 +255,13 @@ function EditModal({
         <div className="flex gap-2 mt-6">
           <button
             onClick={() => { onSave(form); onClose(); }}
-            className="flex-1 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium py-2 rounded-lg transition-colors"
+            className="flex-1 bg-primary hover:opacity-90 text-white text-sm font-medium py-2 rounded-lg transition-colors"
           >
             Save
           </button>
           <button
             onClick={onClose}
-            className="flex-1 bg-white/5 hover:bg-white/10 text-slate-300 text-sm py-2 rounded-lg transition-colors"
+            className="flex-1 bg-muted/60 hover:bg-muted text-foreground/80 text-sm py-2 rounded-lg transition-colors"
           >
             Cancel
           </button>
@@ -369,27 +370,27 @@ function TaxonomyModal({
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose}>
       <div
-        className="bg-[#12141c] border border-white/10 rounded-2xl p-6 w-full max-w-xl max-h-[85vh] overflow-y-auto shadow-2xl"
+        className="bg-card border border-border rounded-2xl p-6 w-full max-w-xl max-h-[85vh] overflow-y-auto shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-5">
-          <h2 className="text-base font-semibold text-blue-300">Taxonomy — {candidate.title}</h2>
+          <h2 className="text-base font-semibold text-primary">Taxonomy — {candidate.title}</h2>
           <Chip tone={curationBadgeTone(curation.level)}>Curation Level {curation.level}</Chip>
         </div>
 
         {curation.missingForLevel1.length > 0 && (
-          <p className="text-xs text-amber-300/80 mb-4">
+          <p className="text-xs text-amber-700 mb-4">
             Missing for Level 1: {curation.missingForLevel1.join(', ')}
           </p>
         )}
 
         <div className="grid grid-cols-2 gap-3 mb-5">
-          <label className="text-xs text-slate-500">
+          <label className="text-xs text-muted-foreground">
             Romance Pace *
             <select
               value={romancePace}
               onChange={(e) => setRomancePace(e.target.value)}
-              className="mt-1.5 w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500/60"
+              className="mt-1.5 w-full bg-muted/60 border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary/60"
             >
               <option value="">Select...</option>
               {Object.entries(ROMANCE_PACE_DISPLAY).map(([key, { emoji, label }]) => (
@@ -397,12 +398,12 @@ function TaxonomyModal({
               ))}
             </select>
           </label>
-          <label className="text-xs text-slate-500">
+          <label className="text-xs text-muted-foreground">
             Ending Type *
             <select
               value={endingType}
               onChange={(e) => setEndingType(e.target.value)}
-              className="mt-1.5 w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500/60"
+              className="mt-1.5 w-full bg-muted/60 border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary/60"
             >
               <option value="">Select...</option>
               {Object.entries(ENDING_TYPE_DISPLAY).map(([key, { emoji, label }]) => (
@@ -410,12 +411,12 @@ function TaxonomyModal({
               ))}
             </select>
           </label>
-          <label className="text-xs text-slate-500">
+          <label className="text-xs text-muted-foreground">
             Emotional Intensity
             <select
               value={emotionalIntensity}
               onChange={(e) => setEmotionalIntensity(e.target.value)}
-              className="mt-1.5 w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500/60"
+              className="mt-1.5 w-full bg-muted/60 border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary/60"
             >
               <option value="">Select...</option>
               {Object.entries(EMOTIONAL_INTENSITY_DISPLAY).map(([key, { emoji, label }]) => (
@@ -423,12 +424,12 @@ function TaxonomyModal({
               ))}
             </select>
           </label>
-          <label className="text-xs text-slate-500">
+          <label className="text-xs text-muted-foreground">
             Content Level
             <select
               value={contentLevel}
               onChange={(e) => setContentLevel(e.target.value)}
-              className="mt-1.5 w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500/60"
+              className="mt-1.5 w-full bg-muted/60 border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary/60"
             >
               <option value="">Needs Content Review</option>
               {Object.entries(CONTENT_LEVEL_DISPLAY).map(([key, { emoji, label }]) => (
@@ -441,8 +442,8 @@ function TaxonomyModal({
         {dimensionSections.map(({ dimension, label, helperText }) => (
           <div key={dimension} className="mb-4">
             <div className="flex items-baseline justify-between mb-1.5">
-              <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</span>
-              <span className="text-[11px] text-slate-600">{helperText}</span>
+              <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</span>
+              <span className="text-[11px] text-muted-foreground/70">{helperText}</span>
             </div>
             <div className="flex flex-wrap gap-1.5">
               {(availableTags[dimension] || []).map((tag) => {
@@ -455,8 +456,8 @@ function TaxonomyModal({
                     className={
                       'text-xs px-2.5 py-1 rounded-full border transition-colors ' +
                       (active
-                        ? 'border-blue-500/60 bg-blue-500/15 text-blue-300'
-                        : 'border-white/10 bg-white/5 text-slate-400 hover:border-white/20')
+                        ? 'border-primary/60 bg-blue-500/15 text-primary'
+                        : 'border-border bg-muted/60 text-muted-foreground hover:border-ring')
                     }
                   >
                     {tag.display_label}
@@ -471,18 +472,18 @@ function TaxonomyModal({
           <button
             onClick={handleSave}
             disabled={saving}
-            className="flex-1 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-900/50 text-white text-sm font-medium py-2 rounded-lg transition-colors"
+            className="flex-1 bg-primary hover:opacity-90 disabled:opacity-40 text-white text-sm font-medium py-2 rounded-lg transition-colors"
           >
             {saving ? 'Saving...' : 'Save Taxonomy'}
           </button>
           <button
             onClick={onClose}
-            className="flex-1 bg-white/5 hover:bg-white/10 text-slate-300 text-sm py-2 rounded-lg transition-colors"
+            className="flex-1 bg-muted/60 hover:bg-muted text-foreground/80 text-sm py-2 rounded-lg transition-colors"
           >
             Close
           </button>
         </div>
-        {saveError && <p className="text-rose-400 text-xs mt-2">{saveError}</p>}
+        {saveError && <p className="text-rose-600 text-xs mt-2">{saveError}</p>}
       </div>
     </div>
   );
@@ -534,17 +535,17 @@ function CandidateRow({
   return (
     <div
       className={
-        'bg-[#0e1016] border-l-4 px-3.5 py-3 flex gap-3.5 transition-colors hover:bg-white/[0.02] ' +
+        'bg-card border-l-4 px-3.5 py-3 flex gap-3.5 transition-colors hover:bg-muted/40 ' +
         accentColor(candidate) +
-        (isActive ? ' bg-blue-500/[0.06] ring-1 ring-inset ring-blue-500/40' : '')
+        (isActive ? ' bg-primary/5 ring-1 ring-inset ring-primary/40' : '')
       }
     >
-      <div className="relative w-14 h-20 flex-shrink-0 bg-white/5 rounded-md overflow-hidden">
+      <div className="relative w-14 h-20 flex-shrink-0 bg-muted/60 rounded-md overflow-hidden">
         {candidate.poster_url ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={candidate.poster_url} alt={edited.title} className="w-full h-full object-cover" />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-slate-600 text-[9px] px-1 text-center">
+          <div className="w-full h-full flex items-center justify-center text-muted-foreground/70 text-[9px] px-1 text-center">
             {edited.title}
           </div>
         )}
@@ -552,8 +553,8 @@ function CandidateRow({
 
       <div className="flex-1 min-w-0 grid grid-cols-1 md:grid-cols-[1.3fr_1fr_auto] gap-x-4 gap-y-1 items-center">
         <div className="min-w-0">
-          <h3 className="font-semibold text-sm leading-snug tracking-tight truncate text-white">{edited.title}</h3>
-          <p className="text-xs text-slate-500 truncate">
+          <h3 className="font-semibold text-sm leading-snug tracking-tight truncate text-foreground">{edited.title}</h3>
+          <p className="text-xs text-muted-foreground truncate">
             {edited.country} · {edited.year ?? '—'}
             {candidate.media_type !== 'movie' ? ' · ' + edited.episode_count + ' eps' : ' · Movie'}
             {' · ' + edited.status}
@@ -571,15 +572,15 @@ function CandidateRow({
 
         <div className="min-w-0 hidden md:block">
           {candidate.genre_names && candidate.genre_names.length > 0 && (
-            <p className="text-xs text-slate-500 truncate">{candidate.genre_names.join(' · ')}</p>
+            <p className="text-xs text-muted-foreground truncate">{candidate.genre_names.join(' · ')}</p>
           )}
-          {castNames && <p className="text-xs text-slate-600 truncate mt-0.5">Cast: {castNames}</p>}
+          {castNames && <p className="text-xs text-muted-foreground/70 truncate mt-0.5">Cast: {castNames}</p>}
           {link && (
             <a
               href={link}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs text-slate-500 hover:text-blue-400 transition-colors"
+              className="text-xs text-muted-foreground hover:text-primary transition-colors"
             >
               TMDB ↗
             </a>
@@ -865,30 +866,38 @@ export default function AdminCandidatesPage() {
 
   if (access === 'signed_out') {
     return (
-      <main className="min-h-screen bg-[#0a0c10] text-white p-8">
-        <p className="text-slate-400">
-          <button type="button" onClick={() => openAuthModal('login')} className="text-blue-400 hover:text-blue-300">
-            Sign in
-          </button>{' '}
-          to access this page.
-        </p>
-      </main>
+      <div className="flex min-h-screen bg-background">
+        <AdminSidebar pendingCount={counts.pending} />
+        <main className="flex-1 text-foreground p-8">
+          <p className="text-muted-foreground">
+            <button type="button" onClick={() => openAuthModal('login')} className="text-primary hover:opacity-80">
+              Sign in
+            </button>{' '}
+            to access this page.
+          </p>
+        </main>
+      </div>
     );
   }
 
   if (access === 'forbidden') {
     return (
-      <main className="min-h-screen bg-[#0a0c10] text-white p-8">
-        <p className="text-rose-400">You don&apos;t have access to this page.</p>
-      </main>
+      <div className="flex min-h-screen bg-background">
+        <AdminSidebar pendingCount={counts.pending} />
+        <main className="flex-1 text-foreground p-8">
+          <p className="text-rose-600">You don&apos;t have access to this page.</p>
+        </main>
+      </div>
     );
   }
 
   return (
-    <main className="min-h-screen bg-[#0a0c10] text-white">
-      <div className="max-w-[1400px] mx-auto p-6">
-        <div className="mb-1 text-xs font-medium text-blue-400/80 uppercase tracking-wider">Admin</div>
-        <h1 className="text-2xl font-bold text-white tracking-tight mb-5">TMDB Review Queue</h1>
+    <div className="flex min-h-screen bg-background">
+      <AdminSidebar pendingCount={counts.pending} />
+      <main className="flex-1 min-w-0 text-foreground">
+      <div className="max-w-[1400px] mx-auto p-6 md:p-8">
+        <div className="mb-1 text-xs font-medium text-primary/80 uppercase tracking-wider">Admin</div>
+        <h1 className="font-heading text-2xl font-normal text-foreground tracking-tight mb-5">Editorial Queue</h1>
 
         <div className="flex flex-wrap gap-3 mb-6">
           <StatCard label="Pending" value={counts.pending} tone="blue" />
@@ -897,7 +906,7 @@ export default function AdminCandidatesPage() {
           <StatCard label="Total" value={counts.pending + counts.approved + counts.rejected} tone="blue" />
         </div>
 
-        <div className="border-b border-white/10 flex gap-6 mb-4">
+        <div className="border-b border-border flex gap-6 mb-4">
           {(['pending', 'approved', 'rejected'] as Tab[]).map((tab) => (
             <button
               key={tab}
@@ -905,30 +914,30 @@ export default function AdminCandidatesPage() {
               className={
                 'pb-3 text-sm font-medium capitalize transition-colors border-b-2 -mb-px flex items-center gap-2 ' +
                 (activeTab === tab
-                  ? 'text-white border-blue-500'
-                  : 'text-slate-500 border-transparent hover:text-slate-300')
+                  ? 'text-foreground border-primary'
+                  : 'text-muted-foreground border-transparent hover:text-foreground/80')
               }
             >
               {tab}
-              <span className="text-xs bg-white/10 text-slate-400 px-1.5 py-0.5 rounded-full tabular-nums">
+              <span className="text-xs bg-muted text-muted-foreground px-1.5 py-0.5 rounded-full tabular-nums">
                 {counts[tab]}
               </span>
             </button>
           ))}
         </div>
 
-        <div className="sticky top-0 z-10 bg-[#0a0c10]/95 backdrop-blur-sm pt-2 pb-3 -mt-2">
-          <div className="bg-white/[0.03] border border-white/5 rounded-xl p-3 flex flex-wrap gap-2">
+        <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm pt-2 pb-3 -mt-2">
+          <div className="bg-muted/40 border border-border/60 rounded-xl p-3 flex flex-wrap gap-2">
             <input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search title..."
-              className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500/60"
+              className="bg-muted/60 border border-border rounded-lg px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/60"
             />
             <select
               value={countryFilter}
               onChange={(e) => setCountryFilter(e.target.value)}
-              className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-blue-500/60"
+              className="bg-muted/60 border border-border rounded-lg px-3 py-1.5 text-sm text-foreground focus:outline-none focus:border-primary/60"
             >
               <option value="All">All countries</option>
               {COUNTRY_OPTIONS.map((c) => (
@@ -938,7 +947,7 @@ export default function AdminCandidatesPage() {
             <select
               value={mediaTypeFilter}
               onChange={(e) => setMediaTypeFilter(e.target.value)}
-              className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-blue-500/60"
+              className="bg-muted/60 border border-border rounded-lg px-3 py-1.5 text-sm text-foreground focus:outline-none focus:border-primary/60"
             >
               <option value="All">TV + Movies</option>
               <option value="tv">TV only</option>
@@ -947,7 +956,7 @@ export default function AdminCandidatesPage() {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-              className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-blue-500/60"
+              className="bg-muted/60 border border-border rounded-lg px-3 py-1.5 text-sm text-foreground focus:outline-none focus:border-primary/60"
             >
               <option value="default">Default order</option>
               <option value="episodes_asc">Episodes: low to high</option>
@@ -955,11 +964,11 @@ export default function AdminCandidatesPage() {
               <option value="year_desc">Year: newest first</option>
               <option value="year_asc">Year: oldest first</option>
             </select>
-            <label className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-slate-300 cursor-pointer">
+            <label className="flex items-center gap-2 bg-muted/60 border border-border rounded-lg px-3 py-1.5 text-sm text-foreground/80 cursor-pointer">
               <input type="checkbox" checked={hideAnimated} onChange={(e) => setHideAnimated(e.target.checked)} />
               Hide animated
             </label>
-            <span className="ml-auto self-center text-xs text-slate-500">
+            <span className="ml-auto self-center text-xs text-muted-foreground">
               {filteredCandidates.length} of {candidates.length} shown
               {activeTab === 'pending' ? ' · A / R shortcuts active' : ''}
             </span>
@@ -973,7 +982,7 @@ export default function AdminCandidatesPage() {
                     filteredCandidates.filter((c) => c.episode_count >= LONG_RUNNING_THRESHOLD),
                     LONG_RUNNING_THRESHOLD + '+ episodes'
                   )}
-                  className="bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 text-xs font-medium px-3 py-1.5 rounded-full transition-colors"
+                  className="bg-amber-100 hover:bg-amber-200 text-amber-700 text-xs font-medium px-3 py-1.5 rounded-full transition-colors"
                 >
                   Reject all {filteredCandidates.filter((c) => c.episode_count >= LONG_RUNNING_THRESHOLD).length} with {LONG_RUNNING_THRESHOLD}+ episodes
                 </button>
@@ -984,7 +993,7 @@ export default function AdminCandidatesPage() {
                     filteredCandidates.filter((c) => c.is_animated),
                     'animated'
                   )}
-                  className="bg-violet-500/15 hover:bg-violet-500/25 text-violet-300 text-xs font-medium px-3 py-1.5 rounded-full transition-colors"
+                  className="bg-violet-100 hover:bg-violet-200 text-violet-700 text-xs font-medium px-3 py-1.5 rounded-full transition-colors"
                 >
                   Reject all {filteredCandidates.filter((c) => c.is_animated).length} animated
                 </button>
@@ -993,14 +1002,14 @@ export default function AdminCandidatesPage() {
           )}
         </div>
 
-        {errorMessage && <p className="text-rose-400 my-3 text-sm">{errorMessage}</p>}
+        {errorMessage && <p className="text-rose-600 my-3 text-sm">{errorMessage}</p>}
 
         {access === 'error' && (
-          <p className="text-rose-400 text-sm mt-3">Could not load candidates. Try refreshing the page.</p>
+          <p className="text-rose-600 text-sm mt-3">Could not load candidates. Try refreshing the page.</p>
         )}
 
         {access === 'ok' && candidates.length === 0 && (
-          <p className="text-slate-400 text-sm mt-3">
+          <p className="text-muted-foreground text-sm mt-3">
             {activeTab === 'pending'
               ? 'No pending candidates right now. Run the discovery script to queue more.'
               : 'Nothing here yet.'}
@@ -1008,11 +1017,11 @@ export default function AdminCandidatesPage() {
         )}
 
         {access === 'ok' && candidates.length > 0 && filteredCandidates.length === 0 && (
-          <p className="text-slate-400 text-sm mt-3">No candidates match the current filters.</p>
+          <p className="text-muted-foreground text-sm mt-3">No candidates match the current filters.</p>
         )}
 
         {access === 'ok' && filteredCandidates.length > 0 && (
-          <div className="border border-white/5 rounded-xl overflow-hidden divide-y divide-white/5 mt-3">
+          <div className="border border-border/60 rounded-xl overflow-hidden divide-y divide-border/60 mt-3">
             {filteredCandidates.map((candidate, index) => (
               <CandidateRow
                 key={candidate.id}
@@ -1031,6 +1040,7 @@ export default function AdminCandidatesPage() {
           </div>
         )}
       </div>
-    </main>
+      </main>
+    </div>
   );
 }

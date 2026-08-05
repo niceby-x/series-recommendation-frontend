@@ -142,7 +142,7 @@ export default function Navbar() {
   // '/new-releases' -- so this top navbar would just duplicate them. Every
   // other authed route still gets this bar as normal. Add new
   // dashboard-style pages' paths here as they're built.
-  const DASHBOARD_ROUTES = ['/', '/series', '/moods', '/tropes', '/collections', '/new-releases'];
+  const DASHBOARD_ROUTES = ['/', '/series', '/moods', '/tropes', '/collections', '/new-releases', '/admin'];
   if (user && DASHBOARD_ROUTES.includes(pathname)) {
     return null;
   }
@@ -292,7 +292,7 @@ export default function Navbar() {
                 </div>
                 {isAdmin && (
                   <Link
-                    href="/admin/candidates"
+                    href="/admin"
                     className="w-full flex items-center gap-2 text-left px-4 py-2.5 text-sm text-popover-foreground hover:bg-muted transition-colors"
                   >
                     <ShieldCheck className="size-4" />
