@@ -53,16 +53,16 @@ export interface AdminNavSection {
 }
 
 // href: real destinations only where a page actually exists today
-// (Dashboard, Editorial Queue, Reviews, Users, Tags, Collections, Moods,
-// Tropes, Import & Sync). Everything else renders as a disabled row with a
-// "Soon" pill in AdminSidebar -- same honest-placeholder convention as
-// DashboardSidebar/MoodFilterChips' empty state, rather than a link that
-// goes nowhere real.
+// (Dashboard, Editorial Queue, Reviews, Users, Tags, Series & Movies,
+// Collections, Moods, Tropes, Import & Sync). Everything else renders as a
+// disabled row with a "Soon" pill in AdminSidebar -- same honest-placeholder
+// convention as DashboardSidebar/MoodFilterChips' empty state, rather than
+// a link that goes nowhere real.
 export const ADMIN_NAV_SECTIONS: AdminNavSection[] = [
   {
     label: 'Content',
     items: [
-      { label: 'Series & Movies', href: null, icon: Film },
+      { label: 'Series & Movies', href: '/admin/series', icon: Film },
       { label: 'Episodes', href: null, icon: Clapperboard },
       { label: 'Collections', href: '/collections', icon: FolderOpen },
       { label: 'Genres', href: null, icon: TagIcon },
