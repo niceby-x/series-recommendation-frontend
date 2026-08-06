@@ -26,6 +26,7 @@ export default function AdminUsersPage() {
   const [pendingCount, setPendingCount] = useState(0);
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState<SortKey>('newest');
+  const [busyIds, setBusyIds] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -91,6 +92,92 @@ export default function AdminUsersPage() {
 
     return sorted;
   }, [users, search, sort]);
+
+  async function withAdminAuth<T>(run: (authHeader: Record<string, string>) => Promise<T>): Promise<T | null> {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session) {
+      setAccess('signed_out');
+      return null;
+    }
+    return run({ Authorization: 'Bearer ' + session.access_token });
+  }
+
+  async function handleToggleAdmin(target: UserRow) {
+    setBusyIds((prev) => new Set(prev).add(target.id));
+
+    const result = await withAdminAuth((authHeader) =>
+      fetch(process.env.NEXT_PUBLIC_API_URL + '/admin/users/' + target.id + '/admin', {
+        method: 'PATCH',
+        headers: { ...authHeader, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_admin: !target.is_admin }),
+      })
+    );
+
+    setBusyIds((prev) => {
+      const next = new Set(prev);
+      next.delete(target.id);
+      return next;
+    });
+
+    if (!result?.ok) return;
+    const json = await result.json();
+    setUsers((prev) => prev.map((u) => (u.id === target.id ? { ...u, ...json.data } : u)));
+  }
+
+  async function handleToggleBan(target: UserRow) {
+    const confirmed = target.is_banned
+      ? true
+      : window.confirm('Ban "' + target.username + '"? They\'ll be signed out and unable to sign back in until unbanned.');
+    if (!confirmed) return;
+
+    setBusyIds((prev) => new Set(prev).add(target.id));
+
+    const result = await withAdminAuth((authHeader) =>
+      fetch(process.env.NEXT_PUBLIC_API_URL + '/admin/users/' + target.id + '/ban', {
+        method: 'PATCH',
+        headers: { ...authHeader, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_banned: !target.is_banned }),
+      })
+    );
+
+    setBusyIds((prev) => {
+      const next = new Set(prev);
+      next.delete(target.id);
+      return next;
+    });
+
+    if (!result?.ok) return;
+    const json = await result.json();
+    setUsers((prev) => prev.map((u) => (u.id === target.id ? { ...u, ...json.data } : u)));
+  }
+
+  async function handleDelete(target: UserRow) {
+    const confirmed = window.confirm(
+      'Permanently delete "' + target.username + '"? This removes their account, ratings, and watchlist. This cannot be undone.'
+    );
+    if (!confirmed) return;
+
+    setBusyIds((prev) => new Set(prev).add(target.id));
+
+    const result = await withAdminAuth((authHeader) =>
+      fetch(process.env.NEXT_PUBLIC_API_URL + '/admin/users/' + target.id, {
+        method: 'DELETE',
+        headers: authHeader,
+      })
+    );
+
+    setBusyIds((prev) => {
+      const next = new Set(prev);
+      next.delete(target.id);
+      return next;
+    });
+
+    if (result?.ok) {
+      setUsers((prev) => prev.filter((u) => u.id !== target.id));
+    }
+  }
 
   if (access === 'checking') return null;
 
@@ -167,7 +254,13 @@ export default function AdminUsersPage() {
             </div>
           </div>
 
-          <UsersTable rows={visibleUsers} />
+          <UsersTable
+            rows={visibleUsers}
+            busyIds={busyIds}
+            onToggleAdmin={handleToggleAdmin}
+            onToggleBan={handleToggleBan}
+            onDelete={handleDelete}
+          />
         </div>
       </div>
     </div>
