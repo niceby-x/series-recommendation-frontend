@@ -66,6 +66,7 @@ export default function AdminDashboardPage() {
   const [counts, setCounts] = useState<Counts>({ pending: 0, approved: 0, rejected: 0 });
   const [queue, setQueue] = useState<PendingCandidate[]>([]);
   const [allSeries, setAllSeries] = useState<SeriesCardData[]>([]);
+  const [userCount, setUserCount] = useState(0);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -85,17 +86,18 @@ export default function AdminDashboardPage() {
       }
       const authHeader = { Authorization: 'Bearer ' + session.access_token };
 
-      const [countsRes, queueRes, seriesRes] = await Promise.all([
+      const [countsRes, queueRes, seriesRes, usersRes] = await Promise.all([
         fetch(process.env.NEXT_PUBLIC_API_URL + '/admin/candidates/counts', { headers: authHeader }),
         fetch(process.env.NEXT_PUBLIC_API_URL + '/admin/candidates?status=pending', { headers: authHeader }),
         fetch(process.env.NEXT_PUBLIC_API_URL + '/series', { cache: 'no-store' }),
+        fetch(process.env.NEXT_PUBLIC_API_URL + '/admin/users', { headers: authHeader }),
       ]);
 
-      if (countsRes.status === 401 || queueRes.status === 401) {
+      if (countsRes.status === 401 || queueRes.status === 401 || usersRes.status === 401) {
         setAccess('signed_out');
         return;
       }
-      if (countsRes.status === 403 || queueRes.status === 403) {
+      if (countsRes.status === 403 || queueRes.status === 403 || usersRes.status === 403) {
         setAccess('forbidden');
         return;
       }
@@ -113,6 +115,11 @@ export default function AdminDashboardPage() {
       if (seriesRes.ok) {
         const seriesJson = await seriesRes.json();
         setAllSeries(seriesJson.data || []);
+      }
+
+      if (usersRes.ok) {
+        const usersJson = await usersRes.json();
+        setUserCount(usersJson.count || 0);
       }
 
       setAccess('ok');
@@ -164,15 +171,16 @@ export default function AdminDashboardPage() {
     priority: priorityFor(c),
   }));
 
-  // Real: total/pending/published (Users/Comments are placeholders -- see
-  // lib/adminContent.ts header for exactly why). Total = published series
-  // + still-pending candidates -- not + counts.approved, since an approved
-  // candidate becomes a series row, so that's already inside allSeries.
+  // Real: total/pending/published/users (Comments is still a placeholder --
+  // see lib/adminContent.ts header for exactly why). Total = published
+  // series + still-pending candidates -- not + counts.approved, since an
+  // approved candidate becomes a series row, so that's already inside
+  // allSeries.
   const statValues: Record<string, { value: string; subtitle: string }> = {
     total: { value: (allSeries.length + counts.pending).toLocaleString(), subtitle: 'Live + in review' },
     pending: { value: String(counts.pending), subtitle: 'Requires your review' },
     published: { value: allSeries.length.toLocaleString(), subtitle: 'Live on site' },
-    users: { value: '8,532', subtitle: '↑ 156 this week (est.)' },
+    users: { value: userCount.toLocaleString(), subtitle: 'Registered accounts' },
     comments: { value: '2,340', subtitle: '↑ 71 this week (est.)' },
   };
 

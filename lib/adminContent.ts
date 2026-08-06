@@ -1,13 +1,13 @@
 // lib/adminContent.ts
 //
 // Content for the Admin Dashboard (app/admin/page.tsx). Real data (fetched
-// via the existing /admin/candidates/counts and /series endpoints) covers
-// Total Titles, Pending Review, Published, and Recently Published -- those
-// numbers are true today. Everything else here (Users, Comments, Recent
-// Activity, Top Moods percentages, week-over-week deltas) is PLACEHOLDER
-// pending real tables/endpoints that don't exist yet (no users-count
-// endpoint, no comments feature, no activity log, no mood-tag column on
-// series) -- same honest-mock convention as lib/dashboardContent.ts.
+// via the existing /admin/candidates/counts, /admin/users, and /series
+// endpoints) covers Total Titles, Pending Review, Published, Users, and
+// Recently Published -- those numbers are true today. Everything else here
+// (Comments, Recent Activity, Top Moods percentages, week-over-week
+// deltas) is PLACEHOLDER pending real tables/endpoints that don't exist yet
+// (no comments feature, no activity log, no mood-tag column on series) --
+// same honest-mock convention as lib/dashboardContent.ts.
 
 import type { LucideIcon } from 'lucide-react';
 import {
@@ -53,10 +53,11 @@ export interface AdminNavSection {
 }
 
 // href: real destinations only where a page actually exists today
-// (Dashboard, Editorial Queue, Collections, Moods, Tropes). Everything
-// else renders as a disabled row with a "Soon" pill in AdminSidebar --
-// same honest-placeholder convention as DashboardSidebar/MoodFilterChips'
-// empty state, rather than a link that goes nowhere real.
+// (Dashboard, Editorial Queue, Reviews, Users, Collections, Moods, Tropes,
+// Import & Sync). Everything else renders as a disabled row with a "Soon"
+// pill in AdminSidebar -- same honest-placeholder convention as
+// DashboardSidebar/MoodFilterChips' empty state, rather than a link that
+// goes nowhere real.
 export const ADMIN_NAV_SECTIONS: AdminNavSection[] = [
   {
     label: 'Content',
@@ -74,14 +75,14 @@ export const ADMIN_NAV_SECTIONS: AdminNavSection[] = [
     label: 'Curation',
     items: [
       { label: 'Editorial Queue', href: '/admin/candidates', icon: ClipboardList, badgeKey: 'pending' },
-      { label: 'Reviews', href: null, icon: CheckCircle2 },
+      { label: 'Reviews', href: '/admin/reviews', icon: CheckCircle2 },
       { label: 'Curator Picks', href: null, icon: Sparkles },
     ],
   },
   {
     label: 'Community',
     items: [
-      { label: 'Users', href: null, icon: Users },
+      { label: 'Users', href: '/admin/users', icon: Users },
       { label: 'Comments', href: null, icon: MessageCircle },
       { label: 'Reports', href: null, icon: Flag },
     ],
@@ -91,7 +92,7 @@ export const ADMIN_NAV_SECTIONS: AdminNavSection[] = [
     items: [
       { label: 'Settings', href: null, icon: Settings },
       { label: 'Taxonomies', href: null, icon: Boxes },
-      { label: 'Import & Sync', href: null, icon: RefreshCw },
+      { label: 'Import & Sync', href: '/admin/import', icon: RefreshCw },
       { label: 'Logs', href: null, icon: FileText },
     ],
   },

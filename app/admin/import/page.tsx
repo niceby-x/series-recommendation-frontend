@@ -1,0 +1,289 @@
+'use client';
+
+import { useEffect, useRef, useState } from 'react';
+import { Play, Loader2, CheckCircle2, XCircle, UploadCloud } from 'lucide-react';
+import type { User } from '@supabase/supabase-js';
+import { supabase } from '../../../lib/supabase';
+import { useAuthModal } from '../../../lib/AuthModalContext';
+import AdminSidebar from '../../../components/admin/AdminSidebar';
+
+type AccessState = 'checking' | 'signed_out' | 'forbidden' | 'ok' | 'error';
+
+interface ImportStatus {
+  running: boolean;
+  startedAt: string | null;
+  finishedAt: string | null;
+  exitCode: number | null;
+  limit: number | null;
+  logTail: string[];
+  error: string | null;
+}
+
+const POLL_INTERVAL_MS = 3000;
+
+async function authHeader() {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (!session) return null;
+  return { Authorization: 'Bearer ' + session.access_token };
+}
+
+export default function AdminImportPage() {
+  const { open: openAuthModal } = useAuthModal();
+  const [user, setUser] = useState<User | null>(null);
+  const [access, setAccess] = useState<AccessState>('checking');
+  const [pendingCount, setPendingCount] = useState(0);
+  const [status, setStatus] = useState<ImportStatus | null>(null);
+  const [limitInput, setLimitInput] = useState('150');
+  const [starting, setStarting] = useState(false);
+  const [startError, setStartError] = useState<string | null>(null);
+  const logRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      if (!session?.user) setAccess('signed_out');
+    });
+  }, []);
+
+  async function fetchStatus() {
+    const header = await authHeader();
+    if (!header) {
+      setAccess('signed_out');
+      return;
+    }
+
+    const res = await fetch(process.env.NEXT_PUBLIC_API_URL + '/admin/import/status', { headers: header });
+    if (res.status === 401) {
+      setAccess('signed_out');
+      return;
+    }
+    if (res.status === 403) {
+      setAccess('forbidden');
+      return;
+    }
+    if (!res.ok) {
+      setAccess('error');
+      return;
+    }
+
+    const json = await res.json();
+    setStatus(json);
+    setAccess('ok');
+  }
+
+  async function loadCounts() {
+    const header = await authHeader();
+    if (!header) return;
+    const res = await fetch(process.env.NEXT_PUBLIC_API_URL + '/admin/candidates/counts', { headers: header });
+    if (res.ok) {
+      const json = await res.json();
+      setPendingCount(json.pending || 0);
+    }
+  }
+
+  useEffect(() => {
+    if (!user) return;
+
+    async function load() {
+      await fetchStatus();
+      await loadCounts();
+    }
+
+    load();
+  }, [user]);
+
+  // Poll while a run is in progress -- the whole point of the
+  // spawn-and-poll pattern on the backend is that a real run takes minutes,
+  // so status has to be pulled rather than delivered in the original
+  // response.
+  useEffect(() => {
+    if (!status?.running) return;
+    const interval = setInterval(fetchStatus, POLL_INTERVAL_MS);
+    return () => clearInterval(interval);
+  }, [status?.running]);
+
+  useEffect(() => {
+    logRef.current?.scrollTo({ top: logRef.current.scrollHeight });
+  }, [status?.logTail]);
+
+  async function handleStart() {
+    setStartError(null);
+    const header = await authHeader();
+    if (!header) {
+      setAccess('signed_out');
+      return;
+    }
+
+    const parsedLimit = parseInt(limitInput);
+    const limit = Number.isFinite(parsedLimit) && parsedLimit > 0 ? parsedLimit : 150;
+
+    setStarting(true);
+    const res = await fetch(process.env.NEXT_PUBLIC_API_URL + '/admin/import/run', {
+      method: 'POST',
+      headers: { ...header, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ limit }),
+    });
+    setStarting(false);
+
+    if (res.status === 409) {
+      setStartError('An import is already running.');
+      fetchStatus();
+      return;
+    }
+    if (!res.ok) {
+      setStartError('Could not start the import. Try again.');
+      return;
+    }
+
+    fetchStatus();
+  }
+
+  if (access === 'checking') return null;
+
+  if (access === 'signed_out') {
+    return (
+      <main className="min-h-screen bg-background p-8">
+        <p className="text-muted-foreground">
+          <button type="button" onClick={() => openAuthModal('login')} className="text-primary font-semibold hover:opacity-80">
+            Sign in
+          </button>{' '}
+          to access the admin dashboard.
+        </p>
+      </main>
+    );
+  }
+
+  if (access === 'forbidden') {
+    return (
+      <main className="min-h-screen bg-background p-8">
+        <p className="text-rose-500 font-semibold">You don&apos;t have access to this page.</p>
+      </main>
+    );
+  }
+
+  if (access === 'error') {
+    return (
+      <main className="min-h-screen bg-background p-8">
+        <p className="text-rose-500">Could not load import status. Try refreshing the page.</p>
+      </main>
+    );
+  }
+
+  const running = status?.running ?? false;
+
+  return (
+    <div className="flex min-h-screen bg-background">
+      <AdminSidebar pendingCount={pendingCount} />
+
+      <div className="flex-1 min-w-0 px-5 md:px-8 lg:px-10 py-6 md:py-8">
+        <div className="w-full max-w-[900px] mx-auto">
+          <div className="mb-6">
+            <h1 className="font-heading text-[26px] md:text-[30px] leading-tight font-normal text-foreground">Import &amp; Sync</h1>
+            <p className="text-muted-foreground text-[14px] mt-1">
+              Run the TMDB discovery script to queue new titles into the Editorial Queue for review.
+            </p>
+          </div>
+
+          <div className="rounded-[20px] bg-card border border-border/60 shadow-sm p-5 mb-6">
+            <div className="flex flex-wrap items-end justify-between gap-4">
+              <div className="flex items-end gap-3">
+                <div>
+                  <label htmlFor="import-limit" className="block text-[12.5px] font-semibold text-foreground mb-1.5">
+                    Limit per media type
+                  </label>
+                  <input
+                    id="import-limit"
+                    type="number"
+                    min={1}
+                    value={limitInput}
+                    onChange={(e) => setLimitInput(e.target.value)}
+                    disabled={running}
+                    className="w-28 bg-background text-foreground rounded-xl px-3.5 py-2.5 text-sm border border-border focus:outline-none focus:border-ring transition-colors disabled:opacity-50"
+                  />
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleStart}
+                  disabled={running || starting}
+                  className="flex items-center gap-2 bg-brand-gradient text-white px-4 py-2.5 rounded-full text-sm font-semibold shadow-sm hover:opacity-90 transition-opacity disabled:opacity-50 disabled:pointer-events-none"
+                >
+                  {running ? <Loader2 className="size-4 animate-spin" /> : <Play className="size-4" />}
+                  {running ? 'Running…' : 'Start Import'}
+                </button>
+              </div>
+
+              <StatusBadge status={status} />
+            </div>
+
+            {startError && <p className="text-rose-500 text-[13px] mt-3">{startError}</p>}
+            {status?.error && <p className="text-rose-500 text-[13px] mt-3">Process error: {status.error}</p>}
+
+            {status?.startedAt && (
+              <p className="text-muted-foreground text-[12.5px] mt-3">
+                Started {new Date(status.startedAt).toLocaleString()}
+                {status.limit != null ? ' · limit ' + status.limit + ' per media type' : ''}
+                {status.finishedAt ? ' · finished ' + new Date(status.finishedAt).toLocaleString() : ''}
+              </p>
+            )}
+          </div>
+
+          <div className="rounded-[20px] bg-card border border-border/60 shadow-sm overflow-hidden">
+            <div className="px-5 py-3 border-b border-border/60">
+              <p className="font-heading text-[15px] font-normal text-foreground">Log Output</p>
+            </div>
+            <div ref={logRef} className="bg-[#161022] text-[#d8d0e6] font-mono text-[12px] leading-relaxed p-4 h-[380px] overflow-y-auto">
+              {status?.logTail && status.logTail.length > 0 ? (
+                status.logTail.map((line, i) => (
+                  <div key={i} className="whitespace-pre-wrap break-words">
+                    {line}
+                  </div>
+                ))
+              ) : (
+                <p className="text-[#8a7fa3]">No output yet. Start an import to see live logs here.</p>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StatusBadge({ status }: { status: ImportStatus | null }) {
+  if (!status || (!status.running && !status.finishedAt)) {
+    return (
+      <span className="flex items-center gap-1.5 text-muted-foreground text-[13px] font-semibold">
+        <UploadCloud className="size-4" />
+        Idle
+      </span>
+    );
+  }
+
+  if (status.running) {
+    return (
+      <span className="flex items-center gap-1.5 text-amber-600 text-[13px] font-semibold">
+        <Loader2 className="size-4 animate-spin" />
+        Running
+      </span>
+    );
+  }
+
+  if (status.exitCode === 0) {
+    return (
+      <span className="flex items-center gap-1.5 text-emerald-600 text-[13px] font-semibold">
+        <CheckCircle2 className="size-4" />
+        Finished successfully
+      </span>
+    );
+  }
+
+  return (
+    <span className="flex items-center gap-1.5 text-rose-600 text-[13px] font-semibold">
+      <XCircle className="size-4" />
+      Finished with errors (exit {status.exitCode})
+    </span>
+  );
+}

@@ -139,11 +139,20 @@ export default function Navbar() {
   // notifications, profile menu) -- HomeAuthed for '/', DiscoverAuthed for
   // '/series', MoodsAuthed for '/moods', TropesAuthed for '/tropes',
   // CollectionsAuthed for '/collections', NewReleasesAuthed for
-  // '/new-releases' -- so this top navbar would just duplicate them. Every
-  // other authed route still gets this bar as normal. Add new
-  // dashboard-style pages' paths here as they're built.
+  // '/new-releases', AdminSidebar for '/admin' and every '/admin/*'
+  // sub-page -- so this top navbar would just duplicate them. Every other
+  // authed route still gets this bar as normal. Add new dashboard-style
+  // pages' paths here as they're built; give a route its own entry in
+  // DASHBOARD_PREFIX_ROUTES instead of DASHBOARD_ROUTES if it has
+  // sub-pages that should also hide this navbar (like /admin/candidates) --
+  // plain DASHBOARD_ROUTES only match exactly, so a page like '/series'
+  // doesn't accidentally hide the navbar on '/series/[id]', which has no
+  // sidebar of its own.
   const DASHBOARD_ROUTES = ['/', '/series', '/moods', '/tropes', '/collections', '/new-releases', '/admin'];
-  if (user && DASHBOARD_ROUTES.includes(pathname)) {
+  const DASHBOARD_PREFIX_ROUTES = ['/admin'];
+  const isDashboardRoute =
+    DASHBOARD_ROUTES.includes(pathname) || DASHBOARD_PREFIX_ROUTES.some((route) => pathname.startsWith(route + '/'));
+  if (user && isDashboardRoute) {
     return null;
   }
 
