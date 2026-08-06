@@ -17,6 +17,11 @@ interface ImportStatus {
   limit: number | null;
   logTail: string[];
   error: string | null;
+  // Only ever set on the DB-backed fallback the backend returns when
+  // nothing's running in-process (see GET /admin/import/status) -- true
+  // means the backend restarted mid-run and reconciled a stale 'running'
+  // row rather than this run actually finishing on its own.
+  interrupted?: boolean;
 }
 
 const POLL_INTERVAL_MS = 3000;
@@ -267,6 +272,15 @@ function StatusBadge({ status }: { status: ImportStatus | null }) {
       <span className="flex items-center gap-1.5 text-amber-600 text-[13px] font-semibold">
         <Loader2 className="size-4 animate-spin" />
         Running
+      </span>
+    );
+  }
+
+  if (status.interrupted) {
+    return (
+      <span className="flex items-center gap-1.5 text-amber-600 text-[13px] font-semibold">
+        <XCircle className="size-4" />
+        Interrupted by a server restart
       </span>
     );
   }
