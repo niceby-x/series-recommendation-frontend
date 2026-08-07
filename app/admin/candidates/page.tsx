@@ -456,7 +456,7 @@ function TaxonomyModal({
                     className={
                       'text-xs px-2.5 py-1 rounded-full border transition-colors ' +
                       (active
-                        ? 'border-primary/60 bg-blue-500/15 text-primary'
+                        ? 'border-primary/60 bg-primary/10 text-primary'
                         : 'border-border bg-muted/60 text-muted-foreground hover:border-ring')
                     }
                   >
