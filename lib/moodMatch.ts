@@ -38,3 +38,8 @@ export function seriesMatchesTropeKey(tags: SeriesTagData[] | undefined, tropeKe
 export function realTropeCount<T extends { tags?: SeriesTagData[] }>(allSeries: T[], tropeKey: string): number {
   return allSeries.filter((s) => seriesMatchesTropeKey(s.tags, tropeKey)).length;
 }
+
+/** The actual series in `allSeries` whose real trope tags match `tropeKey` (not just a count). */
+export function realTropeMatches<T extends { tags?: SeriesTagData[] }>(allSeries: T[], tropeKey: string): T[] {
+  return allSeries.filter((s) => seriesMatchesTropeKey(s.tags, tropeKey));
+}

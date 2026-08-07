@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import type { SeriesCardData } from '../../components/shared/SeriesCard';
 import HomeGate from '../../components/shared/HomeGate';
 import DiscoverAuthed from '../../components/discover/DiscoverAuthed';
@@ -24,9 +25,20 @@ async function getSeries(): Promise<SeriesCardData[]> {
 
 // Same HomeGate split as app/page.tsx, app/moods/page.tsx, etc: logged-out
 // visitors get DiscoverLanding (the existing real Explore page), logged-in
-// users get the sidebar-dashboard DiscoverAuthed.
+// users get the sidebar-dashboard DiscoverAuthed. DiscoverAuthed now reads
+// useSearchParams (for the ?trope= filter coming from the Tropes page), so
+// it's wrapped in Suspense per Next's requirement for that hook.
 export default async function SeriesPage() {
   const seriesList = await getSeries();
 
-  return <HomeGate landing={<DiscoverLanding seriesList={seriesList} />} authed={<DiscoverAuthed allSeries={seriesList} />} />;
+  return (
+    <HomeGate
+      landing={<DiscoverLanding seriesList={seriesList} />}
+      authed={
+        <Suspense fallback={null}>
+          <DiscoverAuthed allSeries={seriesList} />
+        </Suspense>
+      }
+    />
+  );
 }

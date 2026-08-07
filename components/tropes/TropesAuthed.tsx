@@ -14,27 +14,30 @@ import TopTropesCard from './TopTropesCard';
 import TrendingTropesCard from './TrendingTropesCard';
 import TropeSuggestCard from './TropeSuggestCard';
 import { POPULAR_TROPES, BROWSE_CATEGORIES, NEW_TROPES } from '../../lib/tropesContent';
-import { realTropeCount } from '../../lib/moodMatch';
+import { realTropeMatches } from '../../lib/moodMatch';
 import type { SeriesCardData } from '../shared/SeriesCard';
 
-// The logged-in Tropes page. Unlike Moods, these rows are editorial cards
-// (title/description + a series-count chip), not swappable series
-// thumbnails -- so "real data" here means replacing each card's
-// hardcoded seriesCount with a real count of series carrying a matching
-// `trope`-dimension tag (see lib/moodMatch.ts), while keeping the curated
-// title/description copy. A trope with zero real tags yet keeps its
-// original editorial count rather than dropping to a bare 0, so the row
-// doesn't look broken while tagging is still in progress -- same
-// real-if-available-else-curated convention as Moods' real-first-then-mock
-// cards, just applied to a number instead of a whole card.
+// The logged-in Tropes page. Popular/New Tropes cards now carry real data
+// two ways once a trope has real series_tags matches (see lib/moodMatch.ts):
+// a poster collage/image sourced from the actual matching series, and a
+// working link to /series?trope=key (read by DiscoverAuthed's filter,
+// see components/discover/DiscoverAuthed.tsx) instead of the plain
+// catalog link. A trope with zero real tags yet keeps its original
+// editorial icon/count/link -- same real-if-available-else-curated
+// convention as before, just extended from "just the count" to "the whole
+// card's real-vs-mock presentation."
 export default function TropesAuthed({ allSeries }: { allSeries: SeriesCardData[] }) {
   const [selectedTrope, setSelectedTrope] = useState('all');
 
   const popularTropes = useMemo(
     () =>
       POPULAR_TROPES.map((t) => {
-        const real = realTropeCount(allSeries, t.key);
-        return real > 0 ? { ...t, seriesCount: real } : t;
+        const matches = realTropeMatches(allSeries, t.key);
+        if (matches.length === 0) return { trope: t, posterUrls: undefined as (string | null)[] | undefined };
+        return {
+          trope: { ...t, seriesCount: matches.length },
+          posterUrls: matches.slice(0, 3).map((s) => s.backdrop_url ?? s.poster_url),
+        };
       }),
     [allSeries]
   );
@@ -42,8 +45,12 @@ export default function TropesAuthed({ allSeries }: { allSeries: SeriesCardData[
   const newTropes = useMemo(
     () =>
       NEW_TROPES.map((t) => {
-        const real = realTropeCount(allSeries, t.key);
-        return real > 0 ? { ...t, seriesCount: real } : t;
+        const matches = realTropeMatches(allSeries, t.key);
+        if (matches.length === 0) return { trope: t, posterUrl: undefined as string | null | undefined };
+        return {
+          trope: { ...t, seriesCount: matches.length },
+          posterUrl: matches[0].backdrop_url ?? matches[0].poster_url,
+        };
       }),
     [allSeries]
   );
@@ -68,8 +75,8 @@ export default function TropesAuthed({ allSeries }: { allSeries: SeriesCardData[
                   </Link>
                 </div>
                 <ScrollRow>
-                  {popularTropes.map((trope) => (
-                    <PopularTropeCard key={trope.key} trope={trope} />
+                  {popularTropes.map(({ trope, posterUrls }) => (
+                    <PopularTropeCard key={trope.key} trope={trope} posterUrls={posterUrls} />
                   ))}
                 </ScrollRow>
               </section>
@@ -96,8 +103,8 @@ export default function TropesAuthed({ allSeries }: { allSeries: SeriesCardData[
                   </Link>
                 </div>
                 <ScrollRow>
-                  {newTropes.map((trope) => (
-                    <NewTropeCard key={trope.key} trope={trope} />
+                  {newTropes.map(({ trope, posterUrl }) => (
+                    <NewTropeCard key={trope.key} trope={trope} posterUrl={posterUrl} />
                   ))}
                 </ScrollRow>
               </section>
