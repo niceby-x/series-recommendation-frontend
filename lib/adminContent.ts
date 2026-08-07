@@ -76,7 +76,7 @@ export const ADMIN_NAV_SECTIONS: AdminNavSection[] = [
     items: [
       { label: 'Editorial Queue', href: '/admin/candidates', icon: ClipboardList, badgeKey: 'pending' },
       { label: 'Reviews', href: '/admin/reviews', icon: CheckCircle2 },
-      { label: 'Curator Picks', href: null, icon: Sparkles },
+      { label: 'Curator Picks', href: '/admin/curator-picks', icon: Sparkles },
     ],
   },
   {

@@ -25,6 +25,7 @@ import {
   type HeroFeature,
   type CuratorPick,
 } from '../../lib/landingContent';
+import { toCuratorPick, type RealCuratorPick } from '../../lib/curatorPicks';
 
 // Home's logged-out branch. Named/located to match the XLanding.tsx
 // convention every other page (Moods/Tropes/Collections/New Releases)
@@ -32,7 +33,13 @@ import {
 // page), moved here for consistency. Its own sub-components keep their
 // original file names (LandingHero.tsx etc.) since renaming every single
 // one wasn't necessary for the folder-level consistency goal.
-export default function HomeLanding({ allSeries }: { allSeries: SeriesCardData[] }) {
+export default function HomeLanding({
+  allSeries,
+  curatorPicks,
+}: {
+  allSeries: SeriesCardData[];
+  curatorPicks: RealCuratorPick[];
+}) {
   const realHeroCards: HeroFeature[] = allSeries.slice(0, 3).map((series) => ({
     id: series.id,
     title: series.title,
@@ -70,25 +77,20 @@ export default function HomeLanding({ allSeries }: { allSeries: SeriesCardData[]
     ...MOCK_CONTINUE_DISCOVERING.slice(0, Math.max(0, 6 - realDiscoverCards.length)),
   ];
 
-  // Curator's Picks pulls from the catalog too now, so it shows real
-  // posters/backdrops -- same real-data-first, mock-fallback pattern as
-  // the hero deck and Popular on BLumi above. Starts further into the
-  // catalog (offset 6) so it doesn't just repeat the same titles already
-  // shown in Popular on BLumi.
-  const realCuratorPicks: CuratorPick[] = allSeries.slice(6, 10).map((series) => ({
-    id: series.id,
-    title: series.title,
-    country: series.country,
-    mediaType: 'Series',
-    year: series.year,
-    rating: 4.7,
-    tags: ['Romance', 'Drama'],
-    imageUrl: series.backdrop_url ?? series.poster_url,
-  }));
-  const curatorFeature: CuratorPick = realCuratorPicks[0] ?? CURATOR_FEATURE;
+  // Curator's Picks now comes from real admin-curated data (see
+  // lib/curatorPicks.ts / app/admin/curator-picks/page.tsx) instead of an
+  // arbitrary slice of the catalog with hardcoded fake tags/rating. Falls
+  // back to the mock feature/list below only if no admin has picked
+  // anything yet, same real-first-then-mock convention as everywhere else
+  // on this page.
+  const realFeaturePick = curatorPicks.find((p) => p.isFeature);
+  const realListPicks = curatorPicks.filter((p) => !p.isFeature);
+
+  const curatorFeature: CuratorPick = realFeaturePick ? toCuratorPick(realFeaturePick) : CURATOR_FEATURE;
+  const curatorQuote = realFeaturePick?.blurb || CURATOR_FEATURE_QUOTE;
   const curatorList: CuratorPick[] = [
-    ...realCuratorPicks.slice(1, 4),
-    ...CURATOR_LIST.slice(0, Math.max(0, 3 - Math.max(0, realCuratorPicks.length - 1))),
+    ...realListPicks.slice(0, 3).map(toCuratorPick),
+    ...CURATOR_LIST.slice(0, Math.max(0, 3 - realListPicks.length)),
   ];
 
   return (
@@ -124,7 +126,7 @@ export default function HomeLanding({ allSeries }: { allSeries: SeriesCardData[]
               </div>
             </ScrollReveal>
             <ScrollReveal>
-              <CuratorsPicks feature={curatorFeature} quote={CURATOR_FEATURE_QUOTE} list={curatorList} />
+              <CuratorsPicks feature={curatorFeature} quote={curatorQuote} list={curatorList} />
             </ScrollReveal>
           </section>
         </div>

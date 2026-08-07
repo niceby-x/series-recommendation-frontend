@@ -22,6 +22,7 @@ import {
   type CuratorPick,
 } from '../../lib/landingContent';
 import { CONTINUE_DISCOVERING_BADGES } from '../../lib/dashboardContent';
+import { toCuratorPick, type RealCuratorPick } from '../../lib/curatorPicks';
 
 const CURATOR_FEATURE_SYNOPSIS =
   'A nobleman falls for a handmaiden hired to deceive him — until their plan unfolds into something neither expected.';
@@ -33,7 +34,13 @@ const CURATOR_FEATURE_SYNOPSIS =
 // fetched again here; real catalog rows always come first, with mock rows
 // filling any remaining slots -- same convention as the old hero carousel
 // and trending row used.
-export default function HomeAuthed({ allSeries }: { allSeries: SeriesCardData[] }) {
+export default function HomeAuthed({
+  allSeries,
+  curatorPicks: realCuratorPicksData,
+}: {
+  allSeries: SeriesCardData[];
+  curatorPicks: RealCuratorPick[];
+}) {
   // Continue Discovering: real series first, mock titles fill the rest,
   // badges cycle in a fixed order so the row always reads Continue / New
   // Episode / Trending / Top Rated / Just Added left to right.
@@ -92,34 +99,37 @@ export default function HomeAuthed({ allSeries }: { allSeries: SeriesCardData[] 
     })),
   ];
 
-  // Curator's Picks: real series first (feature + 3 list slots, 4 total),
-  // mock fills the rest -- same real-first-then-mock convention as
-  // Continue Discovering and the Trending sidebar above. Real entries get
-  // an actual poster/backdrop image instead of the gradient+watermark
-  // fallback, and the feature's synopsis comes from the series' own data
-  // rather than the hardcoded mock blurb.
-  const realCuratorCount = Math.min(allSeries.length, 4);
-  const realCuratorPicks: CuratorPick[] = allSeries.slice(0, realCuratorCount).map((s) => ({
+  // Curator's Picks now comes from real admin-curated data (see
+  // lib/curatorPicks.ts / app/admin/curator-picks/page.tsx) instead of an
+  // arbitrary slice of the catalog with hardcoded fallback ratings/tags.
+  // Falls back to allSeries-derived picks, then the fully-mock
+  // CURATOR_FEATURE/CURATOR_LIST, if fewer than 4 admin picks exist yet --
+  // same real-first-then-mock convention as Continue Discovering above.
+  const realCuratorPicks: CuratorPick[] = realCuratorPicksData.map(toCuratorPick);
+  const realCuratorCount = Math.max(0, 4 - realCuratorPicks.length);
+  const fallbackCuratorPicks: CuratorPick[] = allSeries.slice(0, realCuratorCount).map((s) => ({
     id: s.id,
     title: s.title,
     country: s.country,
     mediaType: 'Series',
     year: s.year,
-    // No ratings table populated yet -- reuse the same override/fallback
-    // helper the rest of the dashboard uses; 4.5 is a neutral placeholder
-    // for real titles without a hand-set override rating.
     rating: displayRatingFor(s) ?? 4.5,
     tags: displayGenresFor(s),
     imageUrl: s.backdrop_url ?? s.poster_url,
   }));
-  const mockCuratorFill = [CURATOR_FEATURE, ...CURATOR_LIST].slice(0, 4 - realCuratorPicks.length);
-  const curatorPicks = [...realCuratorPicks, ...mockCuratorFill];
-  const curatorFeature = curatorPicks[0];
-  const curatorListItems = curatorPicks.slice(1);
+  const mockCuratorFill = [CURATOR_FEATURE, ...CURATOR_LIST].slice(
+    0,
+    Math.max(0, 4 - realCuratorPicks.length - fallbackCuratorPicks.length)
+  );
+  const combinedCuratorPicks = [...realCuratorPicks, ...fallbackCuratorPicks, ...mockCuratorFill];
+  const curatorFeature = combinedCuratorPicks[0];
+  const curatorListItems = combinedCuratorPicks.slice(1);
+  const featureBlurb = realCuratorPicksData.find((p) => p.isFeature)?.blurb;
   const curatorFeatureSynopsis =
-    realCuratorPicks.length > 0
-      ? allSeries[0].synopsis?.trim() || 'A story worth discovering.'
-      : CURATOR_FEATURE_SYNOPSIS;
+    featureBlurb ||
+    (realCuratorPicks.length > 0 || fallbackCuratorPicks.length > 0
+      ? allSeries[0]?.synopsis?.trim() || 'A story worth discovering.'
+      : CURATOR_FEATURE_SYNOPSIS);
 
   return (
     <div className="flex min-h-screen bg-background">
