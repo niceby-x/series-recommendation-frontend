@@ -8,8 +8,17 @@ import { useAuthModal } from '../../../lib/AuthModalContext';
 import AdminSidebar from '../../../components/admin/AdminSidebar';
 import SeriesList, { type AdminSeries } from '../../../components/admin/SeriesList';
 import SeriesEditModal, { type SeriesEditForm } from '../../../components/admin/SeriesEditModal';
+import type { Tag, TagDimension } from '../../../lib/taxonomy';
 
 type AccessState = 'checking' | 'signed_out' | 'forbidden' | 'ok' | 'error';
+
+const EMPTY_TAGS: Record<TagDimension, Tag[]> = {
+  mood: [],
+  trope: [],
+  relationship_dynamic: [],
+  theme: [],
+  content_warning: [],
+};
 
 export default function AdminSeriesPage() {
   const { open: openAuthModal } = useAuthModal();
@@ -17,6 +26,7 @@ export default function AdminSeriesPage() {
   const [access, setAccess] = useState<AccessState>('checking');
   const [series, setSeries] = useState<AdminSeries[]>([]);
   const [pendingCount, setPendingCount] = useState(0);
+  const [availableTags, setAvailableTags] = useState<Record<TagDimension, Tag[]>>(EMPTY_TAGS);
   const [search, setSearch] = useState('');
   const [busyIds, setBusyIds] = useState<Set<number>>(new Set());
   const [editingSeries, setEditingSeries] = useState<AdminSeries | null>(null);
@@ -46,9 +56,10 @@ export default function AdminSeriesPage() {
       // counts call doubles as our own admin-access check for this page --
       // same reasoning as the Reviews page, which isn't itself an admin-only
       // endpoint's response either.
-      const [seriesRes, countsRes] = await Promise.all([
+      const [seriesRes, countsRes, tagsRes] = await Promise.all([
         fetch(process.env.NEXT_PUBLIC_API_URL + '/series'),
         fetch(process.env.NEXT_PUBLIC_API_URL + '/admin/candidates/counts', { headers: authHeader }),
+        fetch(process.env.NEXT_PUBLIC_API_URL + '/admin/tags', { headers: authHeader }),
       ]);
 
       if (countsRes.status === 401) {
@@ -69,6 +80,11 @@ export default function AdminSeriesPage() {
 
       const countsJson = await countsRes.json();
       setPendingCount(countsJson.pending || 0);
+
+      if (tagsRes.ok) {
+        const tagsJson = await tagsRes.json();
+        setAvailableTags({ ...EMPTY_TAGS, ...(tagsJson.data || {}) });
+      }
 
       setAccess('ok');
     }
@@ -120,6 +136,7 @@ export default function AdminSeriesPage() {
           emotional_intensity: form.emotional_intensity || null,
           ending_type: form.ending_type || null,
           content_level: form.content_level || null,
+          tag_ids: form.tag_ids,
         }),
       })
     );
@@ -150,6 +167,7 @@ export default function AdminSeriesPage() {
                 emotional_intensity: form.emotional_intensity || null,
                 ending_type: form.ending_type || null,
                 content_level: form.content_level || null,
+                tag_ids: form.tag_ids,
               }
             : s
         )
@@ -271,7 +289,12 @@ export default function AdminSeriesPage() {
       </div>
 
       {editingSeries && (
-        <SeriesEditModal series={editingSeries} onSave={handleSave} onClose={() => setEditingSeries(null)} />
+        <SeriesEditModal
+          series={editingSeries}
+          availableTags={availableTags}
+          onSave={handleSave}
+          onClose={() => setEditingSeries(null)}
+        />
       )}
     </div>
   );

@@ -6,6 +6,8 @@ import type {
   EmotionalIntensity,
   EndingType,
   ContentLevel,
+  Tag,
+  TagDimension,
 } from '../../lib/taxonomy';
 import {
   ROMANCE_PACE_DISPLAY,
@@ -17,6 +19,19 @@ import type { AdminSeries } from './SeriesList';
 
 const COUNTRY_OPTIONS = ['Thailand', 'Korea', 'Japan', 'Taiwan', 'China', 'Hong Kong', 'Other'];
 const STATUS_OPTIONS = ['airing', 'completed', 'upcoming'];
+
+// Same 5 dimensions and helper copy as the candidates Taxonomy modal
+// (app/admin/candidates/page.tsx) -- this is the same picker, just editing
+// a live `series` row's series_tags instead of a candidate's
+// series_candidate_tags, so a title's mood/trope tags can be fixed after
+// publish, not only set once at approval time.
+const DIMENSION_SECTIONS: { dimension: TagDimension; label: string; helperText: string }[] = [
+  { dimension: 'mood', label: 'Mood', helperText: '2-4 recommended' },
+  { dimension: 'trope', label: 'Tropes', helperText: '1-3 recommended' },
+  { dimension: 'relationship_dynamic', label: 'Relationship Dynamics', helperText: 'pick what recurs' },
+  { dimension: 'theme', label: 'Themes', helperText: 'optional' },
+  { dimension: 'content_warning', label: 'Content Warnings', helperText: 'leave blank unless certain' },
+];
 
 export interface SeriesEditForm {
   title: string;
@@ -33,6 +48,7 @@ export interface SeriesEditForm {
   emotional_intensity: string;
   ending_type: string;
   content_level: string;
+  tag_ids: number[];
 }
 
 function toForm(series: AdminSeries): SeriesEditForm {
@@ -51,6 +67,7 @@ function toForm(series: AdminSeries): SeriesEditForm {
     emotional_intensity: series.emotional_intensity ?? '',
     ending_type: series.ending_type ?? '',
     content_level: series.content_level ?? '',
+    tag_ids: series.tag_ids ?? [],
   };
 }
 
@@ -68,10 +85,12 @@ const inputClass =
 
 export default function SeriesEditModal({
   series,
+  availableTags,
   onSave,
   onClose,
 }: {
   series: AdminSeries;
+  availableTags: Record<TagDimension, Tag[]>;
   onSave: (form: SeriesEditForm) => void;
   onClose: () => void;
 }) {
@@ -80,6 +99,15 @@ export default function SeriesEditModal({
 
   function field<K extends keyof SeriesEditForm>(key: K, value: SeriesEditForm[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
+  }
+
+  function toggleTag(tagId: number) {
+    setForm((prev) => ({
+      ...prev,
+      tag_ids: prev.tag_ids.includes(tagId)
+        ? prev.tag_ids.filter((id) => id !== tagId)
+        : [...prev.tag_ids, tagId],
+    }));
   }
 
   async function handleSave() {
@@ -91,7 +119,7 @@ export default function SeriesEditModal({
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose}>
       <div
-        className="bg-card border border-border rounded-2xl p-6 w-full max-w-lg max-h-[85vh] overflow-y-auto shadow-2xl"
+        className="bg-card border border-border rounded-2xl p-6 w-full max-w-xl max-h-[85vh] overflow-y-auto shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="text-base font-semibold text-primary mb-5">Edit series</h2>
@@ -222,6 +250,44 @@ export default function SeriesEditModal({
                 ))}
               </select>
             </Field>
+          </div>
+
+          <div className="pt-2 border-t border-border">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3 mt-4">
+              Discovery Tags
+            </p>
+            {DIMENSION_SECTIONS.map(({ dimension, label, helperText }) => (
+              <div key={dimension} className="mb-4">
+                <div className="flex items-baseline justify-between mb-1.5">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</span>
+                  <span className="text-[11px] text-muted-foreground/70">{helperText}</span>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {(availableTags[dimension] || []).length === 0 && (
+                    <span className="text-[12px] text-muted-foreground/60">No {label.toLowerCase()} tags yet.</span>
+                  )}
+                  {(availableTags[dimension] || []).map((tag) => {
+                    const active = form.tag_ids.includes(tag.id);
+                    return (
+                      <button
+                        key={tag.id}
+                        type="button"
+                        onClick={() => toggleTag(tag.id)}
+                        className={
+                          'text-xs px-2.5 py-1 rounded-full border transition-colors ' +
+                          (active
+                            ? 'border-primary/60 bg-blue-500/15 text-primary'
+                            : 'border-border bg-muted/60 text-muted-foreground hover:border-ring')
+                        }
+                      >
+                        {tag.display_emoji && <span aria-hidden>{tag.display_emoji} </span>}
+                        {tag.display_label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 

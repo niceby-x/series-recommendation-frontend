@@ -13,31 +13,39 @@ import PopularInMoodCard from './PopularInMoodCard';
 import MoodFeedbackCard from './MoodFeedbackCard';
 import { MOOD_SECTIONS, MOCK_POPULAR_IN_MOOD, type MoodCardItem } from '../../lib/moodsContent';
 import { mockRatingFor } from '../../lib/exploreMock';
+import { seriesMatchesMoodKey } from '../../lib/moodMatch';
 
-const REAL_SLOTS_PER_SECTION = 2;
+const CARDS_PER_SECTION = 4;
 
-// The logged-in Moods page. Mood tagging isn't a real column on `series`
-// yet (see lib/moodsContent.ts), so -- same real-first-then-mock convention
-// as HomeAuthed/DiscoverAuthed -- each section takes a couple of real
-// catalog rows first (a distinct slice per section, so the same series
-// doesn't repeat across rows) and fills the rest with curated mock cards.
+// The logged-in Moods page. Each section now matches series by their real
+// `mood`-dimension series_tags (see lib/moodMatch.ts) rather than taking a
+// positional slice of the catalog regardless of actual mood -- a series
+// only fills a "Romantic & Heartfelt" slot if it's actually tagged
+// romantic. Real matches fill each row first (most-recently-added first,
+// via reverse()), and curated mock cards fill whatever's left -- so a mood
+// with zero tagged series yet still renders its full editorial row instead
+// of going empty, and one with plenty of real tags gradually pushes the
+// mock cards out as tagging catches up. Same real-first-then-mock
+// convention as HomeAuthed/DiscoverAuthed, just driven by a real filter
+// instead of array position.
 export default function MoodsAuthed({ allSeries }: { allSeries: SeriesCardData[] }) {
   const [selectedMood, setSelectedMood] = useState('all');
 
   const sections = useMemo(() => {
-    return MOOD_SECTIONS.map((section, sectionIndex) => {
-      const start = sectionIndex * REAL_SLOTS_PER_SECTION;
-      const realSlice = allSeries.slice(start, start + REAL_SLOTS_PER_SECTION);
-      const realItems: MoodCardItem[] = realSlice.map((s) => ({
-        id: s.id,
-        title: s.title,
-        country: s.country,
-        mediaType: 'Series',
-        rating: mockRatingFor(s.id),
-        imageUrl: s.backdrop_url ?? s.poster_url,
-        isReal: true,
-      }));
-      const mockFill = section.mockItems.slice(0, 4 - realItems.length);
+    return MOOD_SECTIONS.map((section) => {
+      const realMatches = allSeries.filter((s) => seriesMatchesMoodKey(s.tags, section.moodFilterKey));
+      const realItems: MoodCardItem[] = realMatches
+        .slice(0, CARDS_PER_SECTION)
+        .map((s) => ({
+          id: s.id,
+          title: s.title,
+          country: s.country,
+          mediaType: 'Series',
+          rating: mockRatingFor(s.id),
+          imageUrl: s.backdrop_url ?? s.poster_url,
+          isReal: true,
+        }));
+      const mockFill = section.mockItems.slice(0, CARDS_PER_SECTION - realItems.length);
       return { ...section, items: [...realItems, ...mockFill] };
     });
   }, [allSeries]);

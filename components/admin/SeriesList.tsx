@@ -18,6 +18,7 @@ export interface AdminSeries {
   emotional_intensity?: string | null;
   ending_type?: string | null;
   content_level?: string | null;
+  tag_ids?: number[];
 }
 
 const STATUS_TONE: Record<string, string> = {

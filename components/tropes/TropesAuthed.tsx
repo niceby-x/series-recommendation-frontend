@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import DashboardSidebar from '../dashboard/DashboardSidebar';
 import DashboardHeader from '../dashboard/DashboardHeader';
@@ -14,13 +14,39 @@ import TopTropesCard from './TopTropesCard';
 import TrendingTropesCard from './TrendingTropesCard';
 import TropeSuggestCard from './TropeSuggestCard';
 import { POPULAR_TROPES, BROWSE_CATEGORIES, NEW_TROPES } from '../../lib/tropesContent';
+import { realTropeCount } from '../../lib/moodMatch';
+import type { SeriesCardData } from '../shared/SeriesCard';
 
-// The logged-in Tropes page. Selecting a filter chip doesn't re-slice these
-// rows (trope tagging isn't a real column yet, see lib/tropesContent.ts) --
-// same honest scope as the chips themselves, which exist as real controls
-// pending a real filter to drive.
-export default function TropesAuthed() {
+// The logged-in Tropes page. Unlike Moods, these rows are editorial cards
+// (title/description + a series-count chip), not swappable series
+// thumbnails -- so "real data" here means replacing each card's
+// hardcoded seriesCount with a real count of series carrying a matching
+// `trope`-dimension tag (see lib/moodMatch.ts), while keeping the curated
+// title/description copy. A trope with zero real tags yet keeps its
+// original editorial count rather than dropping to a bare 0, so the row
+// doesn't look broken while tagging is still in progress -- same
+// real-if-available-else-curated convention as Moods' real-first-then-mock
+// cards, just applied to a number instead of a whole card.
+export default function TropesAuthed({ allSeries }: { allSeries: SeriesCardData[] }) {
   const [selectedTrope, setSelectedTrope] = useState('all');
+
+  const popularTropes = useMemo(
+    () =>
+      POPULAR_TROPES.map((t) => {
+        const real = realTropeCount(allSeries, t.key);
+        return real > 0 ? { ...t, seriesCount: real } : t;
+      }),
+    [allSeries]
+  );
+
+  const newTropes = useMemo(
+    () =>
+      NEW_TROPES.map((t) => {
+        const real = realTropeCount(allSeries, t.key);
+        return real > 0 ? { ...t, seriesCount: real } : t;
+      }),
+    [allSeries]
+  );
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -42,7 +68,7 @@ export default function TropesAuthed() {
                   </Link>
                 </div>
                 <ScrollRow>
-                  {POPULAR_TROPES.map((trope) => (
+                  {popularTropes.map((trope) => (
                     <PopularTropeCard key={trope.key} trope={trope} />
                   ))}
                 </ScrollRow>
@@ -70,7 +96,7 @@ export default function TropesAuthed() {
                   </Link>
                 </div>
                 <ScrollRow>
-                  {NEW_TROPES.map((trope) => (
+                  {newTropes.map((trope) => (
                     <NewTropeCard key={trope.key} trope={trope} />
                   ))}
                 </ScrollRow>

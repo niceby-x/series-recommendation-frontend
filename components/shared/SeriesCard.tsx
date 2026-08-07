@@ -5,6 +5,14 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Bookmark, Star } from 'lucide-react';
 
+export interface SeriesTagData {
+  id: number;
+  dimension: 'mood' | 'trope' | 'relationship_dynamic' | 'theme' | 'content_warning';
+  value_key: string;
+  display_label: string;
+  display_emoji: string | null;
+}
+
 export interface SeriesCardData {
   id: number;
   title: string;
@@ -15,6 +23,10 @@ export interface SeriesCardData {
   synopsis: string | null;
   poster_url: string | null;
   backdrop_url: string | null;
+  // Present on GET /series responses now that series_tags is joined in
+  // (see the backend's GET /series route) -- optional since older cached
+  // responses or other callers may not include it.
+  tags?: SeriesTagData[];
 }
 
 const STATUS_LABELS: Record<string, string> = {
