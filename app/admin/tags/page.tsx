@@ -139,6 +139,104 @@ export default function AdminTagsPage() {
     }));
   }
 
+  async function handleRename(tag: AdminTag, label: string, emoji: string): Promise<boolean> {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session) {
+      setAccess('signed_out');
+      return false;
+    }
+
+    setBusyIds((prev) => new Set(prev).add(tag.id));
+
+    const res = await fetch(process.env.NEXT_PUBLIC_API_URL + '/admin/tags/' + tag.id, {
+      method: 'PATCH',
+      headers: {
+        Authorization: 'Bearer ' + session.access_token,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ display_label: label, display_emoji: emoji || null }),
+    });
+
+    setBusyIds((prev) => {
+      const next = new Set(prev);
+      next.delete(tag.id);
+      return next;
+    });
+
+    if (!res.ok) return false;
+
+    const json = await res.json();
+    setTagsByDimension((prev) => ({
+      ...prev,
+      [tag.dimension]: (prev[tag.dimension] || []).map((t) => (t.id === tag.id ? json.data : t)),
+    }));
+    return true;
+  }
+
+  async function handleDelete(tag: AdminTag) {
+    const confirmed = window.confirm(
+      'Permanently delete "' + tag.display_label + '"? This removes it from every series and candidate that has it. This cannot be undone.'
+    );
+    if (!confirmed) return;
+
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session) {
+      setAccess('signed_out');
+      return;
+    }
+
+    setBusyIds((prev) => new Set(prev).add(tag.id));
+
+    const res = await fetch(process.env.NEXT_PUBLIC_API_URL + '/admin/tags/' + tag.id, {
+      method: 'DELETE',
+      headers: { Authorization: 'Bearer ' + session.access_token },
+    });
+
+    setBusyIds((prev) => {
+      const next = new Set(prev);
+      next.delete(tag.id);
+      return next;
+    });
+
+    if (!res.ok) return;
+
+    setTagsByDimension((prev) => ({
+      ...prev,
+      [tag.dimension]: (prev[tag.dimension] || []).filter((t) => t.id !== tag.id),
+    }));
+  }
+
+  async function handleMerge(dimension: TagDimension, sourceIds: number[], targetId: number): Promise<boolean> {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session) {
+      setAccess('signed_out');
+      return false;
+    }
+
+    const res = await fetch(process.env.NEXT_PUBLIC_API_URL + '/admin/tags/merge', {
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer ' + session.access_token,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ source_ids: sourceIds, target_id: targetId }),
+    });
+
+    if (!res.ok) return false;
+
+    setTagsByDimension((prev) => ({
+      ...prev,
+      [dimension]: (prev[dimension] || []).filter((t) => !sourceIds.includes(t.id)),
+    }));
+    return true;
+  }
+
   if (access === 'checking') return null;
 
   if (access === 'signed_out') {
@@ -194,6 +292,9 @@ export default function AdminTagsPage() {
               busyIds={busyIds}
               onCreate={handleCreate}
               onToggle={handleToggle}
+              onRename={handleRename}
+              onDelete={handleDelete}
+              onMerge={handleMerge}
             />
           ))}
         </div>

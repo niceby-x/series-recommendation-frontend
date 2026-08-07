@@ -65,7 +65,7 @@ export const ADMIN_NAV_SECTIONS: AdminNavSection[] = [
       { label: 'Series & Movies', href: '/admin/series', icon: Film },
       { label: 'Episodes', href: null, icon: Clapperboard },
       { label: 'Collections', href: '/collections', icon: FolderOpen },
-      { label: 'Genres', href: null, icon: TagIcon },
+      { label: 'Genres', href: '/admin/genres', icon: TagIcon },
       { label: 'Moods', href: '/moods', icon: Smile },
       { label: 'Tropes', href: '/tropes', icon: Star },
       { label: 'Tags', href: '/admin/tags', icon: Hash },
