@@ -3,25 +3,26 @@
 import { useState } from 'react';
 import { X, FolderPlus } from 'lucide-react';
 
-// There's no `collections` table yet (see lib/collectionsContent.ts), so a
-// created collection only lives in CollectionsAuthed's local state for this
-// session -- same honest "visual only, not persisted" scope as SeriesCard's
-// bookmark toggle elsewhere in this app.
+// Real-backed now -- onCreate (passed in by CollectionsAuthed) calls
+// POST /collections and only closes the modal once that succeeds.
 export default function CreateCollectionModal({
   onClose,
   onCreate,
 }: {
   onClose: () => void;
-  onCreate: (title: string, description: string) => void;
+  onCreate: (title: string, description: string) => void | Promise<void>;
 }) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [saving, setSaving] = useState(false);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const trimmed = title.trim();
     if (!trimmed) return;
-    onCreate(trimmed, description.trim());
+    setSaving(true);
+    await onCreate(trimmed, description.trim());
+    setSaving(false);
   }
 
   return (
@@ -77,10 +78,10 @@ export default function CreateCollectionModal({
 
           <button
             type="submit"
-            disabled={!title.trim()}
+            disabled={!title.trim() || saving}
             className="mt-1 bg-brand-gradient text-white px-4 py-2.5 rounded-full text-sm font-semibold shadow-sm hover:opacity-90 transition-opacity disabled:opacity-50 disabled:pointer-events-none"
           >
-            Create Collection
+            {saving ? 'Creating...' : 'Create Collection'}
           </button>
         </form>
       </div>

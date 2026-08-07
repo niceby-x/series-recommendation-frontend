@@ -49,6 +49,12 @@ export interface SeriesEditForm {
   ending_type: string;
   content_level: string;
   tag_ids: number[];
+  collection_ids: number[];
+}
+
+export interface CollectionOption {
+  id: number;
+  title: string;
 }
 
 function toForm(series: AdminSeries): SeriesEditForm {
@@ -68,6 +74,7 @@ function toForm(series: AdminSeries): SeriesEditForm {
     ending_type: series.ending_type ?? '',
     content_level: series.content_level ?? '',
     tag_ids: series.tag_ids ?? [],
+    collection_ids: series.collection_ids ?? [],
   };
 }
 
@@ -86,11 +93,13 @@ const inputClass =
 export default function SeriesEditModal({
   series,
   availableTags,
+  availableCollections,
   onSave,
   onClose,
 }: {
   series: AdminSeries;
   availableTags: Record<TagDimension, Tag[]>;
+  availableCollections: CollectionOption[];
   onSave: (form: SeriesEditForm) => void;
   onClose: () => void;
 }) {
@@ -107,6 +116,15 @@ export default function SeriesEditModal({
       tag_ids: prev.tag_ids.includes(tagId)
         ? prev.tag_ids.filter((id) => id !== tagId)
         : [...prev.tag_ids, tagId],
+    }));
+  }
+
+  function toggleCollection(collectionId: number) {
+    setForm((prev) => ({
+      ...prev,
+      collection_ids: prev.collection_ids.includes(collectionId)
+        ? prev.collection_ids.filter((id) => id !== collectionId)
+        : [...prev.collection_ids, collectionId],
     }));
   }
 
@@ -288,6 +306,41 @@ export default function SeriesEditModal({
                 </div>
               </div>
             ))}
+          </div>
+
+          <div className="pt-2 border-t border-border">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3 mt-4">
+              Curated Collections
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {availableCollections.length === 0 && (
+                <span className="text-[12px] text-muted-foreground/60">
+                  No curated collections yet -- create one on the Collections page.
+                </span>
+              )}
+              {availableCollections.map((collection) => {
+                const active = form.collection_ids.includes(collection.id);
+                return (
+                  <button
+                    key={collection.id}
+                    type="button"
+                    onClick={() => toggleCollection(collection.id)}
+                    className={
+                      'text-xs px-2.5 py-1 rounded-full border transition-colors ' +
+                      (active
+                        ? 'border-primary/60 bg-primary/10 text-primary'
+                        : 'border-border bg-muted/60 text-muted-foreground hover:border-ring')
+                    }
+                  >
+                    {collection.title}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="text-[11px] text-muted-foreground/70 mt-1.5">
+              Only admin-curated collections show here -- users&apos; personal collections are managed by them, not from
+              here.
+            </p>
           </div>
         </div>
 

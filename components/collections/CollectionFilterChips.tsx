@@ -1,6 +1,23 @@
 'use client';
 
-import { COLLECTION_FILTERS } from '../../lib/collectionsContent';
+import { LayoutGrid, Heart, Sparkles, type LucideIcon } from 'lucide-react';
+
+export interface CollectionFilterOption {
+  key: 'all' | 'mine' | 'curated';
+  label: string;
+  icon: LucideIcon;
+}
+
+// Simplified to the two real data sources this page actually has (personal
+// vs admin-curated) -- the old status filters (completed/ongoing/plan to
+// watch/dropped) described an individual series' watch state, not a
+// collection as a whole, so they didn't correspond to anything once this
+// page moved off mock data.
+export const COLLECTION_FILTERS: CollectionFilterOption[] = [
+  { key: 'all', label: 'All Collections', icon: LayoutGrid },
+  { key: 'mine', label: 'My Collections', icon: Heart },
+  { key: 'curated', label: 'Curated', icon: Sparkles },
+];
 
 // Same controlled-from-parent pattern as MoodFilterChips/TropeFilterChips.
 export default function CollectionFilterChips({

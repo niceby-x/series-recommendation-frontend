@@ -19,6 +19,7 @@ export interface AdminSeries {
   ending_type?: string | null;
   content_level?: string | null;
   tag_ids?: number[];
+  collection_ids?: number[];
 }
 
 const STATUS_TONE: Record<string, string> = {

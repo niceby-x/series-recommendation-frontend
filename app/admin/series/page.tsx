@@ -7,7 +7,7 @@ import { supabase } from '../../../lib/supabase';
 import { useAuthModal } from '../../../lib/AuthModalContext';
 import AdminSidebar from '../../../components/admin/AdminSidebar';
 import SeriesList, { type AdminSeries } from '../../../components/admin/SeriesList';
-import SeriesEditModal, { type SeriesEditForm } from '../../../components/admin/SeriesEditModal';
+import SeriesEditModal, { type SeriesEditForm, type CollectionOption } from '../../../components/admin/SeriesEditModal';
 import type { Tag, TagDimension } from '../../../lib/taxonomy';
 
 type AccessState = 'checking' | 'signed_out' | 'forbidden' | 'ok' | 'error';
@@ -27,6 +27,7 @@ export default function AdminSeriesPage() {
   const [series, setSeries] = useState<AdminSeries[]>([]);
   const [pendingCount, setPendingCount] = useState(0);
   const [availableTags, setAvailableTags] = useState<Record<TagDimension, Tag[]>>(EMPTY_TAGS);
+  const [availableCollections, setAvailableCollections] = useState<CollectionOption[]>([]);
   const [search, setSearch] = useState('');
   const [busyIds, setBusyIds] = useState<Set<number>>(new Set());
   const [editingSeries, setEditingSeries] = useState<AdminSeries | null>(null);
@@ -56,10 +57,11 @@ export default function AdminSeriesPage() {
       // counts call doubles as our own admin-access check for this page --
       // same reasoning as the Reviews page, which isn't itself an admin-only
       // endpoint's response either.
-      const [seriesRes, countsRes, tagsRes] = await Promise.all([
+      const [seriesRes, countsRes, tagsRes, collectionsRes] = await Promise.all([
         fetch(process.env.NEXT_PUBLIC_API_URL + '/series'),
         fetch(process.env.NEXT_PUBLIC_API_URL + '/admin/candidates/counts', { headers: authHeader }),
         fetch(process.env.NEXT_PUBLIC_API_URL + '/admin/tags', { headers: authHeader }),
+        fetch(process.env.NEXT_PUBLIC_API_URL + '/admin/collections', { headers: authHeader }),
       ]);
 
       if (countsRes.status === 401) {
@@ -84,6 +86,11 @@ export default function AdminSeriesPage() {
       if (tagsRes.ok) {
         const tagsJson = await tagsRes.json();
         setAvailableTags({ ...EMPTY_TAGS, ...(tagsJson.data || {}) });
+      }
+
+      if (collectionsRes.ok) {
+        const collectionsJson = await collectionsRes.json();
+        setAvailableCollections((collectionsJson.data || []).map((c: any) => ({ id: c.id, title: c.title })));
       }
 
       setAccess('ok');
@@ -137,6 +144,7 @@ export default function AdminSeriesPage() {
           ending_type: form.ending_type || null,
           content_level: form.content_level || null,
           tag_ids: form.tag_ids,
+          collection_ids: form.collection_ids,
         }),
       })
     );
@@ -168,6 +176,7 @@ export default function AdminSeriesPage() {
                 ending_type: form.ending_type || null,
                 content_level: form.content_level || null,
                 tag_ids: form.tag_ids,
+                collection_ids: form.collection_ids,
               }
             : s
         )
@@ -292,6 +301,7 @@ export default function AdminSeriesPage() {
         <SeriesEditModal
           series={editingSeries}
           availableTags={availableTags}
+          availableCollections={availableCollections}
           onSave={handleSave}
           onClose={() => setEditingSeries(null)}
         />

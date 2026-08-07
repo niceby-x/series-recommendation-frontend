@@ -1,17 +1,17 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
-import { ChevronDown, Plus, FolderOpen } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { ChevronDown, Plus } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
 import DashboardSidebar from '../dashboard/DashboardSidebar';
 import DashboardHeader from '../dashboard/DashboardHeader';
 import CollectionFilterChips from './CollectionFilterChips';
-import CollectionCard from './CollectionCard';
+import CollectionCard, { type RealCollection } from './CollectionCard';
 import CollectionListItem from './CollectionListItem';
 import CollectionOverviewCard from './CollectionOverviewCard';
 import RecentlyUpdatedCard from './RecentlyUpdatedCard';
 import CreateCollectionCTA from './CreateCollectionCTA';
 import CreateCollectionModal from './CreateCollectionModal';
-import { MY_COLLECTIONS, MORE_COLLECTIONS, type Collection } from '../../lib/collectionsContent';
 
 type SortKey = 'updated' | 'most_series' | 'alpha';
 
@@ -21,58 +21,111 @@ const SORT_LABELS: Record<SortKey, string> = {
   alpha: 'A–Z',
 };
 
-const INITIAL_MORE_VISIBLE = 4;
+const INITIAL_MORE_VISIBLE = 6;
 
-// The logged-in Collections page. "My Collections" (the 4 featured cards)
-// stays in its original curated order -- Sort only reorders "More
-// Collections" below it, same scope the mockup implies (Sort sits right by
-// that grid, not above the featured row). Filtering (status chips) applies
-// to both rows. Newly created collections are appended to "More
-// Collections" state only -- see CreateCollectionModal for why this isn't
-// persisted anywhere.
+async function authHeader() {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (!session) return null;
+  return { Authorization: 'Bearer ' + session.access_token };
+}
+
+// The logged-in Collections page. "My Collections" (the featured cards) is
+// the caller's own real personal collections (GET /collections?mine=true);
+// "Curated Collections" below it is every admin-curated one, visible to
+// everyone (GET /collections, no auth needed for that half). Filter chips
+// narrow to one or the other; Sort only reorders the curated grid, same
+// scope as the original mockup.
 export default function CollectionsAuthed() {
   const [selectedFilter, setSelectedFilter] = useState('all');
   const [sort, setSort] = useState<SortKey>('updated');
-  const [showAllMore, setShowAllMore] = useState(false);
+  const [showAllCurated, setShowAllCurated] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
-  const [moreCollections, setMoreCollections] = useState<Collection[]>(MORE_COLLECTIONS);
+  const [mine, setMine] = useState<RealCollection[]>([]);
+  const [curated, setCurated] = useState<RealCollection[]>([]);
+  const [loaded, setLoaded] = useState(false);
 
-  // "My Collections" has no separate ownership concept yet (single-user
-  // app, no shared/public collections) -- so it's an alias for "all", same
-  // honest simplification noted in lib/collectionsContent.ts.
-  const matchesFilter = useCallback(
-    (c: Collection) => {
-      if (selectedFilter === 'all' || selectedFilter === 'mine') return true;
-      return c.status === selectedFilter;
-    },
-    [selectedFilter]
-  );
+  const loadAll = useCallback(async () => {
+    const header = await authHeader();
+    if (!header) return;
 
-  const visibleFeatured = useMemo(() => MY_COLLECTIONS.filter(matchesFilter), [matchesFilter]);
+    const [mineRes, curatedRes] = await Promise.all([
+      fetch(process.env.NEXT_PUBLIC_API_URL + '/collections?mine=true', { headers: header }),
+      fetch(process.env.NEXT_PUBLIC_API_URL + '/collections', { headers: header }),
+    ]);
 
-  const sortedMore = useMemo(() => {
-    const filtered = moreCollections.filter(matchesFilter);
-    if (sort === 'most_series') return [...filtered].sort((a, b) => b.seriesCount - a.seriesCount);
-    if (sort === 'alpha') return [...filtered].sort((a, b) => a.title.localeCompare(b.title));
-    return filtered;
-  }, [moreCollections, sort, matchesFilter]);
+    if (mineRes.ok) {
+      const json = await mineRes.json();
+      setMine(json.data || []);
+    }
+    if (curatedRes.ok) {
+      const json = await curatedRes.json();
+      setCurated(json.data || []);
+    }
+    setLoaded(true);
+  }, []);
 
-  const visibleMore = showAllMore ? sortedMore : sortedMore.slice(0, INITIAL_MORE_VISIBLE);
+  useEffect(() => {
+    loadAll();
+  }, [loadAll]);
 
-  function handleCreate(title: string, description: string) {
-    const created: Collection = {
-      key: 'created-' + Date.now(),
-      icon: FolderOpen,
-      title,
-      description: description || 'A new collection.',
-      seriesCount: 0,
-      updatedAgo: 'just now',
-      progressPct: 0,
-      status: 'plan_to_watch',
-      imageUrl: null,
-    };
-    setMoreCollections((prev) => [created, ...prev]);
+  const showMine = selectedFilter === 'all' || selectedFilter === 'mine';
+  const showCurated = selectedFilter === 'all' || selectedFilter === 'curated';
+
+  const sortedCurated = useMemo(() => {
+    const list = [...curated];
+    if (sort === 'most_series') return list.sort((a, b) => b.series_count - a.series_count);
+    if (sort === 'alpha') return list.sort((a, b) => a.title.localeCompare(b.title));
+    return list.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
+  }, [curated, sort]);
+
+  const visibleCurated = showAllCurated ? sortedCurated : sortedCurated.slice(0, INITIAL_MORE_VISIBLE);
+
+  async function handleCreate(title: string, description: string) {
+    const header = await authHeader();
+    if (!header) return;
+
+    const res = await fetch(process.env.NEXT_PUBLIC_API_URL + '/collections', {
+      method: 'POST',
+      headers: { ...header, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, description: description || null }),
+    });
+
+    if (!res.ok) return;
+    const json = await res.json();
+
+    setMine((prev) => [
+      {
+        id: json.data.id,
+        title: json.data.title,
+        description: json.data.description,
+        is_curated: false,
+        is_mine: true,
+        series_count: 0,
+        progress_pct: 0,
+        updated_at: json.data.updated_at,
+      },
+      ...prev,
+    ]);
     setModalOpen(false);
+  }
+
+  async function handleDelete(collection: RealCollection) {
+    const confirmed = window.confirm('Delete "' + collection.title + '"? This cannot be undone.');
+    if (!confirmed) return;
+
+    const header = await authHeader();
+    if (!header) return;
+
+    const res = await fetch(process.env.NEXT_PUBLIC_API_URL + '/collections/' + collection.id, {
+      method: 'DELETE',
+      headers: header,
+    });
+
+    if (res.ok) {
+      setMine((prev) => prev.filter((c) => c.id !== collection.id));
+    }
   }
 
   return (
@@ -87,70 +140,76 @@ export default function CollectionsAuthed() {
             <main className="min-w-0">
               <CollectionFilterChips selected={selectedFilter} onSelect={setSelectedFilter} />
 
-              <div className="flex flex-wrap items-end justify-between gap-3 mb-4">
-                <h2 className="font-heading text-[22px] font-normal text-foreground flex items-center gap-2">
-                  My Collections
-                  <span className="flex items-center justify-center min-w-6 h-6 px-1.5 rounded-full bg-brand-blush/30 text-primary text-[12.5px] font-bold">
-                    {visibleFeatured.length}
-                  </span>
-                </h2>
+              {showMine && (
+                <>
+                  <div className="flex flex-wrap items-end justify-between gap-3 mb-4">
+                    <h2 className="font-heading text-[22px] font-normal text-foreground flex items-center gap-2">
+                      My Collections
+                      <span className="flex items-center justify-center min-w-6 h-6 px-1.5 rounded-full bg-brand-blush/30 text-primary text-[12.5px] font-bold">
+                        {mine.length}
+                      </span>
+                    </h2>
 
-                <div className="flex items-center gap-2.5">
-                  <div className="relative">
-                    <select
-                      aria-label="Sort collections"
-                      value={sort}
-                      onChange={(e) => setSort(e.target.value as SortKey)}
-                      className="appearance-none bg-card border border-border rounded-full pl-4 pr-9 py-2.5 text-sm font-medium text-foreground shadow-sm hover:border-ring focus:outline-none focus:border-ring transition-colors cursor-pointer"
+                    <button
+                      type="button"
+                      onClick={() => setModalOpen(true)}
+                      className="flex items-center gap-1.5 bg-brand-gradient text-white px-4 py-2.5 rounded-full text-sm font-semibold shadow-sm hover:opacity-90 transition-opacity shrink-0"
                     >
-                      {(Object.keys(SORT_LABELS) as SortKey[]).map((key) => (
-                        <option key={key} value={key}>
-                          Sort by: {SORT_LABELS[key]}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
+                      <Plus className="size-4" />
+                      Create Collection
+                    </button>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() => setModalOpen(true)}
-                    className="flex items-center gap-1.5 bg-brand-gradient text-white px-4 py-2.5 rounded-full text-sm font-semibold shadow-sm hover:opacity-90 transition-opacity shrink-0"
-                  >
-                    <Plus className="size-4" />
-                    Create Collection
-                  </button>
-                </div>
-              </div>
-
-              {visibleFeatured.length === 0 ? (
-                <p className="text-muted-foreground text-sm mb-10">No collections match this filter yet.</p>
-              ) : (
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-10">
-                  {visibleFeatured.map((collection) => (
-                    <CollectionCard key={collection.key} collection={collection} />
-                  ))}
-                </div>
+                  {loaded && mine.length === 0 ? (
+                    <p className="text-muted-foreground text-sm mb-10">
+                      You haven&apos;t made a collection yet -- create one above.
+                    </p>
+                  ) : (
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-10">
+                      {mine.map((collection) => (
+                        <CollectionCard key={collection.id} collection={collection} onDelete={handleDelete} />
+                      ))}
+                    </div>
+                  )}
+                </>
               )}
 
-              {sortedMore.length > 0 && (
+              {showCurated && sortedCurated.length > 0 && (
                 <section>
-                  <h2 className="font-heading text-[22px] font-normal text-foreground mb-4">More Collections</h2>
+                  <div className="flex flex-wrap items-end justify-between gap-3 mb-4">
+                    <h2 className="font-heading text-[22px] font-normal text-foreground">Curated Collections</h2>
+                    <div className="relative">
+                      <select
+                        aria-label="Sort collections"
+                        value={sort}
+                        onChange={(e) => setSort(e.target.value as SortKey)}
+                        className="appearance-none bg-card border border-border rounded-full pl-4 pr-9 py-2.5 text-sm font-medium text-foreground shadow-sm hover:border-ring focus:outline-none focus:border-ring transition-colors cursor-pointer"
+                      >
+                        {(Object.keys(SORT_LABELS) as SortKey[]).map((key) => (
+                          <option key={key} value={key}>
+                            Sort by: {SORT_LABELS[key]}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
+                    </div>
+                  </div>
+
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {visibleMore.map((collection) => (
-                      <CollectionListItem key={collection.key} collection={collection} />
+                    {visibleCurated.map((collection) => (
+                      <CollectionListItem key={collection.id} collection={collection} />
                     ))}
                   </div>
 
-                  {sortedMore.length > INITIAL_MORE_VISIBLE && (
+                  {sortedCurated.length > INITIAL_MORE_VISIBLE && (
                     <div className="flex justify-center mt-6">
                       <button
                         type="button"
-                        onClick={() => setShowAllMore((v) => !v)}
+                        onClick={() => setShowAllCurated((v) => !v)}
                         className="flex items-center gap-1.5 text-primary text-sm font-semibold hover:opacity-80 transition-opacity"
                       >
-                        {showAllMore ? 'Show Less' : 'Show More Collections'}
-                        <ChevronDown className={'size-4 transition-transform ' + (showAllMore ? 'rotate-180' : '')} />
+                        {showAllCurated ? 'Show Less' : 'Show More Collections'}
+                        <ChevronDown className={'size-4 transition-transform ' + (showAllCurated ? 'rotate-180' : '')} />
                       </button>
                     </div>
                   )}
@@ -159,8 +218,8 @@ export default function CollectionsAuthed() {
             </main>
 
             <aside className="flex flex-col gap-5 xl:sticky xl:top-8">
-              <CollectionOverviewCard />
-              <RecentlyUpdatedCard />
+              <CollectionOverviewCard mine={mine} curated={curated} />
+              <RecentlyUpdatedCard collections={[...mine, ...curated]} />
               <CreateCollectionCTA onCreate={() => setModalOpen(true)} />
             </aside>
           </div>

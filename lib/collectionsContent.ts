@@ -1,11 +1,11 @@
 // lib/collectionsContent.ts
 //
-// Content for the Collections page (components/collections/CollectionsAuthed.tsx).
-// Same PLACEHOLDER pattern as lib/moodsContent.ts / lib/tropesContent.ts:
-// there's no `collections` table yet, so every collection here, the
-// overview stats, and "Recently Updated" are illustrative mock data, not
-// queried. imageUrl stays null throughout -- honest gradient+icon
-// fallback, same convention as every other mock card in this app.
+// Now only used by CollectionsLanding.tsx (the logged-out preview) and its
+// static PreviewCard -- CollectionsAuthed moved to real data from
+// /collections (see components/collections/CollectionsAuthed.tsx). MORE_COLLECTIONS,
+// OVERVIEW_STATS, and RECENT_UPDATES below are unused now that the authed
+// page computes its own real equivalents; left in place only as the source
+// for MY_COLLECTIONS, which the landing preview still reads.
 
 import {
   LayoutGrid,

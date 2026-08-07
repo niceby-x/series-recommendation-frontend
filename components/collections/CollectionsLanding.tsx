@@ -2,7 +2,27 @@
 
 import { useAuthModal } from '../../lib/AuthModalContext';
 import { MY_COLLECTIONS } from '../../lib/collectionsContent';
-import CollectionCard from './CollectionCard';
+
+// Non-interactive preview card, distinct from the real (clickable,
+// real-data) CollectionCard used once signed in -- a logged-out visitor
+// has no real collections to link to yet, so this stays purely visual.
+function PreviewCard({ collection }: { collection: (typeof MY_COLLECTIONS)[number] }) {
+  const Icon = collection.icon;
+  return (
+    <div className="rounded-2xl bg-card border border-border/60 shadow-sm overflow-hidden">
+      <div className="relative aspect-[16/10] w-full overflow-hidden bg-gradient-to-br from-brand-blush/25 to-brand-lilac/25 flex items-center justify-center px-3 text-center">
+        <span className="text-muted-foreground text-xs font-medium">{collection.title}</span>
+      </div>
+      <div className="p-4">
+        <p className="flex items-center gap-1.5 text-foreground font-semibold text-[15px] mb-1.5">
+          <Icon className="size-4 text-primary shrink-0" />
+          <span className="truncate">{collection.title}</span>
+        </p>
+        <p className="text-muted-foreground text-[13px] leading-relaxed line-clamp-2">{collection.description}</p>
+      </div>
+    </div>
+  );
+}
 
 // Logged-out visitors get a preview of what collections look like plus a
 // sign-up nudge -- progress/overview stats don't mean anything without an
@@ -29,7 +49,7 @@ export default function CollectionsLanding() {
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
           {MY_COLLECTIONS.map((collection) => (
-            <CollectionCard key={collection.key} collection={collection} />
+            <PreviewCard key={collection.key} collection={collection} />
           ))}
         </div>
       </div>
