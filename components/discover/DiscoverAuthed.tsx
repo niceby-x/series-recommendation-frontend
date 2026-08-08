@@ -33,6 +33,11 @@ import { POPULAR_TROPES, NEW_TROPES } from '../../lib/tropesContent';
 // are), so it surfaces as a dismissible pill above the grid instead.
 export default function DiscoverAuthed({ allSeries }: { allSeries: SeriesCardData[] }) {
   const searchParams = useSearchParams();
+  // Navbar's search form pushes to /series?q=<term> for both logged-in and
+  // logged-out users (see components/shared/Navbar.tsx). SeriesFilter.tsx
+  // (logged-out) already reads it; mirror that here so the same submit
+  // actually filters the grid instead of landing on an unfiltered page.
+  const search = searchParams.get('q') ?? '';
   const urlTropeFilter = searchParams.get('trope');
   // "Clear" just needs to override the URL value for this render tree, not
   // navigate -- avoids syncing the param into state via useEffect (a
@@ -61,15 +66,21 @@ export default function DiscoverAuthed({ allSeries }: { allSeries: SeriesCardDat
   });
 
   const isFiltering =
-    filters.country !== 'All' || filters.genre !== 'All' || filters.year !== 'All' || filters.sort !== 'popular' || !!tropeFilter;
+    search.trim() !== '' ||
+    filters.country !== 'All' ||
+    filters.genre !== 'All' ||
+    filters.year !== 'All' ||
+    filters.sort !== 'popular' ||
+    !!tropeFilter;
 
   const filteredSeries = useMemo(() => {
     let list = allSeries.filter((s) => {
+      const matchesSearch = s.title.toLowerCase().includes(search.trim().toLowerCase());
       const matchesCountry = filters.country === 'All' || s.country === filters.country;
       const matchesGenre = filters.genre === 'All' || mockGenresFor(s.id).includes(filters.genre);
       const matchesYear = filters.year === 'All' || String(s.year) === filters.year;
       const matchesTrope = !tropeFilter || seriesMatchesTropeKey(s.tags, tropeFilter);
-      return matchesCountry && matchesGenre && matchesYear && matchesTrope;
+      return matchesSearch && matchesCountry && matchesGenre && matchesYear && matchesTrope;
     });
 
     if (filters.sort === 'newest') {
@@ -79,7 +90,7 @@ export default function DiscoverAuthed({ allSeries }: { allSeries: SeriesCardDat
     }
 
     return list;
-  }, [allSeries, filters, tropeFilter]);
+  }, [allSeries, filters, search, tropeFilter]);
 
   // Trending Now: top 4 by mock rating. New Releases: top 4 by year. These
   // overlap with each other and with Recommended below when the catalog is
