@@ -27,6 +27,11 @@ export interface SeriesCardData {
   // (see the backend's GET /series route) -- optional since older cached
   // responses or other callers may not include it.
   tags?: SeriesTagData[];
+  // Real aggregation from the `ratings` table (see GET /series and
+  // GET /series/:id in the backend) -- null/0 when nobody has rated the
+  // series yet. Optional for the same reason as `tags` above.
+  average_rating?: number | null;
+  rating_count?: number;
 }
 
 const STATUS_LABELS: Record<string, string> = {

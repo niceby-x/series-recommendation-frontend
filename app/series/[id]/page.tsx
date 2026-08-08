@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
-import { Calendar, Clapperboard } from 'lucide-react';
+import { Calendar, Clapperboard, Star } from 'lucide-react';
 import RatingForm from '../../../components/shared/RatingForm';
 import WatchlistButton from '@/components/shared/WatchlistButton';
 
@@ -15,6 +15,8 @@ interface Series {
   status: string;
   synopsis: string | null;
   poster_url: string | null;
+  average_rating: number | null;
+  rating_count: number;
 }
 
 async function getSeriesById(id: string): Promise<Series> {
@@ -95,6 +97,19 @@ export default async function SeriesDetailPage({ params }: { params: Promise<{ i
           <div className="flex gap-6 text-sm text-gray-400 mb-6">
             <span className="flex items-center gap-1.5"><Calendar className="size-4" /> {series.year}</span>
             <span className="flex items-center gap-1.5"><Clapperboard className="size-4" /> {series.episode_count} episodes</span>
+            {series.average_rating != null ? (
+              <span className="flex items-center gap-1.5 text-yellow-400">
+                <Star className="size-4 fill-yellow-400" />
+                {series.average_rating.toFixed(1)}
+                <span className="text-gray-500">
+                  ({series.rating_count} {series.rating_count === 1 ? 'rating' : 'ratings'})
+                </span>
+              </span>
+            ) : (
+              <span className="flex items-center gap-1.5 text-gray-500">
+                <Star className="size-4" /> No ratings yet
+              </span>
+            )}
           </div>
 
           <div className="mb-6">

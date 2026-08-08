@@ -1,19 +1,17 @@
 // lib/mockCatalogData.ts
 //
 // Single source of truth for the mock/placeholder data used to fill out
-// homepage + Explore surfaces while the real catalog and ratings/genres
-// pipeline are still small. Previously this lived duplicated inline in
+// homepage + Explore surfaces while the real catalog and genres pipeline
+// are still small. Previously this lived duplicated inline in
 // app/page.tsx; Explore needs the exact same "Popular This Week" data as
 // the homepage's "Trending This Week", so it's centralized here instead of
 // copy-pasted a second time.
 //
-// Every export here is placeholder data pending real backend support:
-//   - real per-series ratings  -> `ratings` table is currently empty
-//   - real per-series genres   -> `series_genres` isn't denormalized onto
-//                                  the /series list response yet
-//   - real per-genre counts    -> would need a genre-count endpoint
-// Remove/replace pieces of this file as each of those becomes real,
-// rather than leaving stale mock numbers next to real ones.
+// Ratings are real now (see displayRatingFor below, backed by GET
+// /series's average_rating aggregation) -- REAL_TRENDING_OVERRIDES only
+// still supplies genres, since real per-series genres aren't denormalized
+// onto the /series list response yet. Remove the genres half of this file
+// once that's true too, rather than leaving stale mock data next to real.
 
 import type { SeriesCardData } from '../components/shared/SeriesCard';
 
@@ -55,7 +53,7 @@ export const REAL_TRENDING_OVERRIDES: Record<string, { rating: number; genres: s
 export const PLACEHOLDER_GENRE_TAGS = ['Romance', 'Drama'];
 
 export function displayRatingFor(series: SeriesCardData): number | null {
-  return REAL_TRENDING_OVERRIDES[series.title]?.rating ?? null;
+  return series.average_rating ?? null;
 }
 
 export function displayGenresFor(series: SeriesCardData): string[] {

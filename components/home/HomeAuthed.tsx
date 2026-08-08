@@ -11,7 +11,6 @@ import TrendingSidebarCard, { type TrendingSidebarItem } from '../dashboard/Tren
 import RecentActivityCard from './RecentActivityCard';
 import {
   MOCK_TRENDING,
-  REAL_TRENDING_OVERRIDES,
   displayRatingFor,
   displayGenresFor,
 } from '../../lib/mockCatalogData';
@@ -49,7 +48,7 @@ export default function HomeAuthed({
     title: s.title,
     country: s.country,
     mediaType: 'Series',
-    rating: REAL_TRENDING_OVERRIDES[s.title]?.rating ?? null,
+    rating: displayRatingFor(s),
     badge: CONTINUE_DISCOVERING_BADGES[i],
     imageUrl: s.backdrop_url ?? s.poster_url,
     progress: i === 0 ? 0.4 : undefined,
@@ -82,7 +81,7 @@ export default function HomeAuthed({
       title: s.title,
       country: s.country,
       mediaType: 'Series',
-      rating: REAL_TRENDING_OVERRIDES[s.title]?.rating ?? null,
+      rating: displayRatingFor(s),
       imageUrl: s.backdrop_url ?? s.poster_url,
       trend: TRENDS[i],
       isReal: true,

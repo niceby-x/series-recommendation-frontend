@@ -14,13 +14,36 @@ export default function RatingForm({ seriesId }: { seriesId: number }) {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
+  // Whether the user already had a rating for this series before this page
+  // load -- drives the "Update" vs "Submit" copy below, and lets the
+  // upserting POST /ratings behave predictably instead of silently
+  // overwriting a prior review with no indication it was ever there.
+  const [hasExistingRating, setHasExistingRating] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       setCheckingSession(false);
+
+      if (!session) return;
+
+      fetch(process.env.NEXT_PUBLIC_API_URL + '/ratings/mine/' + seriesId, {
+        headers: { Authorization: 'Bearer ' + session.access_token },
+      })
+        .then((res) => (res.ok ? res.json() : null))
+        .then((json) => {
+          if (json?.data) {
+            setScore(json.data.score);
+            setReviewText(json.data.review_text ?? '');
+            setHasExistingRating(true);
+          }
+        })
+        .catch(() => {
+          // Prefill is a nicety, not a blocker -- if it fails, the form
+          // just starts blank and the upsert on submit still works fine.
+        });
     });
-  }, []);
+  }, [seriesId]);
 
   async function handleSubmit() {
     if (score < 1 || score > 10) {
@@ -61,6 +84,7 @@ export default function RatingForm({ seriesId }: { seriesId: number }) {
     }
 
     setSubmitted(true);
+    setHasExistingRating(true);
     setSubmitting(false);
   }
 
@@ -84,14 +108,18 @@ export default function RatingForm({ seriesId }: { seriesId: number }) {
   if (submitted) {
     return (
       <div className="bg-gray-900 rounded-xl p-6 border border-gray-800 mt-6">
-        <p className="text-green-400 font-medium">Thanks for rating this series!</p>
+        <p className="text-green-400 font-medium">
+          {hasExistingRating ? 'Your rating has been updated!' : 'Thanks for rating this series!'}
+        </p>
       </div>
     );
   }
 
   return (
     <div className="bg-gray-900 rounded-xl p-6 border border-gray-800 mt-6">
-      <h2 className="text-lg font-semibold mb-3 text-blue-400">Rate this series</h2>
+      <h2 className="text-lg font-semibold mb-3 text-blue-400">
+        {hasExistingRating ? 'Update your rating' : 'Rate this series'}
+      </h2>
 
       <div className="flex flex-wrap gap-2 mb-4">
         {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
@@ -125,7 +153,7 @@ export default function RatingForm({ seriesId }: { seriesId: number }) {
         disabled={submitting || score === 0}
         className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed text-white px-6 py-3 rounded-lg font-medium transition-colors"
       >
-        {submitting ? 'Submitting...' : 'Submit Rating'}
+        {submitting ? 'Submitting...' : hasExistingRating ? 'Update Rating' : 'Submit Rating'}
       </button>
     </div>
   );
