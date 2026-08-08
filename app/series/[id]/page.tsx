@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
+import { notFound } from 'next/navigation';
 import { Calendar, Clapperboard } from 'lucide-react';
 import RatingForm from '../../../components/shared/RatingForm';
 import WatchlistButton from '@/components/shared/WatchlistButton';
@@ -17,7 +18,24 @@ interface Series {
 }
 
 async function getSeriesById(id: string): Promise<Series> {
-  const res = await fetch(process.env.NEXT_PUBLIC_API_URL + '/series/' + id);
+  // no-store: series data (rating, status, synopsis edits from admin, etc.)
+  // changes at runtime, per AGENTS.md's fetch-caching rule.
+  const res = await fetch(process.env.NEXT_PUBLIC_API_URL + '/series/' + id, {
+    cache: 'no-store',
+  });
+
+  // GET /series/:id 404s for both a missing series and a malformed/non-numeric
+  // id (see backend src/index.ts), so this one check covers both cases the
+  // task calls out. Anything else unexpected (5xx, network) still throws
+  // into the nearest error boundary rather than reading series.status on
+  // an undefined series.
+  if (!res.ok) {
+    if (res.status === 404) {
+      notFound();
+    }
+    throw new Error('Failed to load series ' + id + ': ' + res.status);
+  }
+
   const json = await res.json();
   return json.data;
 }
