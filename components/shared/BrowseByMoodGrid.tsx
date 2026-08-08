@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import type { MoodTile } from '../../lib/landingContent';
 
 // Mood filtering isn't wired into Explore yet (only country/genre/year/
@@ -20,10 +21,12 @@ export default function BrowseByMoodGrid({ moods }: { moods: MoodTile[] }) {
             }
           >
             {mood.image && (
-              <img
+              <Image
                 src={mood.image}
                 alt=""
-                className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                fill
+                sizes="(min-width: 1024px) 16vw, (min-width: 640px) 33vw, 50vw"
+                className="object-cover transition-transform duration-500 group-hover:scale-105"
                 aria-hidden
               />
             )}

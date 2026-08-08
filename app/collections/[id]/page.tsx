@@ -36,6 +36,7 @@ export default function CollectionDetailPage() {
   const router = useRouter();
   const { open: openAuthModal } = useAuthModal();
   const id = Number(params.id);
+  const validId = Number.isFinite(id);
 
   const [state, setState] = useState<LoadState>('checking');
   const [detail, setDetail] = useState<CollectionDetail | null>(null);
@@ -46,42 +47,39 @@ export default function CollectionDetailPage() {
   const [draftDescription, setDraftDescription] = useState('');
   const [saving, setSaving] = useState(false);
 
-  async function load() {
-    const header = await authHeader();
-
-    const res = await fetch(process.env.NEXT_PUBLIC_API_URL + '/collections/' + id, {
-      headers: header || undefined,
-      cache: 'no-store',
-    });
-
-    if (res.status === 404) {
-      setState('not_found');
-      return;
-    }
-    if (res.status === 403) {
-      setState('forbidden');
-      return;
-    }
-    if (!res.ok) {
-      setState('error');
-      return;
-    }
-
-    const json = await res.json();
-    setDetail(json.data);
-    setDraftTitle(json.data.title);
-    setDraftDescription(json.data.description || '');
-    setState('ok');
-  }
-
   useEffect(() => {
-    if (!Number.isFinite(id)) {
-      setState('not_found');
-      return;
+    if (!validId) return;
+
+    async function load() {
+      const header = await authHeader();
+
+      const res = await fetch(process.env.NEXT_PUBLIC_API_URL + '/collections/' + id, {
+        headers: header || undefined,
+        cache: 'no-store',
+      });
+
+      if (res.status === 404) {
+        setState('not_found');
+        return;
+      }
+      if (res.status === 403) {
+        setState('forbidden');
+        return;
+      }
+      if (!res.ok) {
+        setState('error');
+        return;
+      }
+
+      const json = await res.json();
+      setDetail(json.data);
+      setDraftTitle(json.data.title);
+      setDraftDescription(json.data.description || '');
+      setState('ok');
     }
+
     load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
+  }, [id, validId]);
 
   useEffect(() => {
     if (!detail?.is_mine) return;
@@ -172,9 +170,9 @@ export default function CollectionDetailPage() {
     setDetail((prev) => (prev ? { ...prev, series: prev.series.filter((s) => s.id !== seriesId) } : prev));
   }
 
-  if (state === 'checking') return null;
+  if (validId && state === 'checking') return null;
 
-  if (state === 'not_found') {
+  if (!validId || state === 'not_found') {
     return (
       <main className="min-h-screen bg-background flex items-center justify-center p-8">
         <p className="text-muted-foreground">This collection doesn&apos;t exist.</p>

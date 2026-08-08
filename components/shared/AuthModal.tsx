@@ -45,16 +45,20 @@ export default function AuthModal({
   const [messageType, setMessageType] = useState<'error' | 'success'>('error');
   const [loading, setLoading] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
+  const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
 
   // Reset to whichever mode the caller asked for each time the modal opens
   // (e.g. WatchlistButton always wants 'login', navbar's Sign up wants
-  // 'register') and clear any stale state from a previous open.
-  useEffect(() => {
+  // 'register') and clear any stale state from a previous open. Adjusted
+  // during render (rather than in an effect) so the reset is visible in the
+  // same commit the modal opens in, with no flash of stale state.
+  if (isOpen !== prevIsOpen) {
+    setPrevIsOpen(isOpen);
     if (isOpen) {
       setMode(initialMode);
       setMessage('');
     }
-  }, [isOpen, initialMode]);
+  }
 
   // Escape to close, lock page scroll while open
   useEffect(() => {

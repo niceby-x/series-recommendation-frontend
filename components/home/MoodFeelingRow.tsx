@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { ChevronRight } from 'lucide-react';
 import { MOCK_MOODS } from '../../lib/landingContent';
 
@@ -50,10 +51,12 @@ export default function MoodFeelingRow() {
                 }
               >
                 {mood.image && (
-                  <img
+                  <Image
                     src={mood.image}
                     alt=""
-                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    fill
+                    sizes="152px"
+                    className="object-cover transition-transform duration-500 group-hover:scale-105"
                     aria-hidden
                   />
                 )}

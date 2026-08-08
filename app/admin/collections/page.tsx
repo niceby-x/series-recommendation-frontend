@@ -110,10 +110,7 @@ export default function AdminCollectionsPage() {
   }, [user]);
 
   useEffect(() => {
-    if (selectedId === null) {
-      setDetail(null);
-      return;
-    }
+    if (selectedId === null) return;
 
     async function loadDetail() {
       const res = await fetch(process.env.NEXT_PUBLIC_API_URL + '/collections/' + selectedId);
@@ -210,7 +207,10 @@ export default function AdminCollectionsPage() {
     if (!res.ok) return;
 
     setCollections((prev) => prev.filter((c) => c.id !== collection.id));
-    if (selectedId === collection.id) setSelectedId(null);
+    if (selectedId === collection.id) {
+      setSelectedId(null);
+      setDetail(null);
+    }
   }
 
   async function handleAddSeries(series: SeriesCardData) {

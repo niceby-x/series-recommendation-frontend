@@ -115,10 +115,7 @@ export default function MyListPage() {
   }, []);
 
   useEffect(() => {
-    if (!user) {
-      setLoading(false);
-      return;
-    }
+    if (!user) return;
 
     async function fetchWatchlist() {
       setLoading(true);

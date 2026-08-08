@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { Sparkles, Flame, Star, CalendarClock, MoreHorizontal } from 'lucide-react';
 
 // New Releases / Trending / Top Rated link to the plain catalog for now — there's
@@ -29,9 +30,11 @@ export default function CategoryNav() {
         >
           <span className="relative flex items-center justify-center size-9 rounded-full bg-muted text-primary group-hover:bg-accent transition-colors">
             {category.flagCode ? (
-              <img
+              <Image
                 src={`https://flagcdn.com/w40/${category.flagCode}.png`}
                 alt=""
+                width={20}
+                height={20}
                 className="size-5 rounded-full object-cover"
               />
             ) : category.icon ? (

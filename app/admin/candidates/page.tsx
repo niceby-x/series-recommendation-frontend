@@ -673,13 +673,11 @@ export default function AdminCandidatesPage() {
     if (!user) return;
     fetchCandidates(activeTab);
     fetchCounts();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, activeTab]);
 
   useEffect(() => {
     if (!user) return;
     fetchAvailableTags();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   async function fetchAvailableTags() {
