@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ChevronDown, Plus } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import DashboardSidebar from '../dashboard/DashboardSidebar';
@@ -46,29 +46,37 @@ export default function CollectionsAuthed() {
   const [curated, setCurated] = useState<RealCollection[]>([]);
   const [loaded, setLoaded] = useState(false);
 
-  const loadAll = useCallback(async () => {
-    const header = await authHeader();
-    if (!header) return;
-
-    const [mineRes, curatedRes] = await Promise.all([
-      fetch(process.env.NEXT_PUBLIC_API_URL + '/collections?mine=true', { headers: header }),
-      fetch(process.env.NEXT_PUBLIC_API_URL + '/collections', { headers: header }),
-    ]);
-
-    if (mineRes.ok) {
-      const json = await mineRes.json();
-      setMine(json.data || []);
-    }
-    if (curatedRes.ok) {
-      const json = await curatedRes.json();
-      setCurated(json.data || []);
-    }
-    setLoaded(true);
-  }, []);
-
   useEffect(() => {
+    let cancelled = false;
+
+    async function loadAll() {
+      const header = await authHeader();
+      if (!header || cancelled) return;
+
+      const [mineRes, curatedRes] = await Promise.all([
+        fetch(process.env.NEXT_PUBLIC_API_URL + '/collections?mine=true', { headers: header }),
+        fetch(process.env.NEXT_PUBLIC_API_URL + '/collections', { headers: header }),
+      ]);
+
+      if (cancelled) return;
+
+      if (mineRes.ok) {
+        const json = await mineRes.json();
+        if (!cancelled) setMine(json.data || []);
+      }
+      if (curatedRes.ok) {
+        const json = await curatedRes.json();
+        if (!cancelled) setCurated(json.data || []);
+      }
+      if (!cancelled) setLoaded(true);
+    }
+
     loadAll();
-  }, [loadAll]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const showMine = selectedFilter === 'all' || selectedFilter === 'mine';
   const showCurated = selectedFilter === 'all' || selectedFilter === 'curated';
