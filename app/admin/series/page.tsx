@@ -90,7 +90,9 @@ export default function AdminSeriesPage() {
 
       if (collectionsRes.ok) {
         const collectionsJson = await collectionsRes.json();
-        setAvailableCollections((collectionsJson.data || []).map((c: any) => ({ id: c.id, title: c.title })));
+        setAvailableCollections(
+          (collectionsJson.data || []).map((c: { id: number; title: string }) => ({ id: c.id, title: c.title }))
+        );
       }
 
       setAccess('ok');
