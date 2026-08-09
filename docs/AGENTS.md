@@ -23,29 +23,29 @@ This document captures conventions established during development, including a f
 
 ---
 
-## Critical: String Concatenation Over Template Literals
+## String Concatenation vs. Template Literals
 
-**This is the most important convention in this codebase.** Template literals (`` `${...}` ``) in `fetch()` URLs and dynamic `className` strings have repeatedly gotten silently corrupted during copy-paste into this project (missing backticks, mangled interpolation, broken JSX). This has caused real bugs multiple times.
+Template literals (`` `${...}` ``) in `fetch()` URLs and dynamic `className` strings have, in the past, gotten silently corrupted during copy-paste into this project (missing backticks, mangled interpolation, broken JSX), causing real bugs. It's unclear whether the copy-paste tooling that caused this is still an issue (see P4-05) — treat this as a soft preference, not a hard rule, and revisit again if corruption shows up again:
 
-**Always use string concatenation instead:**
+**Prefer string concatenation for fetch URLs and dynamic classNames:**
 
 ```ts
-// Don't do this:
-fetch(`${process.env.NEXT_PUBLIC_API_URL}/series`)
-
-// Do this:
+// Preferred:
 fetch(process.env.NEXT_PUBLIC_API_URL + '/series')
+
+// Also fine if you've double-checked it pasted in correctly:
+fetch(`${process.env.NEXT_PUBLIC_API_URL}/series`)
 ```
 
 ```tsx
-// Don't do this:
-className={`px-4 py-2 ${isActive ? 'bg-blue-600' : 'bg-gray-800'}`}
-
-// Do this:
+// Preferred:
 className={'px-4 py-2 ' + (isActive ? 'bg-blue-600' : 'bg-gray-800')}
+
+// Also fine if you've double-checked it pasted in correctly:
+className={`px-4 py-2 ${isActive ? 'bg-blue-600' : 'bg-gray-800'}`}
 ```
 
-Apply this rule to every new file that builds a URL or a conditional class string, not just files that have already broken.
+If you do use template literals, just double-check they made it in with backticks intact — that's the specific thing that used to break.
 
 ---
 
@@ -79,9 +79,15 @@ ADMIN_EMAIL=
 
 **Frontend `.env.local`**
 ```
-NEXT_PUBLIC_API_URL=
-NEXT_PUBLIC_ADMIN_EMAIL=
+NEXT_PUBLIC_API_URL=                # backend API base URL
+NEXT_PUBLIC_ADMIN_EMAIL=            # UI-only convenience check for the admin nav link
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=      # anon/public key, safe to expose client-side
+NEXT_PUBLIC_SITE_URL=               # used for canonical links, OG tags, sitemap.ts, robots.ts
 ```
+
+See `.env.example` for the full annotated list — this section previously
+only listed two of the five vars the app actually reads (see P3-08).
 
 ---
 

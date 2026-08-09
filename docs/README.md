@@ -36,12 +36,17 @@ Unlike a generic drama database, Blumi is scoped specifically to BL content, wit
 ## Current Features
 
 **User-facing**
-- Browse BL series with poster cards, hover animations, and status badges
-- Series detail pages
+- Browse BL series with poster cards, hover animations, and status badges, with working country/genre/year/sort filters and search (including a filterable Discover grid that loads more on demand rather than fetching the whole catalog up front)
+- Series detail pages with dynamic per-page metadata (title/description/OG image) for link previews
 - Account registration and login (Supabase Auth, email/password)
-- Ratings (1–10 numeric score) on series
+- Ratings (1–10 numeric score, optional written review) on series, with real aggregate averages/counts shown on cards and detail pages, upsert-on-resubmit, and the form prefilling a user's existing rating
 - Watchlist with status tracking (plan to watch / watching / completed)
 - "My List" page grouping watchlist entries by status
+- Moods — browse by mood (romantic, heartfelt, etc.), matched against real series tags
+- Tropes — browse by trope, matched against real series tags, with counts and poster art pulled from actual matches
+- Collections — personal (create/edit/add-to) and curated (admin-managed) lists of series
+- New Releases page with a release calendar and "Just Released"/"Trending" surfaces
+- robots.txt and a generated sitemap for search engines
 
 **Content pipeline (admin-only)**
 - TMDb keyword-based discovery script (`discover-series-by-keyword.ts`) that searches both TV and movies under the "boys' love (bl)" TMDb keyword, resolves each result's real country, detects animation and season count, and pulls genres + top cast in the same request
@@ -92,12 +97,11 @@ Both require their own `.env` — see `AGENTS.md` for the required variables.
 
 ## Roadmap
 
-Ideas discussed but not yet built:
+Ideas discussed but not yet built (see `docs/03-roadmap.md` for the full phased list):
 - Recommendation explanations ("recommended because you liked X, Y, Z")
-- Mood/trope-based discovery instead of pure browsing
-- Trending / recently added surfaces on the homepage
+- Real personalization (the current "Recommended For You" row is just "everything else," not tailored)
 - User profiles and public watch history
-- Collections/curated lists
+- Community reviews/social features (the `/community` page is a placeholder)
 
 ---
 

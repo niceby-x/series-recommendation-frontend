@@ -18,15 +18,15 @@
 
 ## Phase 2
 
-⬜ Better Homepage
+✅ Better Homepage
 
-⬜ Collections
+✅ Collections
 
-⬜ Trending
+✅ Trending *(ranked by a placeholder rating signal — see Popular This Week)*
 
-⬜ Popular This Week
+✅ Popular This Week *(same placeholder-ranking caveat)*
 
-⬜ Continue Browsing
+⬜ Continue Browsing *(homepage/Explore have "Continue Discovering/Exploring" promo rows, but they're curated, not tied to a user's actual watch history)*
 
 ⬜ User Profiles
 
@@ -34,23 +34,23 @@
 
 ## Phase 3
 
-⬜ Mood Discovery
+✅ Mood Discovery
 
-⬜ Trope Explorer
+✅ Trope Explorer
 
-⬜ Personalized Feed
+⬜ Personalized Feed *(Discover's "Recommended For You" row exists but is just "everything else," not real personalization)*
 
 ⬜ AI Recommendations
 
 ⬜ Recommendation Explanations
 
-⬜ Seasonal Collections
+⬜ Seasonal Collections *(the generic Collections feature could carry these once curated)*
 
 ---
 
 ## Phase 4
 
-⬜ Community Reviews
+⬜ Community Reviews *(the /community page is still a "coming soon" placeholder)*
 
 ⬜ User Lists
 
