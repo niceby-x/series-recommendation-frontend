@@ -12,18 +12,20 @@ import DiscoverMediaCard, { type DiscoverMediaCardData } from './DiscoverMediaCa
 import TopRatedSeriesCard, { type TopRatedItem } from './TopRatedSeriesCard';
 import ExploreByGenreCard from './ExploreByGenreCard';
 import PopularTagsCard from './PopularTagsCard';
-import { mockGenresFor, mockRatingFor } from '../../lib/exploreMock';
+import { mockRatingFor } from '../../lib/exploreMock';
 import { seriesMatchesTropeKey } from '../../lib/moodMatch';
 import { POPULAR_TROPES, NEW_TROPES } from '../../lib/tropesContent';
 
 // The logged-in Discover page. Country/genre/year/sort are REAL, working
-// filters over the real catalog (not decorative) -- reusing the same
-// mockGenresFor/mockRatingFor helpers the existing Explore page uses,
-// since genres and aggregate ratings aren't wired into the /series API
-// yet (see lib/exploreMock.ts). When any filter/sort is non-default, the
-// curated rows below (Trending Now, New Releases, Recommended For You)
-// give way to a single filtered+sorted grid, same isFiltering pattern
-// SeriesFilter.tsx (the logged-out Explore page) already uses.
+// filters over the real catalog (not decorative) -- genre_names comes from
+// GET /series's series_genres join (see P2-06/P2-07), same as country/year.
+// Rating-based sorting still uses mockRatingFor from lib/exploreMock.ts for
+// Trending Now/Top Rated ordering; average_rating is real (see P1-04) but
+// isn't swapped into the sort here, only onto card display. When any
+// filter/sort is non-default, the curated rows below (Trending Now, New
+// Releases, Recommended For You) give way to a single filtered+sorted
+// grid, same isFiltering pattern SeriesFilter.tsx (the logged-out Explore
+// page) already uses.
 //
 // A `?trope=<key>` query param (set by PopularTropeCard/NewTropeCard on
 // the Tropes page once a trope has real series_tags matches) also filters
@@ -57,6 +59,20 @@ export default function DiscoverAuthed({ allSeries }: { allSeries: SeriesCardDat
     () => Array.from(new Set(allSeries.map((s) => s.year))).sort((a, b) => b - a),
     [allSeries]
   );
+  // Real genre names from GET /series's series_genres join (see P2-06),
+  // same derive-from-the-catalog pattern as countries/years above -- not
+  // GENRES from lib/exploreMock.ts, which is a curated mock taxonomy
+  // ('romance', 'school', 'slice_of_life' as fixed keys) that doesn't
+  // correspond to actual TMDb genre names at all (case differs, and some
+  // GENRES entries like "School"/"Slice of Life" aren't real TMDb genres
+  // to begin with). Swapping the *match* to check genre_names while still
+  // sourcing dropdown *options* from GENRES would silently never match
+  // anything -- this is why P2-07 needs it, not just DiscoverAuthed.tsx's
+  // matchesGenre line.
+  const genres = useMemo(
+    () => Array.from(new Set(allSeries.flatMap((s) => s.genre_names ?? []))).sort(),
+    [allSeries]
+  );
 
   const [filters, setFilters] = useState<DiscoverFilterState>({
     country: 'All',
@@ -77,7 +93,7 @@ export default function DiscoverAuthed({ allSeries }: { allSeries: SeriesCardDat
     let list = allSeries.filter((s) => {
       const matchesSearch = s.title.toLowerCase().includes(search.trim().toLowerCase());
       const matchesCountry = filters.country === 'All' || s.country === filters.country;
-      const matchesGenre = filters.genre === 'All' || mockGenresFor(s.id).includes(filters.genre);
+      const matchesGenre = filters.genre === 'All' || (s.genre_names ?? []).includes(filters.genre);
       const matchesYear = filters.year === 'All' || String(s.year) === filters.year;
       const matchesTrope = !tropeFilter || seriesMatchesTropeKey(s.tags, tropeFilter);
       return matchesSearch && matchesCountry && matchesGenre && matchesYear && matchesTrope;
@@ -167,7 +183,7 @@ export default function DiscoverAuthed({ allSeries }: { allSeries: SeriesCardDat
 
           <div className="grid grid-cols-1 xl:grid-cols-[1fr_336px] gap-8 items-start">
             <main className="min-w-0">
-              <DiscoverFiltersBar filters={filters} onChange={setFilters} countries={countries} years={years} />
+              <DiscoverFiltersBar filters={filters} onChange={setFilters} countries={countries} years={years} genres={genres} />
 
               {isFiltering ? (
                 <section>
@@ -260,7 +276,7 @@ export default function DiscoverAuthed({ allSeries }: { allSeries: SeriesCardDat
 
             <aside className="flex flex-col gap-5 xl:sticky xl:top-8">
               <TopRatedSeriesCard items={topRated} />
-              <ExploreByGenreCard onSelect={(genre) => setFilters((f) => ({ ...f, genre }))} />
+              <ExploreByGenreCard genres={genres} onSelect={(genre) => setFilters((f) => ({ ...f, genre }))} />
               <PopularTagsCard />
             </aside>
           </div>

@@ -32,6 +32,10 @@ export interface SeriesCardData {
   // series yet. Optional for the same reason as `tags` above.
   average_rating?: number | null;
   rating_count?: number;
+  // Real genres, now that GET /series joins series_genres in (see P2-06 --
+  // mirrors the genre_names field GET /series/:id already returned).
+  // Optional for the same reason as `tags` above.
+  genre_names?: string[];
 }
 
 const STATUS_LABELS: Record<string, string> = {

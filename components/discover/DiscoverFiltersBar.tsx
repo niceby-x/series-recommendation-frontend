@@ -1,13 +1,12 @@
 'use client';
 
 import { Globe2, LayoutGrid, CalendarDays, ArrowDownUp } from 'lucide-react';
-import { GENRES } from '../../lib/exploreMock';
 
 export type DiscoverSort = 'popular' | 'newest' | 'top_rated';
 
 export interface DiscoverFilterState {
   country: string; // 'All' or a real country value from the catalog
-  genre: string; // 'All' or a GENRES key -- mock, see lib/exploreMock.ts
+  genre: string; // 'All' or a real genre name from the catalog (see P2-06/P2-07)
   year: string; // 'All' or a year as a string
   sort: DiscoverSort;
 }
@@ -58,19 +57,21 @@ function FilterSelect({
 }
 
 // Real, functional filters -- driving DiscoverAuthed's client-side
-// filter/sort of the real catalog (see lib/exploreMock.ts's mockGenresFor
-// / mockRatingFor for why genre + rating-based sort are deterministic
-// mock rather than real DB fields for now).
+// filter/sort of the real catalog. Genre options come from the catalog
+// itself (see DiscoverAuthed's `genres` -- real GET /series genre_names,
+// P2-06/P2-07), same as countries/years below, not a fixed list.
 export default function DiscoverFiltersBar({
   filters,
   onChange,
   countries,
   years,
+  genres,
 }: {
   filters: DiscoverFilterState;
   onChange: (filters: DiscoverFilterState) => void;
   countries: string[];
   years: number[];
+  genres: string[];
 }) {
   return (
     <div className="flex flex-wrap gap-3 mb-8">
@@ -86,7 +87,7 @@ export default function DiscoverFiltersBar({
         ariaLabel="Filter by genre"
         value={filters.genre}
         onChange={(genre) => onChange({ ...filters, genre })}
-        options={[{ value: 'All', label: 'All Genres' }, ...GENRES.map((g) => ({ value: g.key, label: g.label }))]}
+        options={[{ value: 'All', label: 'All Genres' }, ...genres.map((g) => ({ value: g, label: g }))]}
       />
       <FilterSelect
         icon={CalendarDays}

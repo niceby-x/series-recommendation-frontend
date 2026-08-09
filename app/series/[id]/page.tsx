@@ -2,6 +2,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { Calendar, Clapperboard, Star } from 'lucide-react';
+import type { Metadata } from 'next';
 import RatingForm from '../../../components/shared/RatingForm';
 import WatchlistButton from '@/components/shared/WatchlistButton';
 
@@ -40,6 +41,46 @@ async function getSeriesById(id: string): Promise<Series> {
 
   const json = await res.json();
   return json.data;
+}
+
+// Dynamic per-page metadata -- previously only the root layout set
+// <title>/<description>, so every series detail page looked identical
+// (both in the browser tab and when a link is pasted into
+// Discord/Twitter/etc., which read og:title/og:description/og:image
+// rather than the page's visible content). Reuses getSeriesById(id): Next
+// dedupes identical fetch() calls made during the same request, so this
+// doesn't cost a second round trip on top of the page component's own
+// call below.
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const series = await getSeriesById(id);
+
+  const description = series.synopsis
+    ? series.synopsis.length > 155
+      ? series.synopsis.slice(0, 155).trimEnd() + '…'
+      : series.synopsis
+    : 'Discover ' + series.title + ' on BLumi -- ' + series.country + ', ' + series.year + '.';
+
+  return {
+    title: series.title,
+    description,
+    openGraph: {
+      title: series.title,
+      description,
+      type: 'video.tv_show',
+      images: series.poster_url ? [{ url: series.poster_url }] : undefined,
+    },
+    twitter: {
+      card: series.poster_url ? 'summary_large_image' : 'summary',
+      title: series.title,
+      description,
+      images: series.poster_url ? [series.poster_url] : undefined,
+    },
+  };
 }
 
 export default async function SeriesDetailPage({ params }: { params: Promise<{ id: string }> }) {

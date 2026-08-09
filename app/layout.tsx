@@ -3,6 +3,7 @@ import { DM_Serif_Display, Inter, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Navbar from "../components/shared/Navbar";
 import { AuthModalProvider } from "../lib/AuthModalContext";
+import { SITE_URL } from "../lib/siteConfig";
 
 const dmSerifDisplay = DM_Serif_Display({
   variable: "--font-dm-serif",
@@ -22,7 +23,11 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "BLumi | Where Stories Bloom",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "BLumi | Where Stories Bloom",
+    template: "%s | BLumi",
+  },
   description:
     "Discover, curate, and track your next favorite BL series, movies, and anime — handpicked with love.",
 };
