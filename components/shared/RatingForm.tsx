@@ -5,6 +5,12 @@ import { supabase } from '../../lib/supabase';
 import { useAuthModal } from '../../lib/AuthModalContext';
 import type { User } from '@supabase/supabase-js';
 
+// Mirrors the backend's POST /ratings cap (see P2-08 handoff) -- keeping
+// this in sync with the server lets the textarea's maxLength (and the
+// counter below) give inline feedback instead of users hitting the
+// server's 400 after typing a review out.
+const MAX_REVIEW_LENGTH = 2000;
+
 export default function RatingForm({ seriesId }: { seriesId: number }) {
   const { open: openAuthModal } = useAuthModal();
   const [user, setUser] = useState<User | null>(null);
@@ -143,8 +149,12 @@ export default function RatingForm({ seriesId }: { seriesId: number }) {
         value={reviewText}
         onChange={(e) => setReviewText(e.target.value)}
         rows={3}
-        className="w-full bg-gray-800 border border-gray-700 text-white rounded-lg px-4 py-3 mb-4 focus:outline-none focus:border-blue-500"
+        maxLength={MAX_REVIEW_LENGTH}
+        className="w-full bg-gray-800 border border-gray-700 text-white rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500"
       />
+      <p className="text-gray-500 text-xs text-right mb-4">
+        {reviewText.length} / {MAX_REVIEW_LENGTH}
+      </p>
 
       {error && <p className="text-red-400 text-sm mb-4">{error}</p>}
 
