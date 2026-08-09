@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Bookmark, ChevronRight, Flame, Star } from 'lucide-react';
 import type { SeriesCardData } from '../shared/SeriesCard';
-import { mockGenreLabelsFor, mockRatingFor } from '../../lib/exploreMock';
+import { mockGenreLabelsFor } from '../../lib/exploreMock';
 
 const TOP_BADGE_CLASSES: Record<number, string> = {
   1: 'bg-gradient-to-r from-amber-400 to-pink-400',
@@ -15,7 +15,10 @@ const TOP_BADGE_CLASSES: Record<number, string> = {
 
 function PopularCard({ series, rank }: { series: SeriesCardData; rank: number }) {
   const [bookmarked, setBookmarked] = useState(false);
-  const rating = mockRatingFor(series.id);
+  // Real aggregation from GET /series (see P1-04) -- null/undefined when the
+  // series has no ratings yet, so the star badge is dropped below rather
+  // than showing a fake "0.0".
+  const rating = series.average_rating ?? null;
   const genres = mockGenreLabelsFor(series.id).slice(0, 2);
 
   return (
@@ -71,9 +74,13 @@ function PopularCard({ series, rank }: { series: SeriesCardData; rank: number })
             {series.title}
           </h3>
           <div className="flex items-center gap-1 text-white/90 text-[12px] mb-1.5">
-            <Star className="size-3 fill-yellow-400 text-yellow-400" />
-            <span className="font-semibold">{rating.toFixed(1)}</span>
-            <span className="text-white/50">·</span>
+            {rating != null && (
+              <>
+                <Star className="size-3 fill-yellow-400 text-yellow-400" />
+                <span className="font-semibold">{rating.toFixed(1)}</span>
+                <span className="text-white/50">·</span>
+              </>
+            )}
             <span>{series.year}</span>
             <span className="text-white/50">·</span>
             <span className="truncate">{series.country}</span>

@@ -13,7 +13,6 @@ import DiscoverMediaCard, { type DiscoverMediaCardData } from './DiscoverMediaCa
 import TopRatedSeriesCard, { type TopRatedItem } from './TopRatedSeriesCard';
 import ExploreByGenreCard from './ExploreByGenreCard';
 import PopularTagsCard from './PopularTagsCard';
-import { mockRatingFor } from '../../lib/exploreMock';
 import { seriesMatchesTropeKey } from '../../lib/moodMatch';
 import { POPULAR_TROPES, NEW_TROPES } from '../../lib/tropesContent';
 import { usePaginatedSeries, type SeriesPagination } from '../../lib/usePaginatedSeries';
@@ -21,9 +20,11 @@ import { usePaginatedSeries, type SeriesPagination } from '../../lib/usePaginate
 // The logged-in Discover page. Country/genre/year/sort are REAL, working
 // filters over the real catalog (not decorative) -- genre_names comes from
 // GET /series's series_genres join (see P2-06/P2-07), same as country/year.
-// Rating-based sorting still uses mockRatingFor from lib/exploreMock.ts for
-// Trending Now/Top Rated ordering; average_rating is real (see P1-04) but
-// isn't swapped into the sort here, only onto card display. When any
+// Rating-based sorting/display uses the real average_rating field from
+// GET /series (see P1-04) -- series with no ratings yet (average_rating is
+// null/undefined) sort to the bottom via the ?? 0 fallback below, and
+// SeriesCard/DiscoverMediaCard both already treat a null rating as "don't
+// show a star badge" rather than rendering 0.0. When any
 // filter/sort is non-default, the curated rows below (Trending Now, New
 // Releases, Recommended For You) give way to a single filtered+sorted
 // grid, same isFiltering pattern SeriesFilter.tsx (the logged-out Explore
@@ -119,27 +120,27 @@ export default function DiscoverAuthed({
     if (filters.sort === 'newest') {
       list = [...list].sort((a, b) => b.year - a.year);
     } else if (filters.sort === 'top_rated') {
-      list = [...list].sort((a, b) => mockRatingFor(b.id) - mockRatingFor(a.id));
+      list = [...list].sort((a, b) => (b.average_rating ?? 0) - (a.average_rating ?? 0));
     }
 
     return list;
   }, [allSeries, filters, search, tropeFilter]);
 
-  // Trending Now: top 4 by mock rating. New Releases: top 4 by year. These
-  // overlap with each other and with Recommended below when the catalog is
-  // small (a handful of seed rows) -- acceptable for now since there's no
-  // real trending/personalization signal yet to keep them apart.
+  // Trending Now: top 4 by real average_rating. New Releases: top 4 by year.
+  // These overlap with each other and with Recommended below when the
+  // catalog is small (a handful of seed rows) -- acceptable for now since
+  // there's no real trending/personalization signal yet to keep them apart.
   const trendingNow: DiscoverMediaCardData[] = useMemo(
     () =>
       [...allSeries]
-        .sort((a, b) => mockRatingFor(b.id) - mockRatingFor(a.id))
+        .sort((a, b) => (b.average_rating ?? 0) - (a.average_rating ?? 0))
         .slice(0, 4)
         .map((s) => ({
           id: s.id,
           title: s.title,
           country: s.country,
           mediaType: 'Series',
-          rating: mockRatingFor(s.id),
+          rating: s.average_rating ?? null,
           imageUrl: s.backdrop_url ?? s.poster_url,
           isReal: true,
         })),
@@ -156,7 +157,7 @@ export default function DiscoverAuthed({
           title: s.title,
           country: s.country,
           mediaType: 'Series',
-          rating: mockRatingFor(s.id),
+          rating: s.average_rating ?? null,
           imageUrl: s.backdrop_url ?? s.poster_url,
           isReal: true,
         })),
@@ -175,14 +176,17 @@ export default function DiscoverAuthed({
   const topRated: TopRatedItem[] = useMemo(
     () =>
       [...allSeries]
-        .sort((a, b) => mockRatingFor(b.id) - mockRatingFor(a.id))
+        .sort((a, b) => (b.average_rating ?? 0) - (a.average_rating ?? 0))
         .slice(0, 5)
         .map((s, i) => ({
           id: s.id,
           title: s.title,
           country: s.country,
           mediaType: 'Series',
-          rating: mockRatingFor(s.id),
+          // TopRatedItem.rating isn't nullable (unlike SeriesCard/DiscoverMediaCard) --
+          // 0 only shows up here for a series with no ratings yet, which will already
+          // be sorted to the bottom of this top-5 slice behind anything with a real score.
+          rating: s.average_rating ?? 0,
           imageUrl: s.backdrop_url ?? s.poster_url,
           trend: i % 3 === 0 ? 'down' : i % 3 === 1 ? 'flat' : 'up',
           isReal: true,
@@ -225,7 +229,7 @@ export default function DiscoverAuthed({
                   ) : (
                     <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
                       {filteredSeries.map((series) => (
-                        <SeriesCard key={series.id} series={series} rating={mockRatingFor(series.id)} />
+                        <SeriesCard key={series.id} series={series} rating={series.average_rating ?? null} />
                       ))}
                     </div>
                   )}
@@ -283,7 +287,7 @@ export default function DiscoverAuthed({
                     <ScrollRow>
                       {recommended.map((series) => (
                         <div key={series.id} className="shrink-0 w-[160px] snap-start">
-                          <SeriesCard series={series} rating={mockRatingFor(series.id)} />
+                          <SeriesCard series={series} rating={series.average_rating ?? null} />
                         </div>
                       ))}
                     </ScrollRow>

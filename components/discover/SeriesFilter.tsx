@@ -10,7 +10,7 @@ import PopularThisWeek from '../explore/PopularThisWeek';
 import BrowseByGenre from '../explore/BrowseByGenre';
 import ContinueExploring from '../explore/ContinueExploring';
 import ExploreSidebar, { type ExploreFilters, type NavCategory } from '../explore/ExploreSidebar';
-import { mockGenresFor, mockRatingFor } from '../../lib/exploreMock';
+import { mockGenresFor } from '../../lib/exploreMock';
 import { usePaginatedSeries, type SeriesPagination } from '../../lib/usePaginatedSeries';
 
 interface Props {
@@ -72,7 +72,7 @@ export default function SeriesFilter({ seriesList: initialSeriesList, initialPag
         (filters.episodes === '1-12' && series.episode_count <= 12) ||
         (filters.episodes === '13-24' && series.episode_count > 12 && series.episode_count <= 24) ||
         (filters.episodes === '25+' && series.episode_count > 24);
-      const matchesRating = filters.rating === 'Any' || mockRatingFor(series.id) >= Number(filters.rating);
+      const matchesRating = filters.rating === 'Any' || (series.average_rating ?? 0) >= Number(filters.rating);
       const matchesStatus =
         filters.navCategory !== 'coming_soon' && filters.navCategory !== 'completed'
           ? true
@@ -86,9 +86,9 @@ export default function SeriesFilter({ seriesList: initialSeriesList, initialPag
     if (filters.navCategory === 'new') {
       list = [...list].sort((a, b) => b.year - a.year);
     } else if (filters.navCategory === 'top_rated') {
-      list = [...list].sort((a, b) => mockRatingFor(b.id) - mockRatingFor(a.id));
+      list = [...list].sort((a, b) => (b.average_rating ?? 0) - (a.average_rating ?? 0));
     } else if (filters.navCategory === 'hidden_gems') {
-      list = [...list].sort((a, b) => mockRatingFor(a.id) - mockRatingFor(b.id));
+      list = [...list].sort((a, b) => (a.average_rating ?? 0) - (b.average_rating ?? 0));
     }
 
     return list;
@@ -139,7 +139,7 @@ export default function SeriesFilter({ seriesList: initialSeriesList, initialPag
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
                 {filtered.map((series) => (
-                  <SeriesCard key={series.id} series={series} />
+                  <SeriesCard key={series.id} series={series} rating={series.average_rating ?? null} />
                 ))}
               </div>
             )}
