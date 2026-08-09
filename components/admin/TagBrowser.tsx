@@ -222,7 +222,7 @@ export default function TagBrowser({
                 <div className="relative aspect-[2/3] w-full bg-muted">
                   {s.poster_url || s.backdrop_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={s.poster_url ?? s.backdrop_url ?? ''} alt="" className="w-full h-full object-cover" />
+                    <img src={s.poster_url ?? s.backdrop_url ?? ''} alt={s.title} className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full bg-gradient-to-br from-brand-blush/30 to-brand-lilac/30" />
                   )}

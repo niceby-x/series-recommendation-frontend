@@ -50,7 +50,7 @@ export default function ReviewsList({
               <div className="relative shrink-0 size-11 rounded-[10px] overflow-hidden bg-muted">
                 {review.series?.poster_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={review.series.poster_url} alt="" className="w-full h-full object-cover" />
+                  <img src={review.series.poster_url} alt={review.series.title} className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full bg-gradient-to-br from-brand-blush/30 to-brand-lilac/30" />
                 )}

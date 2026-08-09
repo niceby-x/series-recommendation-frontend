@@ -61,7 +61,7 @@ export default function SeriesList({
               <div className="relative shrink-0 size-14 rounded-[10px] overflow-hidden bg-muted">
                 {s.poster_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={s.poster_url} alt="" className="w-full h-full object-cover" />
+                  <img src={s.poster_url} alt={s.title} className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full bg-gradient-to-br from-brand-blush/30 to-brand-lilac/30" />
                 )}

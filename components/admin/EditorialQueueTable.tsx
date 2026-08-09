@@ -60,7 +60,7 @@ export default function EditorialQueueTable({ rows }: { rows: QueueRow[] }) {
                     <div className="relative shrink-0 size-11 rounded-[10px] overflow-hidden bg-muted">
                       {row.posterUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={row.posterUrl} alt="" className="w-full h-full object-cover" />
+                        <img src={row.posterUrl} alt={row.title} className="w-full h-full object-cover" />
                       ) : (
                         <div className="w-full h-full bg-gradient-to-br from-brand-blush/30 to-brand-lilac/30" />
                       )}
