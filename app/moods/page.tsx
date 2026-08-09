@@ -3,6 +3,10 @@ import HomeGate from '../../components/shared/HomeGate';
 import MoodsAuthed from '../../components/moods/MoodsAuthed';
 import MoodsLanding from '../../components/moods/MoodsLanding';
 
+// Deliberately NOT paginated (see P2-04 / lib/usePaginatedSeries.ts):
+// MoodsAuthed matches every series against each mood tag to fill its
+// editorial rows, so a partial catalog would understate real matches.
+// Only Series/Discover (a real flat browse grid) paginates.
 async function getSeries(): Promise<SeriesCardData[]> {
   try {
     const res = await fetch(process.env.NEXT_PUBLIC_API_URL + '/series', {

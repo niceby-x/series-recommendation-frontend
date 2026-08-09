@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import SeriesCard, { type SeriesCardData } from '../shared/SeriesCard';
+import LoadMoreSeriesButton from '../shared/LoadMoreSeriesButton';
 import ExploreHero from '../explore/ExploreHero';
 import GenreStrip from '../explore/GenreStrip';
 import PopularThisWeek from '../explore/PopularThisWeek';
@@ -10,16 +11,24 @@ import BrowseByGenre from '../explore/BrowseByGenre';
 import ContinueExploring from '../explore/ContinueExploring';
 import ExploreSidebar, { type ExploreFilters, type NavCategory } from '../explore/ExploreSidebar';
 import { mockGenresFor, mockRatingFor } from '../../lib/exploreMock';
+import { usePaginatedSeries, type SeriesPagination } from '../../lib/usePaginatedSeries';
 
 interface Props {
   seriesList: SeriesCardData[];
+  initialPagination?: SeriesPagination | null;
 }
 
 function pickRandom<T>(items: T[]): T {
   return items[Math.floor(Math.random() * items.length)];
 }
 
-export default function SeriesFilter({ seriesList }: Props) {
+export default function SeriesFilter({ seriesList: initialSeriesList, initialPagination = null }: Props) {
+  // See lib/usePaginatedSeries.ts -- Series/Discover (both the logged-in
+  // and logged-out variants) is the one page that paginates.
+  const { series: seriesList, hasMore, loadingMore, loadMore } = usePaginatedSeries(
+    initialSeriesList,
+    initialPagination
+  );
   const searchParams = useSearchParams();
   const router = useRouter();
   const [search] = useState(searchParams.get('q') ?? '');
@@ -134,6 +143,7 @@ export default function SeriesFilter({ seriesList }: Props) {
                 ))}
               </div>
             )}
+            <LoadMoreSeriesButton hasMore={hasMore} loading={loadingMore} onClick={loadMore} />
           </div>
         ) : (
           <>
@@ -142,6 +152,7 @@ export default function SeriesFilter({ seriesList }: Props) {
             <PopularThisWeek items={seriesList.slice(0, 7)} />
             <BrowseByGenre onSelect={handleBrowseByGenreSelect} />
             <ContinueExploring onSelect={handleContinueExploringSelect} />
+            <LoadMoreSeriesButton hasMore={hasMore} loading={loadingMore} onClick={loadMore} />
           </>
         )}
       </div>

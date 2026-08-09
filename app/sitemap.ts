@@ -5,6 +5,9 @@ interface SeriesForSitemap {
   id: number;
 }
 
+// Deliberately NOT paginated (see P2-04 / lib/usePaginatedSeries.ts): a
+// sitemap needs every series URL, not a page of them, so this keeps the
+// full-list call. Only Series/Discover (a real flat browse grid) paginates.
 async function getAllSeriesForSitemap(): Promise<SeriesForSitemap[]> {
   try {
     const res = await fetch(process.env.NEXT_PUBLIC_API_URL + '/series', {

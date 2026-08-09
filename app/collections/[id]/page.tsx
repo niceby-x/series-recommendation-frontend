@@ -81,6 +81,10 @@ export default function CollectionDetailPage() {
     load();
   }, [id, validId]);
 
+  // Deliberately NOT paginated (see P2-04 / lib/usePaginatedSeries.ts):
+  // this is a search-to-add picker over the whole catalog, so a partial
+  // list would mean some series just can't be found/added. Only
+  // Series/Discover (a real flat browse grid) paginates.
   useEffect(() => {
     if (!detail?.is_mine) return;
     fetch(process.env.NEXT_PUBLIC_API_URL + '/series', { cache: 'no-store' })

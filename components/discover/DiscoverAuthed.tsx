@@ -6,6 +6,7 @@ import { X } from 'lucide-react';
 import DashboardSidebar from '../dashboard/DashboardSidebar';
 import DashboardHeader from '../dashboard/DashboardHeader';
 import SeriesCard, { type SeriesCardData } from '../shared/SeriesCard';
+import LoadMoreSeriesButton from '../shared/LoadMoreSeriesButton';
 import DiscoverFiltersBar, { type DiscoverFilterState } from './DiscoverFiltersBar';
 import ScrollRow from '../dashboard/ScrollRow';
 import DiscoverMediaCard, { type DiscoverMediaCardData } from './DiscoverMediaCard';
@@ -15,6 +16,7 @@ import PopularTagsCard from './PopularTagsCard';
 import { mockRatingFor } from '../../lib/exploreMock';
 import { seriesMatchesTropeKey } from '../../lib/moodMatch';
 import { POPULAR_TROPES, NEW_TROPES } from '../../lib/tropesContent';
+import { usePaginatedSeries, type SeriesPagination } from '../../lib/usePaginatedSeries';
 
 // The logged-in Discover page. Country/genre/year/sort are REAL, working
 // filters over the real catalog (not decorative) -- genre_names comes from
@@ -33,7 +35,22 @@ import { POPULAR_TROPES, NEW_TROPES } from '../../lib/tropesContent';
 // unlike genre's deterministic mock. There's no dropdown for it in
 // DiscoverFiltersBar (trope isn't a small fixed list the way country/year
 // are), so it surfaces as a dismissible pill above the grid instead.
-export default function DiscoverAuthed({ allSeries }: { allSeries: SeriesCardData[] }) {
+export default function DiscoverAuthed({
+  allSeries: initialSeries,
+  initialPagination = null,
+}: {
+  allSeries: SeriesCardData[];
+  initialPagination?: SeriesPagination | null;
+}) {
+  // Series/Discover is the only page that paginates -- see
+  // lib/usePaginatedSeries.ts. `allSeries` below is whatever's been loaded
+  // so far (grows as "Load more" is clicked); the curated rows and filter
+  // dropdown options derived from it naturally fill in as more loads,
+  // same as the filtered grid.
+  const { series: allSeries, hasMore, loadingMore, loadMore } = usePaginatedSeries(
+    initialSeries,
+    initialPagination
+  );
   const searchParams = useSearchParams();
   // Navbar's search form pushes to /series?q=<term> for both logged-in and
   // logged-out users (see components/shared/Navbar.tsx). SeriesFilter.tsx
@@ -212,6 +229,7 @@ export default function DiscoverAuthed({ allSeries }: { allSeries: SeriesCardDat
                       ))}
                     </div>
                   )}
+                  <LoadMoreSeriesButton hasMore={hasMore} loading={loadingMore} onClick={loadMore} />
                 </section>
               ) : (
                 <>
@@ -270,6 +288,8 @@ export default function DiscoverAuthed({ allSeries }: { allSeries: SeriesCardDat
                       ))}
                     </ScrollRow>
                   </section>
+
+                  <LoadMoreSeriesButton hasMore={hasMore} loading={loadingMore} onClick={loadMore} />
                 </>
               )}
             </main>

@@ -6,6 +6,10 @@ import TropesLanding from '../../components/tropes/TropesLanding';
 // Same series fetch as app/moods/page.tsx, added so TropesAuthed can back
 // its seriesCount figures with real trope-tag matches (see lib/moodMatch.ts)
 // instead of the fully-hardcoded numbers in lib/tropesContent.ts.
+// Deliberately NOT paginated (see P2-04 / lib/usePaginatedSeries.ts):
+// TropesAuthed counts real matches per trope for its seriesCount badges,
+// so a partial catalog would understate those counts. Only Series/Discover
+// (a real flat browse grid) paginates.
 async function getSeries(): Promise<SeriesCardData[]> {
   try {
     const res = await fetch(process.env.NEXT_PUBLIC_API_URL + '/series', {

@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 import SeriesFilter from './SeriesFilter';
 import type { SeriesCardData } from '../shared/SeriesCard';
+import type { SeriesPagination } from '../../lib/usePaginatedSeries';
 
 // Discover's logged-out branch -- the existing real Explore experience
 // (SeriesFilter + its sidebar of real filters), not a from-scratch
@@ -9,7 +10,13 @@ import type { SeriesCardData } from '../shared/SeriesCard';
 // XLanding.tsx convention as Moods/Tropes/Collections/New Releases,
 // instead of being the one page with its logged-out markup inlined in
 // the route file.
-export default function DiscoverLanding({ seriesList }: { seriesList: SeriesCardData[] }) {
+export default function DiscoverLanding({
+  seriesList,
+  initialPagination = null,
+}: {
+  seriesList: SeriesCardData[];
+  initialPagination?: SeriesPagination | null;
+}) {
   return (
     <main className="min-h-screen bg-background px-4 md:px-6 lg:px-8 py-6">
       <div className="max-w-7xl mx-auto">
@@ -17,7 +24,7 @@ export default function DiscoverLanding({ seriesList }: { seriesList: SeriesCard
             Suspense boundary in the App Router — without this, Next.js can't
             prerender this page and the build fails outright. */}
         <Suspense fallback={null}>
-          <SeriesFilter seriesList={seriesList} />
+          <SeriesFilter seriesList={seriesList} initialPagination={initialPagination} />
         </Suspense>
       </div>
     </main>
