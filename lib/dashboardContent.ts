@@ -14,9 +14,10 @@
 // used to have its own DASHBOARD_MOODS with a 6th "Exciting" mood the
 // landing page didn't have, which was an inconsistency, not a feature.
 
-// Badges cycle onto the "Continue Discovering" row in this order, real
-// series first (see HomeAuthed) then mock fills the rest -- same
-// real-first-then-mock pattern as the old Trending row.
+// Badges cycle onto the "Continue Watching" row in this order (renamed
+// from "Continue Discovering" -- see H1-02), real series first (see
+// HomeAuthed) then mock fills the rest -- same real-first-then-mock
+// pattern as the old Trending row.
 export const CONTINUE_DISCOVERING_BADGES = ['Continue', 'New Episode', 'Trending', 'Top Rated', 'Just Added'];
 
 // Bloom Journey (right-rail gamification card) -- placeholder until a real

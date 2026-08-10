@@ -109,7 +109,7 @@ export default function DashboardCuratorsPicks({
           <p className="text-muted-foreground text-[13px] mt-0.5">Handpicked stories we think you&apos;ll love</p>
         </div>
         <Link href="/series" className="text-primary text-sm font-semibold hover:opacity-80 transition-opacity shrink-0">
-          View all
+          See more picks
         </Link>
       </div>
 

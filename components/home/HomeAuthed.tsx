@@ -40,7 +40,7 @@ export default function HomeAuthed({
   allSeries: SeriesCardData[];
   curatorPicks: RealCuratorPick[];
 }) {
-  // Continue Discovering: real series first, mock titles fill the rest,
+  // Continue Watching: real series first, mock titles fill the rest,
   // badges cycle in a fixed order so the row always reads Continue / New
   // Episode / Trending / Top Rated / Just Added left to right.
   const realDiscoverCards: DashboardDiscoverCard[] = allSeries.slice(0, 5).map((s, i) => ({
@@ -103,7 +103,7 @@ export default function HomeAuthed({
   // arbitrary slice of the catalog with hardcoded fallback ratings/tags.
   // Falls back to allSeries-derived picks, then the fully-mock
   // CURATOR_FEATURE/CURATOR_LIST, if fewer than 4 admin picks exist yet --
-  // same real-first-then-mock convention as Continue Discovering above.
+  // same real-first-then-mock convention as Continue Watching above.
   const realCuratorPicks: CuratorPick[] = realCuratorPicksData.map(toCuratorPick);
   const realCuratorCount = Math.max(0, 4 - realCuratorPicks.length);
   const fallbackCuratorPicks: CuratorPick[] = allSeries.slice(0, realCuratorCount).map((s) => ({
@@ -144,9 +144,9 @@ export default function HomeAuthed({
 
               <section className="mb-10">
                 <div className="flex justify-between items-end mb-4">
-                  <h2 className="font-heading text-[22px] font-normal text-foreground">Continue Discovering</h2>
+                  <h2 className="font-heading text-[22px] font-normal text-foreground">Continue Watching</h2>
                   <Link href="/series" className="text-primary text-sm font-semibold hover:opacity-80 transition-opacity shrink-0">
-                    View all
+                    Browse all
                   </Link>
                 </div>
                 <DashboardDiscoverRow cards={discoverCards} />

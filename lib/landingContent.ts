@@ -64,7 +64,8 @@ export interface DiscoverCard {
   isReal: boolean;
 }
 
-// Fills "Continue Discovering" when the live catalog is thin. Mirrors the
+// Fills "Continue Watching" (renamed from "Continue Discovering" -- see
+// H1-02) when the live catalog is thin. Mirrors the
 // isReal-gated pattern from HeroCarousel — mock cards never link out.
 export const MOCK_CONTINUE_DISCOVERING: DiscoverCard[] = [
   { id: 'ld-1', title: 'The Eclipse', country: 'Thailand', mediaType: 'Series', year: 2022, rating: 4.7, badge: 'Trending', tags: ['Friends to Lovers', 'College'], imageUrl: null, isReal: false },

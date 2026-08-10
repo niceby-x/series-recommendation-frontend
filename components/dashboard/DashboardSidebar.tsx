@@ -48,13 +48,12 @@ export default function DashboardSidebar() {
 
   return (
     <>
-      {/* Spacer: reserves the collapsed rail's width in the page's flex
-          layout so main/aside content doesn't shift when the real
-          <aside> below expands on hover (it's fixed + overlays instead
-          of pushing content). */}
-      <div className="hidden lg:block w-[76px] shrink-0" aria-hidden />
-
-      <aside className="hidden lg:flex group flex-col fixed top-0 left-0 h-screen z-30 w-[76px] hover:w-[232px] overflow-y-auto overflow-x-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden border-r border-border bg-card px-3 py-6 transition-[width] duration-200 ease-out shadow-[4px_0_20px_-8px_rgba(0,0,0,0.06)] hover:shadow-[4px_0_24px_-4px_rgba(0,0,0,0.15)]">
+      {/* aside is `peer` here (and reordered before the spacer below) so
+          the spacer can grow in lockstep via peer-hover, in DOM source
+          order. Position is unaffected since the real <aside> is fixed
+          and never participates in this flex layout either way -- only
+          the spacer does. */}
+      <aside className="peer hidden lg:flex group flex-col fixed top-0 left-0 h-screen z-30 w-[76px] hover:w-[232px] overflow-y-auto overflow-x-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden border-r border-border bg-card px-3 py-6 transition-[width] duration-200 ease-out shadow-[4px_0_20px_-8px_rgba(0,0,0,0.06)] hover:shadow-[4px_0_24px_-4px_rgba(0,0,0,0.15)]">
         <Link href="/" className={ROW_CLASS + ' px-1 mb-4 shrink-0'}>
           <Logo variant="icon" theme="brand" size={30} className="shrink-0" />
           <span className={'font-heading font-semibold text-lg text-[#5E4B6B] ' + LABEL_CLASS}>BLumi</span>
@@ -116,6 +115,16 @@ export default function DashboardSidebar() {
           ))}
         </nav>
       </aside>
+
+      {/* Spacer: reserves the rail's width in the page's flex layout so
+          main/aside content sits after it -- and now grows from 76px to
+          232px in sync with the <aside> above (via peer-hover) whenever
+          it's hovered, so the expansion pushes page content over instead
+          of the fixed-position <aside> overlaying it (see H4-01). */}
+      <div
+        className="hidden lg:block w-[76px] peer-hover:w-[232px] shrink-0 transition-[width] duration-200 ease-out"
+        aria-hidden
+      />
     </>
   );
 }

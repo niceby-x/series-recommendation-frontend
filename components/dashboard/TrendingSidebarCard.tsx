@@ -59,7 +59,7 @@ export default function TrendingSidebarCard({ items }: { items: TrendingSidebarI
       <div className="flex items-center justify-between mb-1">
         <p className="font-heading text-[16px] font-normal text-foreground">Trending This Week</p>
         <Link href="/series" className="text-primary text-[12.5px] font-semibold hover:opacity-80 transition-opacity shrink-0">
-          View all
+          See full ranking
         </Link>
       </div>
       <div className="divide-y divide-border/60">
