@@ -134,8 +134,9 @@ export interface ActivityItem {
   timeAgo: string;
 }
 
-// Placeholder pending a real activity/events table (mirrors
-// MOCK_RECENT_ACTIVITY in dashboardContent.ts's own header note).
+// Placeholder pending a real admin activity/audit-log table (tracked
+// separately as A2-02 -- the personal version of this, MOCK_RECENT_ACTIVITY
+// in dashboardContent.ts, is now real, see H2-04).
 export const MOCK_ADMIN_ACTIVITY: ActivityItem[] = [
   { id: 'aa1', icon: CheckCircle2, iconClass: 'bg-emerald-100 text-emerald-600', text: 'was published', target: 'Cherry Magic', actor: 'Hana', timeAgo: '1h ago' },
   { id: 'aa2', icon: Star, iconClass: 'bg-violet-100 text-violet-600', text: 'added new mood', target: '"Healing"', actor: 'Admin', timeAgo: '3h ago' },

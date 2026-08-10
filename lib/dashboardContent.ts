@@ -2,9 +2,10 @@
 //
 // Content for the logged-in dashboard homepage (components/home/HomeAuthed.tsx).
 // Everything here is PLACEHOLDER data pending real backend support:
-//   - XP / level / streak      -> no gamification tables yet
-//   - trend direction (up/down) -> no historical ranking snapshots yet
-//   - recent activity feed     -> no activity/events table yet
+//   - XP / level / streak      -> no gamification tables yet (H2-03)
+//   - trend direction (up/down) -> now real, see SeriesCardData.rank_trend (H2-01)
+//   - recent activity feed     -> now real, see RecentActivityCard's own
+//                                  GET /me/activity fetch (H2-04)
 // Mirrors the isReal-gated, mock-fills-the-rest pattern used elsewhere in
 // this app (see HeroCarousel slides, MOCK_TRENDING in mockCatalogData.ts).
 //
@@ -44,17 +45,3 @@ export const MOCK_WEEKLY_JOURNEY = {
     { label: 'S', completed: false },
   ],
 };
-
-export interface RecentActivityItem {
-  id: string;
-  text: string;
-  target: string;
-  timeAgo: string;
-  kind: 'watchlist' | 'rating' | 'progress';
-}
-
-export const MOCK_RECENT_ACTIVITY: RecentActivityItem[] = [
-  { id: 'a1', kind: 'watchlist', text: 'You added', target: 'The Handmaiden to Watchlist', timeAgo: '2m ago' },
-  { id: 'a2', kind: 'rating', text: 'You rated', target: 'Cherry Magic 4.5 stars', timeAgo: '1h ago' },
-  { id: 'a3', kind: 'progress', text: 'You finished', target: 'episode 7 of Step by Step', timeAgo: '5h ago' },
-];
