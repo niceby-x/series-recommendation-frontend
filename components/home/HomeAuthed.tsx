@@ -27,12 +27,14 @@ const CURATOR_FEATURE_SYNOPSIS =
   'A nobleman falls for a handmaiden hired to deceive him — until their plan unfolds into something neither expected.';
 
 // The logged-in homepage -- a sidebar dashboard (mood picker, continue
-// discovering, curator's picks) with a gamified right rail (Bloom Journey,
-// weekly streak, trending list, recent activity). Data is fetched once in
-// app/page.tsx and passed down (shared with LandingPage) rather than
+// discovering, curator's picks, trending) with a gamified right rail
+// (Bloom Journey, weekly streak, recent activity). Data is fetched once
+// in app/page.tsx and passed down (shared with LandingPage) rather than
 // fetched again here; real catalog rows always come first, with mock rows
 // filling any remaining slots -- same convention as the old hero carousel
-// and trending row used.
+// and trending row used. Trending moved from the right rail into the main
+// flow (see H4-03) -- a content-discovery module doesn't belong competing
+// for space with account/progress widgets.
 export default function HomeAuthed({
   allSeries,
   curatorPicks: realCuratorPicksData,
@@ -162,13 +164,22 @@ export default function HomeAuthed({
                 <DashboardDiscoverRow cards={discoverCards} />
               </section>
 
+              <section className="mb-10">
+                <div className="flex justify-between items-end mb-4">
+                  <h2 className="font-heading text-[22px] font-normal text-foreground">Trending This Week</h2>
+                  <Link href="/series" className="text-primary text-sm font-semibold hover:opacity-80 transition-opacity shrink-0">
+                    See full ranking
+                  </Link>
+                </div>
+                <TrendingSidebarCard items={trendingItems} variant="row" />
+              </section>
+
               <DashboardCuratorsPicks feature={curatorFeature} synopsis={curatorFeatureSynopsis} list={curatorListItems} />
             </main>
 
             <aside className="flex flex-col gap-5 xl:sticky xl:top-8">
               <BloomJourneyCard />
               <WeeklyJourneyCard />
-              <TrendingSidebarCard items={trendingItems} />
               <RecentActivityCard />
             </aside>
           </div>
