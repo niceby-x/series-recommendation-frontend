@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowUp, ArrowDown, Minus, Star } from 'lucide-react';
+import { ArrowUp, ArrowDown, Minus, Sparkles, Star } from 'lucide-react';
 
 export interface TrendingSidebarItem {
   id: number | string;
@@ -9,15 +9,23 @@ export interface TrendingSidebarItem {
   mediaType: string;
   rating: number | null;
   imageUrl: string | null;
-  trend: 'up' | 'down' | 'flat';
+  // 'new' = ranked today but wasn't in the prior snapshot. null/undefined
+  // = no trend data at all -- render as unknown, not as 'flat' (flat
+  // means a real comparison found no change).
+  trend: 'up' | 'down' | 'flat' | 'new' | null | undefined;
   isReal: boolean;
 }
 
-const TREND_ICON = { up: ArrowUp, down: ArrowDown, flat: Minus };
-const TREND_CLASS = { up: 'text-emerald-500', down: 'text-destructive', flat: 'text-muted-foreground' };
+const TREND_ICON = { up: ArrowUp, down: ArrowDown, flat: Minus, new: Sparkles };
+const TREND_CLASS = {
+  up: 'text-emerald-500',
+  down: 'text-destructive',
+  flat: 'text-muted-foreground',
+  new: 'text-brand-gold',
+};
 
 function Row({ item, rank }: { item: TrendingSidebarItem; rank: number }) {
-  const TrendIcon = TREND_ICON[item.trend];
+  const TrendIcon = item.trend ? TREND_ICON[item.trend] : null;
 
   const inner = (
     <div className="flex items-center gap-3 py-2.5">
@@ -40,7 +48,9 @@ function Row({ item, rank }: { item: TrendingSidebarItem; rank: number }) {
           )}
         </p>
       </div>
-      <TrendIcon className={'size-3.5 shrink-0 ' + TREND_CLASS[item.trend]} />
+      {TrendIcon && item.trend && (
+        <TrendIcon className={'size-3.5 shrink-0 ' + TREND_CLASS[item.trend]} />
+      )}
     </div>
   );
 

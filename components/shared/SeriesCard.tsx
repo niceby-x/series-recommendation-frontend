@@ -36,6 +36,15 @@ export interface SeriesCardData {
   // mirrors the genre_names field GET /series/:id already returned).
   // Optional for the same reason as `tags` above.
   genre_names?: string[];
+  // Real week-over-week popularity rank + trend direction (see H2-01 --
+  // backed by a rank-snapshot job, replaces the old hardcoded TRENDS
+  // array). rank is 1 = most popular, null if unranked or the snapshot
+  // job hasn't run yet. rank_trend is null when there's no trend data at
+  // all (treat as unknown, not "unchanged") -- distinct from 'flat',
+  // which means a real comparison found no change. Optional for the same
+  // reason as `tags` above.
+  rank?: number | null;
+  rank_trend?: 'up' | 'down' | 'flat' | 'new' | null;
 }
 
 const STATUS_LABELS: Record<string, string> = {

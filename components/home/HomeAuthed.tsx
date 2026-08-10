@@ -71,29 +71,39 @@ export default function HomeAuthed({
   const discoverCards = [...realDiscoverCards, ...mockDiscoverCards];
 
   // Trending sidebar (right rail): same real-first-then-mock blend as the
-  // old homepage's big Trending row, just condensed to a top-5 list with a
-  // placeholder trend arrow (no historical ranking snapshots yet).
-  const TRENDS: TrendingSidebarItem['trend'][] = ['up', 'down', 'up', 'up', 'flat'];
-  const realTrendingCount = Math.min(allSeries.length, 5);
+  // old homepage's big Trending row, condensed to a top-5 list. Trend
+  // direction and rank now come from GET /series (see H2-01 -- backed by
+  // a real week-over-week rank-snapshot job), not a hardcoded array.
+  // Sorted by rank (nulls last) so the list order actually matches what
+  // the arrows are claiming.
+  const rankedSeries = [...allSeries].sort((a, b) => {
+    if (a.rank == null && b.rank == null) return 0;
+    if (a.rank == null) return 1;
+    if (b.rank == null) return -1;
+    return a.rank - b.rank;
+  });
+  const realTrendingCount = Math.min(rankedSeries.length, 5);
   const trendingItems: TrendingSidebarItem[] = [
-    ...allSeries.slice(0, realTrendingCount).map((s, i) => ({
+    ...rankedSeries.slice(0, realTrendingCount).map((s) => ({
       id: s.id,
       title: s.title,
       country: s.country,
       mediaType: 'Series',
       rating: displayRatingFor(s),
       imageUrl: s.backdrop_url ?? s.poster_url,
-      trend: TRENDS[i],
+      trend: s.rank_trend,
       isReal: true,
     })),
-    ...MOCK_TRENDING.slice(0, 5 - realTrendingCount).map((s, i) => ({
+    // Mock fallback rows have no real ranking snapshot behind them, so
+    // trend is left as null (unknown) rather than a fabricated arrow.
+    ...MOCK_TRENDING.slice(0, 5 - realTrendingCount).map((s) => ({
       id: s.id,
       title: s.title,
       country: s.country,
       mediaType: 'Series',
       rating: s.mockRating,
       imageUrl: s.backdrop_url ?? s.poster_url,
-      trend: TRENDS[realTrendingCount + i],
+      trend: null,
       isReal: false,
     })),
   ];
