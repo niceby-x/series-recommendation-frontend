@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import type { SeriesCardData } from '../../components/shared/SeriesCard';
 import HomeGate from '../../components/shared/HomeGate';
 import MoodsAuthed from '../../components/moods/MoodsAuthed';
@@ -28,9 +29,21 @@ async function getSeries(): Promise<SeriesCardData[]> {
 
 // Same split as app/page.tsx and app/series/page.tsx: logged-out visitors
 // get a lightweight preview + sign-up nudge, logged-in users get the full
-// sidebar-dashboard Moods page.
+// sidebar-dashboard Moods page. MoodsAuthed now reads useSearchParams (for
+// the ?mood= filter coming from Home's mood cards, see H1-01), so it's
+// wrapped in Suspense per Next's requirement for that hook -- same pattern
+// as app/series/page.tsx's DiscoverAuthed.
 export default async function MoodsPage() {
   const allSeries = await getSeries();
 
-  return <HomeGate landing={<MoodsLanding />} authed={<MoodsAuthed allSeries={allSeries} />} />;
+  return (
+    <HomeGate
+      landing={<MoodsLanding />}
+      authed={
+        <Suspense fallback={null}>
+          <MoodsAuthed allSeries={allSeries} />
+        </Suspense>
+      }
+    />
+  );
 }

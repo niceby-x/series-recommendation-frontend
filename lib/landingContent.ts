@@ -16,15 +16,21 @@ export interface MoodTile {
   count: number;
   gradient: string; // tailwind gradient classes -- used as the art-panel background, and as the fallback when image is null
   image: string | null; // path under /public, e.g. '/images/moods/cozy.png'
+  // Which lib/moodsContent.ts MOOD_FILTERS key this editorial tile maps to
+  // (see H1-01). Only 'happy'/'romantic'/'emotional' have real MOOD_SECTIONS
+  // content today -- 'sad' is a real filter chip but has no section behind
+  // it yet, so Melancholic honestly lands on /moods' "still curating" empty
+  // state rather than being force-fit into an unrelated section.
+  moodKey: string;
 }
 
 export const MOCK_MOODS: MoodTile[] = [
-  { name: 'Cozy', count: 128, gradient: 'from-[#FBE0C7] to-[#F7B6C8]/50', image: '/images/moods/cozy.png' },
-  { name: 'Emotional', count: 215, gradient: 'from-[#D8E3F7] to-[#C8D9F7]/60', image: '/images/moods/emotional.png' },
-  { name: 'Healing', count: 186, gradient: 'from-[#E3D9F9] to-brand-lilac/50', image: '/images/moods/healing.png' },
-  { name: 'Heartwarming', count: 243, gradient: 'from-[#F9D6DE] to-brand-blush/60', image: '/images/moods/heartwarming.png' },
-  { name: 'Angsty', count: 153, gradient: 'from-[#DCD6E3] to-[#C7BFD4]/60', image: '/images/moods/angsty.png' },
-  { name: 'Melancholic', count: 107, gradient: 'from-[#CFC7E8] to-[#8E7FB8]/60', image: '/images/moods/melancholic.png' },
+  { name: 'Cozy', count: 128, gradient: 'from-[#FBE0C7] to-[#F7B6C8]/50', image: '/images/moods/cozy.png', moodKey: 'happy' },
+  { name: 'Emotional', count: 215, gradient: 'from-[#D8E3F7] to-[#C8D9F7]/60', image: '/images/moods/emotional.png', moodKey: 'emotional' },
+  { name: 'Healing', count: 186, gradient: 'from-[#E3D9F9] to-brand-lilac/50', image: '/images/moods/healing.png', moodKey: 'emotional' },
+  { name: 'Heartwarming', count: 243, gradient: 'from-[#F9D6DE] to-brand-blush/60', image: '/images/moods/heartwarming.png', moodKey: 'romantic' },
+  { name: 'Angsty', count: 153, gradient: 'from-[#DCD6E3] to-[#C7BFD4]/60', image: '/images/moods/angsty.png', moodKey: 'emotional' },
+  { name: 'Melancholic', count: 107, gradient: 'from-[#CFC7E8] to-[#8E7FB8]/60', image: '/images/moods/melancholic.png', moodKey: 'sad' },
 ];
 
 export interface TropeChip {

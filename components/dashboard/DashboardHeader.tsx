@@ -38,9 +38,29 @@ export default function DashboardHeader({ title, subtitle }: { title?: string; s
     () => typeof document !== 'undefined' && document.documentElement.classList.contains('dark')
   );
 
+  const [profileUsername, setProfileUsername] = useState<string | null>(null);
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
+
+      if (!session) return;
+
+      // Real username for the greeting (see H4-02) -- falls back to the
+      // email-prefix below if this fails, so a slow/failed /me call never
+      // blocks the header from rendering.
+      fetch(process.env.NEXT_PUBLIC_API_URL + '/me', {
+        headers: { Authorization: 'Bearer ' + session.access_token },
+      })
+        .then((res) => (res.ok ? res.json() : null))
+        .then((json) => {
+          if (json?.data?.username) {
+            setProfileUsername(json.data.username);
+          }
+        })
+        .catch(() => {
+          // Greeting falls back to the email prefix below.
+        });
     });
   }, []);
 
@@ -74,7 +94,11 @@ export default function DashboardHeader({ title, subtitle }: { title?: string; s
     document.documentElement.classList.toggle('dark', next);
   }
 
-  const displayName = user?.email ? user.email.split('@')[0] : 'Guest';
+  // Real users.username (via GET /me) takes priority over the Supabase Auth
+  // email prefix -- see H4-02. The email-prefix fallback still covers the
+  // brief window before /me resolves, and any account /me couldn't be
+  // reached for.
+  const displayName = profileUsername || (user?.email ? user.email.split('@')[0] : 'Guest');
   const capitalizedName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
   const initial = displayName.charAt(0).toUpperCase();
   const isAdmin = !!(user?.email && user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL);

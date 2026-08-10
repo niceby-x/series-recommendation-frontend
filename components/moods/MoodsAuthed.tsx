@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import DashboardSidebar from '../dashboard/DashboardSidebar';
 import DashboardHeader from '../dashboard/DashboardHeader';
@@ -11,7 +12,7 @@ import MoodPickerCard from './MoodPickerCard';
 import TopMoodCard from './TopMoodCard';
 import PopularInMoodCard from './PopularInMoodCard';
 import MoodFeedbackCard from './MoodFeedbackCard';
-import { MOOD_SECTIONS, MOCK_POPULAR_IN_MOOD, type MoodCardItem } from '../../lib/moodsContent';
+import { MOOD_FILTERS, MOOD_SECTIONS, MOCK_POPULAR_IN_MOOD, type MoodCardItem } from '../../lib/moodsContent';
 import { mockRatingFor } from '../../lib/exploreMock';
 import { seriesMatchesMoodKey } from '../../lib/moodMatch';
 
@@ -29,7 +30,14 @@ const CARDS_PER_SECTION = 4;
 // convention as HomeAuthed/DiscoverAuthed, just driven by a real filter
 // instead of array position.
 export default function MoodsAuthed({ allSeries }: { allSeries: SeriesCardData[] }) {
-  const [selectedMood, setSelectedMood] = useState('all');
+  // Seeded from ?mood= (see H1-01 -- Home's mood cards link here with a
+  // real key now). Falls back to 'all' for a missing/unrecognized param
+  // rather than trusting an arbitrary URL value as a filter key.
+  const searchParams = useSearchParams();
+  const requestedMood = searchParams.get('mood');
+  const initialMood =
+    requestedMood && MOOD_FILTERS.some((f) => f.key === requestedMood) ? requestedMood : 'all';
+  const [selectedMood, setSelectedMood] = useState(initialMood);
 
   const sections = useMemo(() => {
     return MOOD_SECTIONS.map((section) => {

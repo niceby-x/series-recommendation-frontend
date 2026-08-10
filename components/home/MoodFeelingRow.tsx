@@ -6,10 +6,12 @@ import Image from 'next/image';
 import { ChevronRight } from 'lucide-react';
 import { MOCK_MOODS } from '../../lib/landingContent';
 
-// Mood filtering isn't wired into Explore yet -- same honest fallback as
-// BrowseByMoodGrid.tsx: link to the plain catalog rather than a ?mood=
-// param nothing reads. Uses the same MOCK_MOODS list as the landing
-// page's BrowseByMoodGrid so the two never drift out of sync.
+// Mood filtering is real at /moods (see lib/moodMatch.ts / MoodsAuthed.tsx),
+// so each card links to /moods?mood=<moodKey> instead of the plain catalog
+// (see H1-01). Uses the same MOCK_MOODS list as the landing page's
+// BrowseByMoodGrid so the two never drift out of sync -- BrowseByMoodGrid
+// still links to /series on purpose, since Explore's own filters don't
+// read a mood param.
 export default function MoodFeelingRow() {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [atEnd, setAtEnd] = useState(false);
@@ -44,7 +46,7 @@ export default function MoodFeelingRow() {
             return (
               <Link
                 key={mood.name}
-                href="/series"
+                href={'/moods?mood=' + mood.moodKey}
                 className={
                   'group relative shrink-0 w-[152px] aspect-[4/5] rounded-lg overflow-hidden bg-gradient-to-br shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg ' +
                   mood.gradient
