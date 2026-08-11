@@ -2,12 +2,14 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Compass, Smile, Star, FolderOpen, Sparkles, Users, Bookmark, Heart, History, NotebookPen } from 'lucide-react';
+import { Home, Compass, Smile, Star, FolderOpen, Sparkles, Users, Bookmark, Heart, History, NotebookPen, Settings } from 'lucide-react';
 import Logo from '../shared/Logo';
 
 // Every link here honestly points at what's real today. Moods, Tropes,
 // Collections, and New Releases are all real pages now (app/moods/page.tsx,
 // app/tropes/page.tsx, app/collections/page.tsx, app/new-releases/page.tsx).
+// Settings (pinned to the bottom, see below) is real too, if minimal --
+// see H4-04 / app/settings/page.tsx.
 const NAV_ITEMS = [
   { href: '/', label: 'Home', icon: Home },
   { href: '/series', label: 'Discover', icon: Compass },
@@ -113,6 +115,29 @@ export default function DashboardSidebar() {
               <span className={LABEL_CLASS}>{label}</span>
             </Link>
           ))}
+        </nav>
+
+        {/* Settings -- placeholder destination (see H4-04), pinned to the
+            sidebar's bottom via mt-auto per the reviewed layout, rather
+            than sitting in the main nav group alongside real content
+            sections. Only a dark-mode toggle exists today (moved to
+            app/settings/page.tsx from the profile dropdown, which keeps
+            its own copy too); more settings land here as they exist. */}
+        <nav className="flex flex-col gap-1 mt-auto pt-3">
+          <Link
+            href="/settings"
+            title="Settings"
+            className={
+              ROW_CLASS +
+              ' px-2.5 py-2.5 rounded-full text-sm font-semibold ' +
+              (isActive('/settings')
+                ? 'bg-brand-gradient text-white shadow-sm'
+                : 'text-foreground/70 hover:bg-muted hover:text-foreground')
+            }
+          >
+            <Settings className="size-4.5 shrink-0" />
+            <span className={LABEL_CLASS}>Settings</span>
+          </Link>
         </nav>
       </aside>
 
