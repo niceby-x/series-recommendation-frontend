@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Search, Bell, ChevronDown, LogOut, ShieldCheck, Moon, Sparkles } from 'lucide-react';
+import { Search, Bell, ChevronDown, LogOut, ShieldCheck, Moon, Sparkles, Clock } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
 import { supabase } from '../../lib/supabase';
 import FlowerIcon from '../shared/FlowerIcon';
@@ -14,6 +14,32 @@ function getGreeting() {
   if (hour < 12) return 'Good morning';
   if (hour < 18) return 'Good afternoon';
   return 'Good evening';
+}
+
+// Recent searches (see H3-02) -- client-only v1, stored in localStorage.
+// Cross-device persistence would need a backend table, which is a bigger
+// piece of work than this quick win calls for.
+const RECENT_SEARCHES_KEY = 'blumi:recentSearches';
+const MAX_RECENT_SEARCHES = 5;
+
+function loadRecentSearches(): string[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = window.localStorage.getItem(RECENT_SEARCHES_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed.filter((s) => typeof s === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveRecentSearches(searches: string[]) {
+  try {
+    window.localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(searches));
+  } catch {
+    // Private browsing / storage quota -- recent searches just won't
+    // persist across visits, not worth surfacing an error for.
+  }
 }
 
 // Title block (greeting by default, or a custom title/subtitle) +
@@ -29,6 +55,12 @@ export default function DashboardHeader({ title, subtitle }: { title?: string; s
   const [menuOpen, setMenuOpen] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  // Recent-searches dropdown (see H3-02) + the search <input> ref that
+  // Cmd/Ctrl+K focuses.
+  const [recentSearches, setRecentSearches] = useState<string[]>(() => loadRecentSearches());
+  const [searchFocused, setSearchFocused] = useState(false);
+  const searchFormRef = useRef<HTMLFormElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   // Real toggle -- app/globals.css already ships a full .dark palette, this
   // just flips the class the same way a theme provider would. Lazy
   // initializer (not an effect) so it reads the real class on first client
@@ -64,6 +96,27 @@ export default function DashboardHeader({ title, subtitle }: { title?: string; s
     });
   }, []);
 
+  // Global Cmd/Ctrl+K shortcut (see H3-02) -- focuses the search input from
+  // anywhere on the page, same shortcut convention as most search-first
+  // apps. Ignored while typing in another input/textarea so it doesn't
+  // steal a literal "k" keystroke.
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        const active = document.activeElement;
+        const isTyping =
+          active instanceof HTMLElement &&
+          (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.isContentEditable);
+        if (isTyping && active !== searchInputRef.current) return;
+
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
@@ -72,15 +125,41 @@ export default function DashboardHeader({ title, subtitle }: { title?: string; s
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setMenuOpen(false);
       }
+      if (searchFormRef.current && !searchFormRef.current.contains(event.target as Node)) {
+        setSearchFocused(false);
+      }
     }
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  function runSearch(term: string) {
+    const trimmed = term.trim();
+    if (trimmed) {
+      const deduped = [trimmed, ...recentSearches.filter((s) => s.toLowerCase() !== trimmed.toLowerCase())];
+      const next = deduped.slice(0, MAX_RECENT_SEARCHES);
+      setRecentSearches(next);
+      saveRecentSearches(next);
+    }
+    setSearchFocused(false);
+    searchInputRef.current?.blur();
+    router.push(trimmed ? '/series?q=' + encodeURIComponent(trimmed) : '/series');
+  }
+
   function handleSearchSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const trimmed = search.trim();
-    router.push(trimmed ? '/series?q=' + encodeURIComponent(trimmed) : '/series');
+    runSearch(search);
+  }
+
+  function handleRecentSearchSelect(term: string) {
+    setSearch(term);
+    runSearch(term);
+  }
+
+  function clearRecentSearches(e: React.MouseEvent) {
+    e.stopPropagation();
+    setRecentSearches([]);
+    saveRecentSearches([]);
   }
 
   async function handleLogout() {
@@ -130,15 +209,28 @@ export default function DashboardHeader({ title, subtitle }: { title?: string; s
       </div>
 
       <div className="flex items-center gap-3 min-w-0 ml-auto sm:ml-0">
-        <form onSubmit={handleSearchSubmit} className="hidden md:block flex-1 min-w-[140px] max-w-[288px]">
+        <form onSubmit={handleSearchSubmit} ref={searchFormRef} className="relative hidden md:block flex-1 min-w-[140px] max-w-[288px]">
           <div className="relative">
             <input
+              ref={searchInputRef}
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              onFocus={() => setSearchFocused(true)}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') {
+                  setSearchFocused(false);
+                  searchInputRef.current?.blur();
+                }
+              }}
               placeholder="Search series, movies, moods..."
-              className="w-full bg-card text-foreground placeholder:text-muted-foreground rounded-full pl-5 pr-11 py-2.5 text-sm border border-border shadow-sm focus:outline-none focus:border-ring transition-colors"
+              className="w-full bg-card text-foreground placeholder:text-muted-foreground rounded-full pl-5 pr-16 py-2.5 text-sm border border-border shadow-sm focus:outline-none focus:border-ring transition-colors"
             />
+            {!searchFocused && !search && (
+              <kbd className="hidden lg:flex absolute right-9 top-1/2 -translate-y-1/2 items-center gap-0.5 text-[10px] font-medium text-muted-foreground/70 bg-muted px-1.5 py-0.5 rounded border border-border pointer-events-none">
+                <span className="text-[11px] leading-none">⌘</span>K
+              </kbd>
+            )}
             <button
               type="submit"
               aria-label="Search"
@@ -147,6 +239,40 @@ export default function DashboardHeader({ title, subtitle }: { title?: string; s
               <Search className="size-4" />
             </button>
           </div>
+
+          {searchFocused && recentSearches.length > 0 && (
+            <div className="absolute left-0 right-0 mt-2 bg-popover border border-border rounded-2xl shadow-xl overflow-hidden z-20">
+              <div className="flex items-center justify-between px-4 pt-3 pb-1">
+                <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
+                  Recent Searches
+                </span>
+                <button
+                  type="button"
+                  onClick={clearRecentSearches}
+                  className="text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Clear
+                </button>
+              </div>
+              <ul className="pb-2">
+                {recentSearches.map((term) => (
+                  <li key={term}>
+                    <button
+                      type="button"
+                      // onMouseDown (not onClick) fires before the input's
+                      // onBlur/the outside-click handler can close this
+                      // dropdown out from under the click.
+                      onMouseDown={() => handleRecentSearchSelect(term)}
+                      className="w-full flex items-center gap-2.5 px-4 py-2 text-left text-sm text-popover-foreground hover:bg-muted transition-colors"
+                    >
+                      <Clock className="size-3.5 text-muted-foreground shrink-0" />
+                      <span className="truncate flex-1">{term}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </form>
 
         <div className="relative shrink-0" ref={notifRef}>
