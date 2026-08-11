@@ -4,6 +4,7 @@ import DashboardSidebar from '../dashboard/DashboardSidebar';
 import DashboardHeader from '../dashboard/DashboardHeader';
 import MoodFeelingRow from './MoodFeelingRow';
 import DashboardDiscoverRow, { type DashboardDiscoverCard } from './DashboardDiscoverRow';
+import MadeForYouRow from './MadeForYouRow';
 import DashboardCuratorsPicks from './DashboardCuratorsPicks';
 import BloomJourneyCard from './BloomJourneyCard';
 import WeeklyJourneyCard from './WeeklyJourneyCard';
@@ -27,14 +28,18 @@ const CURATOR_FEATURE_SYNOPSIS =
   'A nobleman falls for a handmaiden hired to deceive him — until their plan unfolds into something neither expected.';
 
 // The logged-in homepage -- a sidebar dashboard (mood picker, continue
-// discovering, curator's picks, trending) with a gamified right rail
-// (Bloom Journey, weekly streak, recent activity). Data is fetched once
-// in app/page.tsx and passed down (shared with LandingPage) rather than
-// fetched again here; real catalog rows always come first, with mock rows
-// filling any remaining slots -- same convention as the old hero carousel
-// and trending row used. Trending moved from the right rail into the main
-// flow (see H4-03) -- a content-discovery module doesn't belong competing
-// for space with account/progress widgets.
+// discovering, made for you, curator's picks, trending) with a gamified
+// right rail (Bloom Journey, weekly streak, recent activity). Data is
+// fetched once in app/page.tsx and passed down (shared with LandingPage)
+// rather than fetched again here; real catalog rows always come first,
+// with mock rows filling any remaining slots -- same convention as the
+// old hero carousel and trending row used. Trending moved from the right
+// rail into the main flow (see H4-03) -- a content-discovery module
+// doesn't belong competing for space with account/progress widgets. Made
+// For You (see H3-01) owns its own fetch/empty-state and isn't part of
+// that real-first-then-mock blend -- it's a first-person "for you"
+// signal, so it has nothing to show (an honest prompt instead) rather
+// than a mock fallback when the backend doesn't have enough signal yet.
 export default function HomeAuthed({
   allSeries,
   curatorPicks: realCuratorPicksData,
@@ -164,6 +169,8 @@ export default function HomeAuthed({
                 </div>
                 <DashboardDiscoverRow cards={discoverCards} />
               </section>
+
+              <MadeForYouRow />
 
               <section className="mb-10">
                 <div className="flex justify-between items-end mb-4">
