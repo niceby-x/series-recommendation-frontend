@@ -44,7 +44,10 @@ export default function HomeAuthed({
 }) {
   // Continue Watching: real series first, mock titles fill the rest,
   // badges cycle in a fixed order so the row always reads Continue / New
-  // Episode / Trending / Top Rated / Just Added left to right.
+  // Episode / Trending / Top Rated / Just Added left to right. Per-episode
+  // progress (see H2-02) is fetched and matched onto real cards inside
+  // DashboardDiscoverRow itself, since it's per-user data that needs the
+  // Supabase session -- not something this server component has.
   const realDiscoverCards: DashboardDiscoverCard[] = allSeries.slice(0, 5).map((s, i) => ({
     id: s.id,
     title: s.title,
@@ -53,7 +56,6 @@ export default function HomeAuthed({
     rating: displayRatingFor(s),
     badge: CONTINUE_DISCOVERING_BADGES[i],
     imageUrl: s.backdrop_url ?? s.poster_url,
-    progress: i === 0 ? 0.4 : undefined,
     isReal: true,
   }));
   const mockDiscoverCards: DashboardDiscoverCard[] = MOCK_CONTINUE_DISCOVERING.slice(
@@ -67,7 +69,6 @@ export default function HomeAuthed({
     rating: c.rating,
     badge: CONTINUE_DISCOVERING_BADGES[realDiscoverCards.length + i],
     imageUrl: c.imageUrl,
-    progress: realDiscoverCards.length === 0 && i === 0 ? 0.4 : undefined,
     isReal: false,
   }));
   const discoverCards = [...realDiscoverCards, ...mockDiscoverCards];

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Play, Star, ChevronLeft, ChevronRight, Sparkle, Flame, Award, PlusCircle } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
 
 export interface DashboardDiscoverCard {
   id: number | string;
@@ -13,8 +14,16 @@ export interface DashboardDiscoverCard {
   rating: number | null;
   badge: string;
   imageUrl: string | null;
-  progress?: number; // 0-1, only rendered on the "Continue" card
   isReal: boolean;
+}
+
+// Real per-episode progress from GET /watchlist (see H2-02). Keyed by
+// series id -- only ever populated for isReal cards, since mock cards
+// have no backing watchlist row to match against.
+interface WatchProgress {
+  current_episode: number;
+  total_episodes: number;
+  minutes_remaining: number | null;
 }
 
 const BADGE_STYLES: Record<string, string> = {
@@ -32,9 +41,16 @@ const BADGE_ICONS: Record<string, typeof Play> = {
   'Just Added': PlusCircle,
 };
 
-function Card({ card }: { card: DashboardDiscoverCard }) {
+function Card({ card, progress }: { card: DashboardDiscoverCard; progress?: WatchProgress }) {
   const BadgeIcon = BADGE_ICONS[card.badge] ?? Sparkle;
   const badgeClass = BADGE_STYLES[card.badge] ?? 'bg-black/70';
+
+  // Fraction only makes sense with a positive episode count -- guard
+  // against a 0/0 or missing total_episodes producing NaN or Infinity.
+  const fraction =
+    progress && progress.total_episodes > 0
+      ? Math.min(1, Math.max(0, progress.current_episode / progress.total_episodes))
+      : null;
 
   const inner = (
     <div className="group relative shrink-0 w-[228px] snap-start">
@@ -77,10 +93,16 @@ function Card({ card }: { card: DashboardDiscoverCard }) {
         </div>
       </div>
 
-      {card.progress != null && (
-        <div className="h-1 w-full bg-muted rounded-full mt-1.5 overflow-hidden">
-          <div className="h-full bg-brand-gradient rounded-full" style={{ width: (card.progress * 100) + '%' }} />
-        </div>
+      {progress && fraction != null && (
+        <>
+          <div className="h-1 w-full bg-muted rounded-full mt-1.5 overflow-hidden">
+            <div className="h-full bg-brand-gradient rounded-full" style={{ width: (fraction * 100) + '%' }} />
+          </div>
+          <p className="text-muted-foreground text-[11px] mt-1">
+            Episode {progress.current_episode} of {progress.total_episodes}
+            {progress.minutes_remaining != null && ' · ' + progress.minutes_remaining + ' min left'}
+          </p>
+        </>
       )}
     </div>
   );
@@ -98,6 +120,39 @@ export default function DashboardDiscoverRow({ cards }: { cards: DashboardDiscov
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [atStart, setAtStart] = useState(true);
   const [atEnd, setAtEnd] = useState(false);
+  const [progressById, setProgressById] = useState<Record<number, WatchProgress>>({});
+
+  // Per-episode progress is per-user data behind the Supabase session, so
+  // it's fetched here rather than passed down from HomeAuthed (a server
+  // component with no session access) -- see H2-02. A signed-out visitor
+  // never reaches this authed dashboard at all, but a failed/slow fetch
+  // just leaves cards without a progress bar rather than blocking the row.
+  useEffect(() => {
+    async function fetchProgress() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const res = await fetch(process.env.NEXT_PUBLIC_API_URL + '/watchlist', {
+        headers: { Authorization: 'Bearer ' + session.access_token },
+      });
+      if (!res.ok) return;
+
+      const json = await res.json();
+      const entries: Array<{ series: { id: number }; progress: WatchProgress | null }> = json.data ?? [];
+
+      const map: Record<number, WatchProgress> = {};
+      for (const entry of entries) {
+        if (entry.progress) {
+          map[entry.series.id] = entry.progress;
+        }
+      }
+      setProgressById(map);
+    }
+
+    fetchProgress().catch(() => {
+      // Cards just render without progress bars below.
+    });
+  }, []);
 
   function updateEdges() {
     const el = scrollerRef.current;
@@ -125,7 +180,11 @@ export default function DashboardDiscoverRow({ cards }: { cards: DashboardDiscov
         className="flex gap-4 overflow-x-auto pb-1 scroll-smooth snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {cards.map((card) => (
-          <Card key={card.id} card={card} />
+          <Card
+            key={card.id}
+            card={card}
+            progress={card.isReal ? progressById[card.id as number] : undefined}
+          />
         ))}
       </div>
 
