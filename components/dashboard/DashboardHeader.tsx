@@ -71,6 +71,14 @@ export default function DashboardHeader({ title, subtitle }: { title?: string; s
   );
 
   const [profileUsername, setProfileUsername] = useState<string | null>(null);
+  // See Q2-02: is_admin comes from GET /me (auth-gated, server-side) now,
+  // not a comparison against NEXT_PUBLIC_ADMIN_EMAIL -- that env var is
+  // NEXT_PUBLIC_-prefixed, so it always shipped in the client bundle
+  // regardless of whether it granted real access, identifying a specific
+  // phishing target for no reason. This only controls whether the Admin
+  // link renders -- requireAdmin on the backend independently enforces
+  // real access on every admin route either way.
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -80,7 +88,8 @@ export default function DashboardHeader({ title, subtitle }: { title?: string; s
 
       // Real username for the greeting (see H4-02) -- falls back to the
       // email-prefix below if this fails, so a slow/failed /me call never
-      // blocks the header from rendering.
+      // blocks the header from rendering. Also picks up is_admin (see
+      // Q2-02) off the same response rather than firing a second fetch.
       fetch(process.env.NEXT_PUBLIC_API_URL + '/me', {
         headers: { Authorization: 'Bearer ' + session.access_token },
       })
@@ -89,9 +98,11 @@ export default function DashboardHeader({ title, subtitle }: { title?: string; s
           if (json?.data?.username) {
             setProfileUsername(json.data.username);
           }
+          setIsAdmin(!!json?.data?.is_admin);
         })
         .catch(() => {
-          // Greeting falls back to the email prefix below.
+          // Greeting falls back to the email prefix below; Admin link
+          // just won't show, which is the safe default on a failed check.
         });
     });
   }, []);
@@ -180,7 +191,6 @@ export default function DashboardHeader({ title, subtitle }: { title?: string; s
   const displayName = profileUsername || (user?.email ? user.email.split('@')[0] : 'Guest');
   const capitalizedName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
   const initial = displayName.charAt(0).toUpperCase();
-  const isAdmin = !!(user?.email && user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL);
 
   return (
     <div className="flex flex-wrap sm:flex-nowrap sm:items-center sm:justify-between gap-x-5 gap-y-4 mb-8">

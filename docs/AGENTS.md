@@ -61,7 +61,7 @@ If you do use template literals, just double-check they made it in with backtick
 ## Admin / Content Pipeline
 
 - Nothing from TMDb discovery goes directly into `series`. It lands in `series_candidates` (`review_status: pending`) and only reaches `series` via the `/admin/candidates/:id/approve` route
-- Admin access is gated by comparing the signed-in user's email against an `ADMIN_EMAIL` env var on the **backend** — never hardcode an email in source. The frontend also checks a `NEXT_PUBLIC_ADMIN_EMAIL` var to conditionally show the nav link, but that's UI convenience only; the real enforcement is server-side
+- Admin access is gated by comparing the signed-in user's email against an `ADMIN_EMAIL` env var on the **backend** — never hardcode an email in source. The frontend shows/hides the Admin nav link based on `GET /me`'s `is_admin` field (see Q2-02) rather than its own env var comparison; either way this is UI convenience only, the real enforcement is server-side via `requireAdmin`
 - Approving a candidate must also find-or-create its genres/cast and link them via `series_genres`/`series_cast`; restoring an approved candidate back to pending must reverse this (delete the `series` row and its link rows) — see `/admin/candidates/:id/restore`
 - TMDb discovery (`discover-series-by-keyword.ts`) searches TV and movies as **separate passes with independent budgets** — do not share one `--limit` counter across both, or one media type can starve the other
 
@@ -80,7 +80,7 @@ ADMIN_EMAIL=
 **Frontend `.env.local`**
 ```
 NEXT_PUBLIC_API_URL=                # backend API base URL
-NEXT_PUBLIC_ADMIN_EMAIL=            # UI-only convenience check for the admin nav link
+NEXT_PUBLIC_ADMIN_EMAIL=            # unused by the frontend as of Q2-02 -- Admin nav link now comes from GET /me's is_admin
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=      # anon/public key, safe to expose client-side
 NEXT_PUBLIC_SITE_URL=               # used for canonical links, OG tags, sitemap.ts, robots.ts

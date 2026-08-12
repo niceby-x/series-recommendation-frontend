@@ -61,6 +61,14 @@ export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const [lastPathname, setLastPathname] = useState(pathname);
+  // See Q2-02: is_admin comes from GET /me now, not a comparison against
+  // NEXT_PUBLIC_ADMIN_EMAIL -- that env var is NEXT_PUBLIC_-prefixed, so
+  // it always shipped in the client bundle regardless of whether it
+  // granted real access, identifying a specific phishing target for no
+  // reason. This only controls whether the Admin link renders --
+  // requireAdmin on the backend independently enforces real access on
+  // every admin route either way.
+  const [isAdmin, setIsAdmin] = useState(false);
 
   if (pathname !== lastPathname) {
     setLastPathname(pathname);
@@ -86,6 +94,36 @@ export default function Navbar() {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadIsAdmin() {
+      if (!user) {
+        if (!cancelled) setIsAdmin(false);
+        return;
+      }
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session || cancelled) return;
+
+      try {
+        const res = await fetch(process.env.NEXT_PUBLIC_API_URL + '/me', {
+          headers: { Authorization: 'Bearer ' + session.access_token },
+        });
+        const json = res.ok ? await res.json() : null;
+        if (!cancelled) setIsAdmin(!!json?.data?.is_admin);
+      } catch {
+        // Admin link just won't show if this fails -- the safe default,
+        // and not a real access gate either way (see the comment above).
+      }
+    }
+
+    loadIsAdmin();
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -134,7 +172,6 @@ export default function Navbar() {
   }
 
   const initial = user?.email ? user.email.charAt(0).toUpperCase() : '?';
-  const isAdmin = !!(user?.email && user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL);
 
   // Pages with their own full sidebar + header (logo, nav, search,
   // notifications, profile menu) -- HomeAuthed for '/', DiscoverAuthed for
