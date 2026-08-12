@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { Star, Trash2 } from 'lucide-react';
 
 export interface ReviewRow {
@@ -49,8 +50,7 @@ export default function ReviewsList({
             <div className="flex items-center gap-3 shrink-0 sm:w-[220px] min-w-0">
               <div className="relative shrink-0 size-11 rounded-[10px] overflow-hidden bg-muted">
                 {review.series?.poster_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={review.series.poster_url} alt={review.series.title} className="w-full h-full object-cover" />
+                  <Image src={review.series.poster_url} alt={review.series.title} fill sizes="44px" className="object-cover" />
                 ) : (
                   <div className="w-full h-full bg-gradient-to-br from-brand-blush/30 to-brand-lilac/30" />
                 )}

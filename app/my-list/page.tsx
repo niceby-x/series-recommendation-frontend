@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { supabase } from '../../lib/supabase';
 import { useAuthModal } from '../../lib/AuthModalContext';
 import type { User } from '@supabase/supabase-js';
@@ -59,11 +60,12 @@ function SeriesCard({ entry }: { entry: WatchlistEntry }) {
     >
       <div className="relative aspect-[2/3] bg-muted overflow-hidden">
         {entry.series.poster_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <Image
             src={entry.series.poster_url}
             alt={entry.series.title}
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            fill
+            sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 20vw"
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-brand-blush/25 to-brand-lilac/25 text-muted-foreground text-sm px-4 text-center">

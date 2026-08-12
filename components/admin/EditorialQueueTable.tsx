@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { Eye, MoreVertical } from 'lucide-react';
 
 export interface QueueRow {
@@ -59,8 +60,7 @@ export default function EditorialQueueTable({ rows }: { rows: QueueRow[] }) {
                   <div className="flex items-center gap-3 min-w-[200px]">
                     <div className="relative shrink-0 size-11 rounded-[10px] overflow-hidden bg-muted">
                       {row.posterUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={row.posterUrl} alt={row.title} className="w-full h-full object-cover" />
+                        <Image src={row.posterUrl} alt={row.title} fill sizes="44px" className="object-cover" />
                       ) : (
                         <div className="w-full h-full bg-gradient-to-br from-brand-blush/30 to-brand-lilac/30" />
                       )}

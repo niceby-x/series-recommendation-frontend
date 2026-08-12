@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import Image from 'next/image';
 import { Search, X } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import type { AdminTag } from './TagDimensionSection';
@@ -221,8 +222,13 @@ export default function TagBrowser({
               <div key={s.id} className="group relative rounded-2xl bg-card border border-border/60 shadow-sm overflow-hidden">
                 <div className="relative aspect-[2/3] w-full bg-muted">
                   {s.poster_url || s.backdrop_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={s.poster_url ?? s.backdrop_url ?? ''} alt={s.title} className="w-full h-full object-cover" />
+                    <Image
+                      src={s.poster_url ?? s.backdrop_url ?? ''}
+                      alt={s.title}
+                      fill
+                      sizes="(max-width: 640px) 50vw, 33vw"
+                      className="object-cover"
+                    />
                   ) : (
                     <div className="w-full h-full bg-gradient-to-br from-brand-blush/30 to-brand-lilac/30" />
                   )}

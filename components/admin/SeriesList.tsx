@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { Pencil, Trash2 } from 'lucide-react';
 
 export interface AdminSeries {
@@ -60,8 +61,7 @@ export default function SeriesList({
             <div className="flex items-center gap-3 min-w-0 flex-1">
               <div className="relative shrink-0 size-14 rounded-[10px] overflow-hidden bg-muted">
                 {s.poster_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={s.poster_url} alt={s.title} className="w-full h-full object-cover" />
+                  <Image src={s.poster_url} alt={s.title} fill sizes="56px" className="object-cover" />
                 ) : (
                   <div className="w-full h-full bg-gradient-to-br from-brand-blush/30 to-brand-lilac/30" />
                 )}
