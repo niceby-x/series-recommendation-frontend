@@ -45,6 +45,15 @@ export default function WatchlistButton({ seriesId }: { seriesId: number }) {
       const res = await fetch(process.env.NEXT_PUBLIC_API_URL + '/watchlist/' + seriesId, {
         headers: { Authorization: 'Bearer ' + session.access_token },
       });
+
+      if (!res.ok) {
+        if (res.status === 401) {
+          setError('Your session expired. Please sign in again.');
+        }
+        setLoadingStatus(false);
+        return;
+      }
+
       const json = await res.json();
 
       setCurrentStatus(json.status);

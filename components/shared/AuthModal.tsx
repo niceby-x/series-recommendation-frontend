@@ -88,7 +88,7 @@ export default function AuthModal({
     setRememberMe(mode === 'login' ? rememberMe : true);
 
     if (mode === 'register') {
-      const { error } = await supabase.auth.signUp({ email, password });
+      const { error } = await supabase.auth.signUp({ email: email.trim(), password });
       if (error) {
         setMessage(error.message);
         setMessageType('error');
@@ -97,7 +97,7 @@ export default function AuthModal({
         setMessageType('success');
       }
     } else {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
       if (error) {
         setMessage(error.message);
         setMessageType('error');
