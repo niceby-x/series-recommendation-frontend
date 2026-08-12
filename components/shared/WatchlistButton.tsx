@@ -131,8 +131,8 @@ export default function WatchlistButton({ seriesId }: { seriesId: number }) {
 
   if (!user) {
     return (
-      <p className="text-gray-400 text-sm">
-        <button type="button" onClick={() => openAuthModal('login')} className="text-blue-400 hover:text-blue-300">
+      <p className="text-muted-foreground text-sm">
+        <button type="button" onClick={() => openAuthModal('login')} className="text-primary hover:text-brand-purple-vivid">
           Sign in
         </button>{' '}
         to add this to your watchlist.
@@ -146,10 +146,10 @@ export default function WatchlistButton({ seriesId }: { seriesId: number }) {
         onClick={() => setMenuOpen(!menuOpen)}
         disabled={updating}
         className={
-          'px-5 py-2.5 rounded-lg font-medium text-sm transition-colors ' +
+          'px-5 py-2.5 rounded-full font-medium text-sm transition-colors ' +
           (currentStatus
-            ? 'bg-gray-800 text-white hover:bg-gray-700'
-            : 'bg-blue-600 text-white hover:bg-blue-700') +
+            ? 'bg-muted text-foreground hover:bg-accent'
+            : 'bg-brand-gradient text-white hover:opacity-90') +
           ' disabled:opacity-60'
         }
       >
@@ -161,14 +161,14 @@ export default function WatchlistButton({ seriesId }: { seriesId: number }) {
       </button>
 
       {menuOpen && (
-        <div className="absolute mt-2 w-48 bg-gray-900 border border-gray-800 rounded-lg shadow-lg z-10 overflow-hidden">
+        <div className="absolute mt-2 w-48 bg-card border border-border rounded-xl shadow-brand z-10 overflow-hidden">
           {(Object.keys(STATUS_LABELS) as Status[]).map((status) => (
             <button
               key={status}
               onClick={() => handleSetStatus(status)}
               className={
-                'w-full text-left px-4 py-2 text-sm hover:bg-gray-800 transition-colors ' +
-                (currentStatus === status ? 'text-blue-400' : 'text-gray-300')
+                'w-full text-left px-4 py-2 text-sm hover:bg-accent transition-colors ' +
+                (currentStatus === status ? 'text-primary' : 'text-foreground/75')
               }
             >
               {STATUS_LABELS[status]}
@@ -177,7 +177,7 @@ export default function WatchlistButton({ seriesId }: { seriesId: number }) {
           {currentStatus && (
             <button
               onClick={handleRemove}
-              className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-gray-800 transition-colors border-t border-gray-800"
+              className="w-full text-left px-4 py-2 text-sm text-destructive hover:bg-accent transition-colors border-t border-border"
             >
               Remove from List
             </button>
@@ -185,7 +185,7 @@ export default function WatchlistButton({ seriesId }: { seriesId: number }) {
         </div>
       )}
 
-      {error && <p className="text-red-400 text-xs mt-2">{error}</p>}
+      {error && <p className="text-destructive text-xs mt-2">{error}</p>}
     </div>
   );
 }

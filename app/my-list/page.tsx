@@ -15,9 +15,9 @@ const STATUS_LABELS: Record<Status, string> = {
 };
 
 const STATUS_BADGE_STYLES: Record<Status, string> = {
-  plan_to_watch: 'bg-gray-800 text-gray-300',
-  watching: 'bg-blue-900 text-blue-300',
-  completed: 'bg-green-900 text-green-300',
+  plan_to_watch: 'bg-muted text-foreground/75',
+  watching: 'bg-brand-blush/80 text-[#4A2F3F]',
+  completed: 'bg-brand-lilac/80 text-[#3D2E52]',
 };
 
 const STATUS_ORDER: Status[] = ['watching', 'plan_to_watch', 'completed'];
@@ -41,11 +41,11 @@ interface WatchlistEntry {
 
 function SkeletonCard() {
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden animate-pulse">
-      <div className="aspect-[2/3] bg-gray-800" />
+    <div className="bg-card border border-border rounded-xl overflow-hidden animate-pulse">
+      <div className="aspect-[2/3] bg-muted" />
       <div className="p-4 space-y-2">
-        <div className="h-4 bg-gray-800 rounded w-3/4" />
-        <div className="h-3 bg-gray-800 rounded w-1/2" />
+        <div className="h-4 bg-muted rounded w-3/4" />
+        <div className="h-3 bg-muted rounded w-1/2" />
       </div>
     </div>
   );
@@ -55,9 +55,9 @@ function SeriesCard({ entry }: { entry: WatchlistEntry }) {
   return (
     <Link
       href={'/series/' + entry.series.id}
-      className="group bg-gray-900 border border-gray-800 rounded-xl overflow-hidden transition-all duration-300 hover:border-gray-700 hover:-translate-y-1 hover:shadow-xl hover:shadow-blue-900/20"
+      className="group bg-card border border-border rounded-xl overflow-hidden shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:ring-2 hover:ring-primary/30"
     >
-      <div className="relative aspect-[2/3] bg-gray-800 overflow-hidden">
+      <div className="relative aspect-[2/3] bg-muted overflow-hidden">
         {entry.series.poster_url ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -66,22 +66,22 @@ function SeriesCard({ entry }: { entry: WatchlistEntry }) {
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-gray-600 text-sm px-4 text-center">
+          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-brand-blush/25 to-brand-lilac/25 text-muted-foreground text-sm px-4 text-center">
             {entry.series.title}
           </div>
         )}
 
-        <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/90 to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/80 to-transparent" />
 
         <div className="absolute top-2 left-2 flex gap-2">
-          <span className="text-xs bg-blue-900/90 text-blue-300 px-2 py-1 rounded backdrop-blur-sm">
+          <span className="text-[13px] font-semibold bg-brand-blush/80 text-[#4A2F3F] px-2.5 py-1 rounded-full backdrop-blur-sm">
             {entry.series.country}
           </span>
         </div>
 
         <span
           className={
-            'absolute top-2 right-2 text-xs px-2 py-1 rounded backdrop-blur-sm ' +
+            'absolute top-2 right-2 text-[13px] font-semibold px-2.5 py-1 rounded-full backdrop-blur-sm ' +
             STATUS_BADGE_STYLES[entry.status]
           }
         >
@@ -90,8 +90,8 @@ function SeriesCard({ entry }: { entry: WatchlistEntry }) {
       </div>
 
       <div className="p-4">
-        <h3 className="font-bold leading-snug mb-1 line-clamp-2">{entry.series.title}</h3>
-        <p className="text-sm text-gray-400">
+        <h3 className="font-bold leading-snug mb-1 line-clamp-2 text-card-foreground group-hover:text-primary transition-colors">{entry.series.title}</h3>
+        <p className="text-sm text-muted-foreground">
           {entry.series.year} &middot; {entry.series.episode_count} episodes
         </p>
       </div>
@@ -151,9 +151,9 @@ export default function MyListPage() {
 
   if (!user) {
     return (
-      <main className="min-h-screen bg-gray-950 text-white p-8">
-        <p className="text-gray-400">
-          <button type="button" onClick={() => openAuthModal('login')} className="text-blue-400 hover:text-blue-300">
+      <main className="min-h-screen bg-background text-foreground p-8">
+        <p className="text-muted-foreground">
+          <button type="button" onClick={() => openAuthModal('login')} className="text-primary hover:text-brand-purple-vivid">
             Sign in
           </button>{' '}
           to see your list.
@@ -163,11 +163,11 @@ export default function MyListPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-950 text-white p-8">
-      <h1 className="text-4xl font-bold text-blue-400 mb-2">My List</h1>
-      <p className="text-gray-400 mb-8">Series you&apos;re tracking</p>
+    <main className="min-h-screen bg-background text-foreground p-8">
+      <h1 className="text-4xl font-bold font-heading text-brand-gradient mb-2">My List</h1>
+      <p className="text-muted-foreground mb-8">Series you&apos;re tracking</p>
 
-      {error && <p className="text-red-400">{error}</p>}
+      {error && <p className="text-destructive">{error}</p>}
 
       {loading && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -178,9 +178,9 @@ export default function MyListPage() {
       )}
 
       {!loading && !error && entries.length === 0 && (
-        <p className="text-gray-400">
+        <p className="text-muted-foreground">
           Your list is empty.{' '}
-          <Link href="/series" className="text-blue-400 hover:text-blue-300">
+          <Link href="/series" className="text-primary hover:text-brand-purple-vivid">
             Browse series
           </Link>{' '}
           to add some.
@@ -195,7 +195,7 @@ export default function MyListPage() {
 
             return (
               <section key={status}>
-                <h2 className="text-lg font-semibold text-blue-400 mb-4">
+                <h2 className="text-lg font-semibold font-heading text-brand-gradient mb-4">
                   {STATUS_LABELS[status]} ({groupEntries.length})
                 </h2>
 

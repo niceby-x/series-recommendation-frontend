@@ -100,9 +100,9 @@ export default function RatingForm({ seriesId }: { seriesId: number }) {
 
   if (!user) {
     return (
-      <div className="bg-gray-900 rounded-xl p-6 border border-gray-800 mt-6">
-        <p className="text-gray-400">
-          <button type="button" onClick={() => openAuthModal('login')} className="text-blue-400 hover:text-blue-300">
+      <div className="bg-card rounded-xl p-6 border border-border shadow-sm mt-6">
+        <p className="text-muted-foreground">
+          <button type="button" onClick={() => openAuthModal('login')} className="text-primary hover:text-brand-purple-vivid">
             Sign in
           </button>{' '}
           to rate this series.
@@ -113,8 +113,8 @@ export default function RatingForm({ seriesId }: { seriesId: number }) {
 
   if (submitted) {
     return (
-      <div className="bg-gray-900 rounded-xl p-6 border border-gray-800 mt-6">
-        <p className="text-green-400 font-medium">
+      <div className="bg-card rounded-xl p-6 border border-border shadow-sm mt-6">
+        <p className="text-[#3D7A4F] font-medium">
           {hasExistingRating ? 'Your rating has been updated!' : 'Thanks for rating this series!'}
         </p>
       </div>
@@ -122,8 +122,8 @@ export default function RatingForm({ seriesId }: { seriesId: number }) {
   }
 
   return (
-    <div className="bg-gray-900 rounded-xl p-6 border border-gray-800 mt-6">
-      <h2 className="text-lg font-semibold mb-3 text-blue-400">
+    <div className="bg-card rounded-xl p-6 border border-border shadow-sm mt-6">
+      <h2 className="text-lg font-semibold mb-3 font-heading text-brand-gradient">
         {hasExistingRating ? 'Update your rating' : 'Rate this series'}
       </h2>
 
@@ -133,10 +133,10 @@ export default function RatingForm({ seriesId }: { seriesId: number }) {
             key={n}
             onClick={() => setScore(n)}
             className={
-              'w-10 h-10 rounded-lg font-medium transition-colors ' +
+              'w-10 h-10 rounded-full font-medium transition-colors ' +
               (score === n
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-800 text-gray-300 hover:bg-gray-700')
+                ? 'bg-brand-gradient text-white'
+                : 'bg-muted text-foreground/75 hover:bg-brand-blush/30')
             }
           >
             {n}
@@ -150,18 +150,18 @@ export default function RatingForm({ seriesId }: { seriesId: number }) {
         onChange={(e) => setReviewText(e.target.value)}
         rows={3}
         maxLength={MAX_REVIEW_LENGTH}
-        className="w-full bg-gray-800 border border-gray-700 text-white rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500"
+        className="w-full bg-background border border-border text-foreground rounded-lg px-4 py-3 focus:outline-none focus:border-ring transition-colors"
       />
-      <p className="text-gray-500 text-xs text-right mb-4">
+      <p className="text-muted-foreground text-xs text-right mb-4">
         {reviewText.length} / {MAX_REVIEW_LENGTH}
       </p>
 
-      {error && <p className="text-red-400 text-sm mb-4">{error}</p>}
+      {error && <p className="text-destructive text-sm mb-4">{error}</p>}
 
       <button
         onClick={handleSubmit}
         disabled={submitting || score === 0}
-        className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed text-white px-6 py-3 rounded-lg font-medium transition-colors"
+        className="bg-brand-gradient hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-3 rounded-full font-medium transition-opacity"
       >
         {submitting ? 'Submitting...' : hasExistingRating ? 'Update Rating' : 'Submit Rating'}
       </button>
