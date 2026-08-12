@@ -5,6 +5,7 @@ import { Calendar, Clapperboard, Star } from 'lucide-react';
 import type { Metadata } from 'next';
 import RatingForm from '../../../components/shared/RatingForm';
 import WatchlistButton from '@/components/shared/WatchlistButton';
+import ProgressTracker from '@/components/shared/ProgressTracker';
 
 interface Series {
   id: number;
@@ -163,6 +164,8 @@ export default async function SeriesDetailPage({ params }: { params: Promise<{ i
               {series.synopsis || 'No synopsis available.'}
             </p>
           </div>
+
+          <ProgressTracker seriesId={series.id} episodeCount={series.episode_count} />
 
           <RatingForm seriesId={series.id} />
         </div>
