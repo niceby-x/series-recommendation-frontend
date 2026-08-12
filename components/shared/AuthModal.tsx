@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { X, Mail, Lock, Eye, EyeOff, Check, Heart, Sparkles } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
+import { supabase, setRememberMe } from '../../lib/supabase';
 import Logo from './Logo';
 import FlowerIcon from './FlowerIcon';
 
@@ -40,7 +40,7 @@ export default function AuthModal({
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(true);
+  const [rememberMe, setRememberMeChecked] = useState(true);
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState<'error' | 'success'>('error');
   const [loading, setLoading] = useState(false);
@@ -80,6 +80,12 @@ export default function AuthModal({
   async function handleSubmit() {
     setLoading(true);
     setMessage('');
+
+    // Point the storage adapter in lib/supabase.ts at the right backend
+    // before the new session lands (see Q1-02). Register has no checkbox
+    // of its own -- it gets the same persisted-by-default behavior the
+    // login checkbox starts checked with.
+    setRememberMe(mode === 'login' ? rememberMe : true);
 
     if (mode === 'register') {
       const { error } = await supabase.auth.signUp({ email, password });
@@ -185,7 +191,7 @@ export default function AuthModal({
           <div className="flex items-center justify-between">
             <button
               type="button"
-              onClick={() => setRememberMe((v) => !v)}
+              onClick={() => setRememberMeChecked((v) => !v)}
               className="flex items-center gap-2 text-[13px] text-foreground/70"
             >
               <span

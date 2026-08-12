@@ -22,8 +22,9 @@ const NAV_LINKS = [
 // "Lists" (nothing to list before you have an account) and adds a Discover
 // menu. Every item in it is a REAL, working destination -- the trending/
 // top-rated links use Explore's actual ?section= filters (see
-// components/explore/ExploreClient.tsx), not placeholder query params
-// nothing reads.
+// components/discover/SeriesFilter.tsx, which reads ?section= into its
+// navCategory state -- see Q1-05), not placeholder query params nothing
+// reads.
 const DISCOVER_MENU = [
   { href: '/series', label: 'Browse All' },
   { href: '/series?section=trending', label: 'Trending' },
@@ -148,7 +149,7 @@ export default function Navbar() {
   // plain DASHBOARD_ROUTES only match exactly, so a page like '/series'
   // doesn't accidentally hide the navbar on '/series/[id]', which has no
   // sidebar of its own.
-  const DASHBOARD_ROUTES = ['/', '/series', '/moods', '/tropes', '/collections', '/new-releases', '/admin'];
+  const DASHBOARD_ROUTES = ['/', '/series', '/moods', '/tropes', '/collections', '/new-releases', '/admin', '/settings'];
   const DASHBOARD_PREFIX_ROUTES = ['/admin'];
   const isDashboardRoute =
     DASHBOARD_ROUTES.includes(pathname) || DASHBOARD_PREFIX_ROUTES.some((route) => pathname.startsWith(route + '/'));

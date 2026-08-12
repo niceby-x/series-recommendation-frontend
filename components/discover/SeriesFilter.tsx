@@ -41,8 +41,22 @@ export default function SeriesFilter({ seriesList: initialSeriesList, initialPag
   const dataYearMin = years.length ? Math.min(...years) : 2000;
   const dataYearMax = years.length ? Math.max(...years) : new Date().getFullYear();
 
+  // ?section=trending / ?section=top-rated come from the logged-out
+  // Discover mega-menu (see components/shared/Navbar.tsx's DISCOVER_MENU)
+  // -- map them onto the same navCategory values the sidebar's own
+  // Trending/Top Rated nav items use, same pattern as ?status=upcoming
+  // below (see Q1-05).
+  const initialNavCategory: NavCategory =
+    searchParams.get('status') === 'upcoming'
+      ? 'coming_soon'
+      : searchParams.get('section') === 'trending'
+        ? 'trending'
+        : searchParams.get('section') === 'top-rated'
+          ? 'top_rated'
+          : 'all';
+
   const [filters, setFilters] = useState<ExploreFilters>({
-    navCategory: (searchParams.get('status') === 'upcoming' ? 'coming_soon' : 'all') as NavCategory,
+    navCategory: initialNavCategory,
     country: searchParams.get('country') ?? 'All',
     genre: 'All',
     yearMin: dataYearMin,
