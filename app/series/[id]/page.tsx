@@ -7,6 +7,7 @@ import type { Metadata } from 'next';
 import RatingForm from '../../../components/shared/RatingForm';
 import WatchlistButton from '@/components/shared/WatchlistButton';
 import ProgressTracker from '@/components/shared/ProgressTracker';
+import RelatedSeriesRow, { type RelatedSeriesItem } from '@/components/shared/RelatedSeriesRow';
 import type { SeriesTagData } from '@/components/shared/SeriesCard';
 
 // Human-readable section labels for each tag dimension -- mirrors the
@@ -89,6 +90,22 @@ async function getSeriesById(id: string): Promise<Series> {
   return json.data;
 }
 
+// Q2-02: "more like this" data for RelatedSeriesRow, backed by the new
+// GET /series/:id/related (see backend src/routes/series.ts). Unlike
+// getSeriesById above, a failure here degrades to an empty section
+// rather than a page-level error -- related series is a nice-to-have,
+// not core content the page can't render without.
+async function getRelatedSeries(id: string): Promise<RelatedSeriesItem[]> {
+  const res = await fetch(process.env.NEXT_PUBLIC_API_URL + '/series/' + id + '/related', {
+    cache: 'no-store',
+  });
+
+  if (!res.ok) return [];
+
+  const json = await res.json();
+  return json.data ?? [];
+}
+
 // Dynamic per-page metadata -- previously only the root layout set
 // <title>/<description>, so every series detail page looked identical
 // (both in the browser tab and when a link is pasted into
@@ -131,8 +148,11 @@ export async function generateMetadata({
 
 export default async function SeriesDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const series = await getSeriesById(id);
-  const backToBrowseHref = await getBackToBrowseHref();
+  const [series, relatedSeries, backToBrowseHref] = await Promise.all([
+    getSeriesById(id),
+    getRelatedSeries(id),
+    getBackToBrowseHref(),
+  ]);
 
   const statusBadgeClass = series.status === 'completed'
     ? 'text-[13px] font-semibold px-2.5 py-1 rounded-full bg-brand-lilac text-[#3D2E52]'
@@ -255,6 +275,8 @@ export default async function SeriesDetailPage({ params }: { params: Promise<{ i
           <RatingForm seriesId={series.id} />
         </div>
       </div>
+
+      <RelatedSeriesRow items={relatedSeries} />
     </main>
   );
 }
