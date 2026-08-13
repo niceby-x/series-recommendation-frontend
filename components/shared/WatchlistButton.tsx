@@ -80,18 +80,18 @@ export default function WatchlistButton({ seriesId }: { seriesId: number }) {
       body: JSON.stringify({ series_id: seriesId, status }),
     });
 
-    const json = await res.json();
-
     // A newer write has already landed -- this response is stale, so bail
     // out without touching state.
     if (requestIdRef.current !== requestId) return;
 
     if (!res.ok) {
-      setError(json.message || 'Something went wrong updating your watchlist.');
+      const json = await res.json().catch(() => null);
+      setError(json?.message || 'Something went wrong updating your watchlist.');
       setUpdating(false);
       return;
     }
 
+    const json = await res.json();
     setCurrentStatus(json.data.status);
     setUpdating(false);
   }
@@ -119,8 +119,8 @@ export default function WatchlistButton({ seriesId }: { seriesId: number }) {
     if (requestIdRef.current !== requestId) return;
 
     if (!res.ok) {
-      const json = await res.json();
-      setError(json.message || 'Something went wrong removing this series.');
+      const json = await res.json().catch(() => null);
+      setError(json?.message || 'Something went wrong removing this series.');
       setUpdating(false);
       return;
     }

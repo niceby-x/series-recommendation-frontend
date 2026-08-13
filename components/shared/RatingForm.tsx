@@ -80,10 +80,9 @@ export default function RatingForm({ seriesId }: { seriesId: number }) {
       }),
     });
 
-    const json = await res.json();
-
     if (!res.ok) {
-      setError(json.message || 'Something went wrong submitting your rating.');
+      const json = await res.json().catch(() => null);
+      setError(json?.message || 'Something went wrong submitting your rating.');
       setSubmitting(false);
       return;
     }
