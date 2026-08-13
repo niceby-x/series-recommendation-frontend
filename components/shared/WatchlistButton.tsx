@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAuthModal } from '../../lib/AuthModalContext';
 import { useSession } from '../../lib/SessionContext';
 
@@ -21,6 +21,13 @@ export default function WatchlistButton({ seriesId }: { seriesId: number }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [error, setError] = useState('');
   const [sessionExpired, setSessionExpired] = useState(false);
+  // Q2-05: handleSetStatus and handleRemove both write to currentStatus.
+  // If two writes are in flight and resolve out of order, applying the
+  // slower one after the faster one would leave the UI showing a status
+  // that disagrees with what actually persisted. Each write claims the
+  // next id before it fetches and only applies its result if it's still
+  // the most recent write by the time the response comes back.
+  const requestIdRef = useRef(0);
 
   useEffect(() => {
     if (!session) return;
@@ -62,6 +69,8 @@ export default function WatchlistButton({ seriesId }: { seriesId: number }) {
       return;
     }
 
+    const requestId = ++requestIdRef.current;
+
     const res = await fetch(process.env.NEXT_PUBLIC_API_URL + '/watchlist', {
       method: 'POST',
       headers: {
@@ -71,14 +80,19 @@ export default function WatchlistButton({ seriesId }: { seriesId: number }) {
       body: JSON.stringify({ series_id: seriesId, status }),
     });
 
+    const json = await res.json();
+
+    // A newer write has already landed -- this response is stale, so bail
+    // out without touching state.
+    if (requestIdRef.current !== requestId) return;
+
     if (!res.ok) {
-      const json = await res.json();
       setError(json.message || 'Something went wrong updating your watchlist.');
       setUpdating(false);
       return;
     }
 
-    setCurrentStatus(status);
+    setCurrentStatus(json.data.status);
     setUpdating(false);
   }
 
@@ -93,10 +107,16 @@ export default function WatchlistButton({ seriesId }: { seriesId: number }) {
       return;
     }
 
+    const requestId = ++requestIdRef.current;
+
     const res = await fetch(process.env.NEXT_PUBLIC_API_URL + '/watchlist/' + seriesId, {
       method: 'DELETE',
       headers: { Authorization: 'Bearer ' + session.access_token },
     });
+
+    // A newer write has already landed -- this response is stale, so bail
+    // out without touching state.
+    if (requestIdRef.current !== requestId) return;
 
     if (!res.ok) {
       const json = await res.json();
