@@ -154,7 +154,7 @@ export default function RatingForm({ seriesId }: { seriesId: number }) {
         {reviewText.length} / {MAX_REVIEW_LENGTH}
       </p>
 
-      {error && <p className="text-destructive text-sm mb-4">{error}</p>}
+      {error && <p role="alert" className="text-destructive text-sm mb-4">{error}</p>}
 
       <button
         onClick={handleSubmit}

@@ -149,6 +149,8 @@ export default function WatchlistButton({ seriesId }: { seriesId: number }) {
       <button
         onClick={() => setMenuOpen(!menuOpen)}
         disabled={updating || sessionExpired}
+        aria-haspopup="menu"
+        aria-expanded={menuOpen}
         className={
           'px-5 py-2.5 rounded-full font-medium text-sm transition-colors ' +
           (currentStatus
@@ -167,10 +169,11 @@ export default function WatchlistButton({ seriesId }: { seriesId: number }) {
       </button>
 
       {menuOpen && (
-        <div className="absolute mt-2 w-48 bg-card border border-border rounded-xl shadow-brand z-10 overflow-hidden">
+        <div role="menu" className="absolute mt-2 w-48 bg-card border border-border rounded-xl shadow-brand z-10 overflow-hidden">
           {(Object.keys(STATUS_LABELS) as Status[]).map((status) => (
             <button
               key={status}
+              role="menuitem"
               onClick={() => handleSetStatus(status)}
               className={
                 'w-full text-left px-4 py-2 text-sm hover:bg-accent transition-colors ' +
@@ -182,6 +185,7 @@ export default function WatchlistButton({ seriesId }: { seriesId: number }) {
           ))}
           {currentStatus && (
             <button
+              role="menuitem"
               onClick={handleRemove}
               className="w-full text-left px-4 py-2 text-sm text-destructive hover:bg-accent transition-colors border-t border-border"
             >
@@ -191,7 +195,7 @@ export default function WatchlistButton({ seriesId }: { seriesId: number }) {
         </div>
       )}
 
-      {error && <p className="text-destructive text-xs mt-2">{error}</p>}
+      {error && <p role="alert" className="text-destructive text-xs mt-2">{error}</p>}
     </div>
   );
 }
