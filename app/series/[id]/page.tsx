@@ -7,6 +7,18 @@ import type { Metadata } from 'next';
 import RatingForm from '../../../components/shared/RatingForm';
 import WatchlistButton from '@/components/shared/WatchlistButton';
 import ProgressTracker from '@/components/shared/ProgressTracker';
+import type { SeriesTagData } from '@/components/shared/SeriesCard';
+
+// Human-readable section labels for each tag dimension -- mirrors the
+// dimension set in lib/taxonomy.ts. Only dimensions with at least one tag
+// on this series get their own row below.
+const TAG_DIMENSION_LABELS: Record<SeriesTagData['dimension'], string> = {
+  mood: 'Mood',
+  trope: 'Trope',
+  relationship_dynamic: 'Relationship Dynamic',
+  theme: 'Theme',
+  content_warning: 'Content Warning',
+};
 
 interface Series {
   id: number;
@@ -20,6 +32,11 @@ interface Series {
   poster_url: string | null;
   average_rating: number | null;
   rating_count: number;
+  // GET /series/:id already joins these in (see the backend route) -- the
+  // detail page previously never read them, so genre/mood/trope context
+  // was invisible here even though the API always returned it.
+  genre_names?: string[];
+  tags?: SeriesTagData[];
 }
 
 // Restores the query string (filters, search, mood/trope context) the user
@@ -182,6 +199,45 @@ export default async function SeriesDetailPage({ params }: { params: Promise<{ i
               </span>
             )}
           </div>
+
+          {series.genre_names && series.genre_names.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-4">
+              {series.genre_names.map((genre) => (
+                <span
+                  key={genre}
+                  className="bg-muted text-foreground/75 text-[12.5px] font-medium px-3.5 py-1.5 rounded-full"
+                >
+                  {genre}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {series.tags && series.tags.length > 0 && (
+            <div className="mb-6 space-y-2">
+              {(Object.keys(TAG_DIMENSION_LABELS) as SeriesTagData['dimension'][]).map((dimension) => {
+                const dimensionTags = series.tags!.filter((tag) => tag.dimension === dimension);
+                if (dimensionTags.length === 0) return null;
+
+                return (
+                  <div key={dimension} className="flex flex-wrap items-center gap-2">
+                    <span className="text-[12.5px] font-semibold text-muted-foreground shrink-0">
+                      {TAG_DIMENSION_LABELS[dimension]}:
+                    </span>
+                    {dimensionTags.map((tag) => (
+                      <span
+                        key={tag.id}
+                        className="flex items-center gap-1 bg-brand-blush/25 text-[#5E4B6B] text-[12.5px] font-medium px-3 py-1.5 rounded-full"
+                      >
+                        {tag.display_emoji && <span aria-hidden>{tag.display_emoji}</span>}
+                        {tag.display_label}
+                      </span>
+                    ))}
+                  </div>
+                );
+              })}
+            </div>
+          )}
 
           <div className="mb-6">
             <WatchlistButton seriesId={series.id} />
