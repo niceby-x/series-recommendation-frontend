@@ -8,6 +8,7 @@ import RatingForm from '../../../components/shared/RatingForm';
 import WatchlistButton from '@/components/shared/WatchlistButton';
 import ProgressTracker from '@/components/shared/ProgressTracker';
 import RelatedSeriesRow, { type RelatedSeriesItem } from '@/components/shared/RelatedSeriesRow';
+import { SessionProvider } from '@/lib/SessionContext';
 import type { SeriesTagData } from '@/components/shared/SeriesCard';
 
 // Human-readable section labels for each tag dimension -- mirrors the
@@ -259,20 +260,22 @@ export default async function SeriesDetailPage({ params }: { params: Promise<{ i
             </div>
           )}
 
-          <div className="mb-6">
-            <WatchlistButton seriesId={series.id} />
-          </div>
+          <SessionProvider>
+            <div className="mb-6">
+              <WatchlistButton seriesId={series.id} />
+            </div>
 
-          <div className="bg-card rounded-xl p-6 border border-border shadow-sm">
-            <h2 className="text-lg font-semibold mb-3 font-heading text-brand-gradient">Synopsis</h2>
-            <p className="text-foreground/80 leading-relaxed">
-              {series.synopsis || 'No synopsis available.'}
-            </p>
-          </div>
+            <div className="bg-card rounded-xl p-6 border border-border shadow-sm">
+              <h2 className="text-lg font-semibold mb-3 font-heading text-brand-gradient">Synopsis</h2>
+              <p className="text-foreground/80 leading-relaxed">
+                {series.synopsis || 'No synopsis available.'}
+              </p>
+            </div>
 
-          <ProgressTracker seriesId={series.id} episodeCount={series.episode_count} />
+            <ProgressTracker seriesId={series.id} episodeCount={series.episode_count} />
 
-          <RatingForm seriesId={series.id} />
+            <RatingForm seriesId={series.id} />
+          </SessionProvider>
         </div>
       </div>
 

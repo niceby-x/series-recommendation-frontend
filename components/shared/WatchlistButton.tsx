@@ -1,9 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { supabase } from '../../lib/supabase';
 import { useAuthModal } from '../../lib/AuthModalContext';
-import type { User } from '@supabase/supabase-js';
+import { useSession } from '../../lib/SessionContext';
 
 type Status = 'plan_to_watch' | 'watching' | 'completed';
 
@@ -15,8 +14,7 @@ const STATUS_LABELS: Record<Status, string> = {
 
 export default function WatchlistButton({ seriesId }: { seriesId: number }) {
   const { open: openAuthModal } = useAuthModal();
-  const [user, setUser] = useState<User | null>(null);
-  const [checkingSession, setCheckingSession] = useState(true);
+  const { user, session, checkingSession } = useSession();
   const [currentStatus, setCurrentStatus] = useState<Status | null>(null);
   const [loadingStatus, setLoadingStatus] = useState(false);
   const [updating, setUpdating] = useState(false);
@@ -25,26 +23,14 @@ export default function WatchlistButton({ seriesId }: { seriesId: number }) {
   const [sessionExpired, setSessionExpired] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      setCheckingSession(false);
-    });
-  }, []);
-
-  useEffect(() => {
-    if (!user) return;
+    if (!session) return;
+    const activeSession = session;
 
     async function fetchStatus() {
       setLoadingStatus(true);
 
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        setLoadingStatus(false);
-        return;
-      }
-
       const res = await fetch(process.env.NEXT_PUBLIC_API_URL + '/watchlist/' + seriesId, {
-        headers: { Authorization: 'Bearer ' + session.access_token },
+        headers: { Authorization: 'Bearer ' + activeSession.access_token },
       });
 
       if (!res.ok) {
@@ -63,14 +49,12 @@ export default function WatchlistButton({ seriesId }: { seriesId: number }) {
     }
 
     fetchStatus();
-  }, [user, seriesId]);
+  }, [session, seriesId]);
 
   async function handleSetStatus(status: Status) {
     setUpdating(true);
     setError('');
     setMenuOpen(false);
-
-    const { data: { session } } = await supabase.auth.getSession();
 
     if (!session) {
       setError('Your session expired. Please sign in again.');
@@ -102,8 +86,6 @@ export default function WatchlistButton({ seriesId }: { seriesId: number }) {
     setUpdating(true);
     setError('');
     setMenuOpen(false);
-
-    const { data: { session } } = await supabase.auth.getSession();
 
     if (!session) {
       setError('Your session expired. Please sign in again.');

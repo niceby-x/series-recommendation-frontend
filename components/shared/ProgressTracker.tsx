@@ -1,9 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { supabase } from '../../lib/supabase';
 import { useAuthModal } from '../../lib/AuthModalContext';
-import type { User } from '@supabase/supabase-js';
+import { useSession } from '../../lib/SessionContext';
 
 // Shape of the `progress` field returned by GET /watchlist/:seriesId/progress
 // (see backend src/routes/watchlist.ts). Q2-03: previously there was no
@@ -23,8 +22,7 @@ export default function ProgressTracker({
   episodeCount: number;
 }) {
   const { open: openAuthModal } = useAuthModal();
-  const [user, setUser] = useState<User | null>(null);
-  const [checkingSession, setCheckingSession] = useState(true);
+  const { user, session, checkingSession } = useSession();
   const [currentEpisode, setCurrentEpisode] = useState('');
   const [minutesRemaining, setMinutesRemaining] = useState('');
   // Drives "Update" vs "Save" copy, same reasoning RatingForm.tsx uses
@@ -39,39 +37,34 @@ export default function ProgressTracker({
   const [sessionExpired, setSessionExpired] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      setCheckingSession(false);
+    if (!session) return;
 
-      if (!session) return;
-
-      fetch(process.env.NEXT_PUBLIC_API_URL + '/watchlist/' + seriesId + '/progress', {
-        headers: { Authorization: 'Bearer ' + session.access_token },
+    fetch(process.env.NEXT_PUBLIC_API_URL + '/watchlist/' + seriesId + '/progress', {
+      headers: { Authorization: 'Bearer ' + session.access_token },
+    })
+      .then((res) => {
+        if (res.status === 401) {
+          setError('Your session expired. Please sign in again.');
+          setSessionExpired(true);
+          return null;
+        }
+        return res.ok ? res.json() : null;
       })
-        .then((res) => {
-          if (res.status === 401) {
-            setError('Your session expired. Please sign in again.');
-            setSessionExpired(true);
-            return null;
-          }
-          return res.ok ? res.json() : null;
-        })
-        .then((json) => {
-          const progress: ExistingProgress | null = json?.progress ?? null;
-          if (progress) {
-            setCurrentEpisode(String(progress.current_episode));
-            setMinutesRemaining(
-              progress.minutes_remaining != null ? String(progress.minutes_remaining) : ''
-            );
-            setHasExistingProgress(true);
-          }
-        })
-        .catch(() => {
-          // Prefill is a nicety, not a blocker -- if it fails, the form
-          // just starts blank and the upsert on submit still works fine.
-        });
-    });
-  }, [seriesId]);
+      .then((json) => {
+        const progress: ExistingProgress | null = json?.progress ?? null;
+        if (progress) {
+          setCurrentEpisode(String(progress.current_episode));
+          setMinutesRemaining(
+            progress.minutes_remaining != null ? String(progress.minutes_remaining) : ''
+          );
+          setHasExistingProgress(true);
+        }
+      })
+      .catch(() => {
+        // Prefill is a nicety, not a blocker -- if it fails, the form
+        // just starts blank and the upsert on submit still works fine.
+      });
+  }, [session, seriesId]);
 
   async function handleSubmit() {
     const episodeNum = parseInt(currentEpisode, 10);
@@ -90,10 +83,6 @@ export default function ProgressTracker({
     setSubmitting(true);
     setError('');
     setSubmitted(false);
-
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
 
     if (!session) {
       setError('Your session expired. Please sign in again.');

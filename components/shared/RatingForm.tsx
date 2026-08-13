@@ -1,9 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { supabase } from '../../lib/supabase';
 import { useAuthModal } from '../../lib/AuthModalContext';
-import type { User } from '@supabase/supabase-js';
+import { useSession } from '../../lib/SessionContext';
 
 // Mirrors the backend's POST /ratings cap (see P2-08 handoff) -- keeping
 // this in sync with the server lets the textarea's maxLength (and the
@@ -13,8 +12,7 @@ const MAX_REVIEW_LENGTH = 2000;
 
 export default function RatingForm({ seriesId }: { seriesId: number }) {
   const { open: openAuthModal } = useAuthModal();
-  const [user, setUser] = useState<User | null>(null);
-  const [checkingSession, setCheckingSession] = useState(true);
+  const { user, session, checkingSession } = useSession();
   const [score, setScore] = useState<number>(0);
   const [reviewText, setReviewText] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -28,36 +26,31 @@ export default function RatingForm({ seriesId }: { seriesId: number }) {
   const [hasExistingRating, setHasExistingRating] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      setCheckingSession(false);
+    if (!session) return;
 
-      if (!session) return;
-
-      fetch(process.env.NEXT_PUBLIC_API_URL + '/ratings/mine/' + seriesId, {
-        headers: { Authorization: 'Bearer ' + session.access_token },
+    fetch(process.env.NEXT_PUBLIC_API_URL + '/ratings/mine/' + seriesId, {
+      headers: { Authorization: 'Bearer ' + session.access_token },
+    })
+      .then((res) => {
+        if (res.status === 401) {
+          setError('Your session expired. Please sign in again.');
+          setSessionExpired(true);
+          return null;
+        }
+        return res.ok ? res.json() : null;
       })
-        .then((res) => {
-          if (res.status === 401) {
-            setError('Your session expired. Please sign in again.');
-            setSessionExpired(true);
-            return null;
-          }
-          return res.ok ? res.json() : null;
-        })
-        .then((json) => {
-          if (json?.data) {
-            setScore(json.data.score);
-            setReviewText(json.data.review_text ?? '');
-            setHasExistingRating(true);
-          }
-        })
-        .catch(() => {
-          // Prefill is a nicety, not a blocker -- if it fails, the form
-          // just starts blank and the upsert on submit still works fine.
-        });
-    });
-  }, [seriesId]);
+      .then((json) => {
+        if (json?.data) {
+          setScore(json.data.score);
+          setReviewText(json.data.review_text ?? '');
+          setHasExistingRating(true);
+        }
+      })
+      .catch(() => {
+        // Prefill is a nicety, not a blocker -- if it fails, the form
+        // just starts blank and the upsert on submit still works fine.
+      });
+  }, [session, seriesId]);
 
   async function handleSubmit() {
     if (score < 1 || score > 10) {
@@ -67,8 +60,6 @@ export default function RatingForm({ seriesId }: { seriesId: number }) {
 
     setSubmitting(true);
     setError('');
-
-    const { data: { session } } = await supabase.auth.getSession();
 
     if (!session) {
       setError('Your session expired. Please sign in again.');
