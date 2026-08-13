@@ -1,11 +1,12 @@
+import Link from 'next/link';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
+import { headers } from 'next/headers';
 import { Calendar, Clapperboard, Star } from 'lucide-react';
 import type { Metadata } from 'next';
 import RatingForm from '../../../components/shared/RatingForm';
 import WatchlistButton from '@/components/shared/WatchlistButton';
 import ProgressTracker from '@/components/shared/ProgressTracker';
-import BackToBrowseLink from '@/components/shared/BackToBrowseLink';
 
 interface Series {
   id: number;
@@ -19,6 +20,33 @@ interface Series {
   poster_url: string | null;
   average_rating: number | null;
   rating_count: number;
+}
+
+// Restores the query string (filters, search, mood/trope context) the user
+// had active on /series when they clicked into this page. This is a Server
+// Component, so params only carries the route's [id] -- but next/link's
+// client-side navigation still issues an RSC fetch that carries a normal
+// Referer header set to the page the click originated from, and next/headers
+// lets a Server Component read it. (document.referrer client-side was
+// considered, but it only reflects the last *full* page load and goes stale
+// after a couple of soft navigations -- this header is set fresh on every
+// navigation, so it's the more reliable source here.)
+async function getBackToBrowseHref(): Promise<string> {
+  const headersList = await headers();
+  const referer = headersList.get('referer');
+  if (!referer) return '/series';
+
+  try {
+    const refererUrl = new URL(referer);
+    const host = headersList.get('host');
+    if (host && refererUrl.host === host && refererUrl.pathname === '/series') {
+      return refererUrl.pathname + refererUrl.search;
+    }
+  } catch {
+    // Malformed referer header -- fall through to the plain default.
+  }
+
+  return '/series';
 }
 
 async function getSeriesById(id: string): Promise<Series> {
@@ -87,6 +115,7 @@ export async function generateMetadata({
 export default async function SeriesDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const series = await getSeriesById(id);
+  const backToBrowseHref = await getBackToBrowseHref();
 
   const statusBadgeClass = series.status === 'completed'
     ? 'text-[13px] font-semibold px-2.5 py-1 rounded-full bg-brand-lilac text-[#3D2E52]'
@@ -94,7 +123,9 @@ export default async function SeriesDetailPage({ params }: { params: Promise<{ i
 
   return (
     <main className="min-h-screen bg-background text-foreground p-8">
-      <BackToBrowseLink />
+      <Link href={backToBrowseHref} className="text-primary hover:text-brand-purple-vivid text-sm mb-6 block">
+        ← Back to Browse
+      </Link>
 
       <div className="max-w-4xl flex flex-col md:flex-row gap-8">
         {/* Poster */}
