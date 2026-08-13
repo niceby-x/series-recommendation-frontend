@@ -5,12 +5,11 @@ import { supabase } from '../../lib/supabase';
 import { useAuthModal } from '../../lib/AuthModalContext';
 import type { User } from '@supabase/supabase-js';
 
-// Shape of the `progress` field on a GET /watchlist entry (see backend
-// src/routes/watchlist.ts, Route 6). There's no per-series GET for
-// progress alone -- only the full watchlist list includes it -- so
-// prefill below fetches that list and matches this series by id, same
-// approach components/home/DashboardDiscoverRow.tsx already uses for
-// the Home page progress bars.
+// Shape of the `progress` field returned by GET /watchlist/:seriesId/progress
+// (see backend src/routes/watchlist.ts). Q2-03: previously there was no
+// per-series GET for progress alone, so prefill fetched the entire
+// watchlist and matched this series by id -- an O(n) fetch just to check
+// one row. This dedicated endpoint replaces that.
 interface ExistingProgress {
   current_episode: number;
   minutes_remaining: number | null;
@@ -46,7 +45,7 @@ export default function ProgressTracker({
 
       if (!session) return;
 
-      fetch(process.env.NEXT_PUBLIC_API_URL + '/watchlist', {
+      fetch(process.env.NEXT_PUBLIC_API_URL + '/watchlist/' + seriesId + '/progress', {
         headers: { Authorization: 'Bearer ' + session.access_token },
       })
         .then((res) => {
@@ -58,13 +57,11 @@ export default function ProgressTracker({
           return res.ok ? res.json() : null;
         })
         .then((json) => {
-          const entries: Array<{ series: { id: number }; progress: ExistingProgress | null }> =
-            json?.data ?? [];
-          const match = entries.find((e) => e.series?.id === seriesId);
-          if (match?.progress) {
-            setCurrentEpisode(String(match.progress.current_episode));
+          const progress: ExistingProgress | null = json?.progress ?? null;
+          if (progress) {
+            setCurrentEpisode(String(progress.current_episode));
             setMinutesRemaining(
-              match.progress.minutes_remaining != null ? String(match.progress.minutes_remaining) : ''
+              progress.minutes_remaining != null ? String(progress.minutes_remaining) : ''
             );
             setHasExistingProgress(true);
           }
