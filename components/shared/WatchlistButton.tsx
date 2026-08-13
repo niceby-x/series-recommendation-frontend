@@ -22,6 +22,7 @@ export default function WatchlistButton({ seriesId }: { seriesId: number }) {
   const [updating, setUpdating] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [error, setError] = useState('');
+  const [sessionExpired, setSessionExpired] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -49,6 +50,7 @@ export default function WatchlistButton({ seriesId }: { seriesId: number }) {
       if (!res.ok) {
         if (res.status === 401) {
           setError('Your session expired. Please sign in again.');
+          setSessionExpired(true);
         }
         setLoadingStatus(false);
         return;
@@ -144,7 +146,7 @@ export default function WatchlistButton({ seriesId }: { seriesId: number }) {
     <div className="relative inline-block">
       <button
         onClick={() => setMenuOpen(!menuOpen)}
-        disabled={updating}
+        disabled={updating || sessionExpired}
         className={
           'px-5 py-2.5 rounded-full font-medium text-sm transition-colors ' +
           (currentStatus
@@ -155,6 +157,8 @@ export default function WatchlistButton({ seriesId }: { seriesId: number }) {
       >
         {updating
           ? 'Updating...'
+          : sessionExpired
+          ? 'Sign in required'
           : currentStatus
           ? STATUS_LABELS[currentStatus]
           : '+ Add to List'}

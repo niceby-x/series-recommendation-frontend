@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { Calendar, Clapperboard, Star } from 'lucide-react';
@@ -6,6 +5,7 @@ import type { Metadata } from 'next';
 import RatingForm from '../../../components/shared/RatingForm';
 import WatchlistButton from '@/components/shared/WatchlistButton';
 import ProgressTracker from '@/components/shared/ProgressTracker';
+import BackToBrowseLink from '@/components/shared/BackToBrowseLink';
 
 interface Series {
   id: number;
@@ -94,9 +94,7 @@ export default async function SeriesDetailPage({ params }: { params: Promise<{ i
 
   return (
     <main className="min-h-screen bg-background text-foreground p-8">
-      <Link href="/series" className="text-primary hover:text-brand-purple-vivid text-sm mb-6 block">
-        ← Back to Browse
-      </Link>
+      <BackToBrowseLink />
 
       <div className="max-w-4xl flex flex-col md:flex-row gap-8">
         {/* Poster */}

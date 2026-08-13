@@ -20,6 +20,7 @@ export default function RatingForm({ seriesId }: { seriesId: number }) {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
+  const [sessionExpired, setSessionExpired] = useState(false);
   // Whether the user already had a rating for this series before this page
   // load -- drives the "Update" vs "Submit" copy below, and lets the
   // upserting POST /ratings behave predictably instead of silently
@@ -36,7 +37,14 @@ export default function RatingForm({ seriesId }: { seriesId: number }) {
       fetch(process.env.NEXT_PUBLIC_API_URL + '/ratings/mine/' + seriesId, {
         headers: { Authorization: 'Bearer ' + session.access_token },
       })
-        .then((res) => (res.ok ? res.json() : null))
+        .then((res) => {
+          if (res.status === 401) {
+            setError('Your session expired. Please sign in again.');
+            setSessionExpired(true);
+            return null;
+          }
+          return res.ok ? res.json() : null;
+        })
         .then((json) => {
           if (json?.data) {
             setScore(json.data.score);
@@ -160,10 +168,10 @@ export default function RatingForm({ seriesId }: { seriesId: number }) {
 
       <button
         onClick={handleSubmit}
-        disabled={submitting || score === 0}
+        disabled={submitting || score === 0 || sessionExpired}
         className="bg-brand-gradient hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-3 rounded-full font-medium transition-opacity"
       >
-        {submitting ? 'Submitting...' : hasExistingRating ? 'Update Rating' : 'Submit Rating'}
+        {submitting ? 'Submitting...' : sessionExpired ? 'Sign in required' : hasExistingRating ? 'Update Rating' : 'Submit Rating'}
       </button>
     </div>
   );

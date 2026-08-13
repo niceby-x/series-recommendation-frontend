@@ -37,6 +37,7 @@ export default function ProgressTracker({
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
+  const [sessionExpired, setSessionExpired] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -48,7 +49,14 @@ export default function ProgressTracker({
       fetch(process.env.NEXT_PUBLIC_API_URL + '/watchlist', {
         headers: { Authorization: 'Bearer ' + session.access_token },
       })
-        .then((res) => (res.ok ? res.json() : null))
+        .then((res) => {
+          if (res.status === 401) {
+            setError('Your session expired. Please sign in again.');
+            setSessionExpired(true);
+            return null;
+          }
+          return res.ok ? res.json() : null;
+        })
         .then((json) => {
           const entries: Array<{ series: { id: number }; progress: ExistingProgress | null }> =
             json?.data ?? [];
@@ -179,10 +187,10 @@ export default function ProgressTracker({
 
       <button
         onClick={handleSubmit}
-        disabled={submitting || currentEpisode.trim() === ''}
+        disabled={submitting || currentEpisode.trim() === '' || sessionExpired}
         className="bg-brand-gradient hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-3 rounded-full font-medium transition-opacity"
       >
-        {submitting ? 'Saving...' : hasExistingProgress ? 'Update Progress' : 'Save Progress'}
+        {submitting ? 'Saving...' : sessionExpired ? 'Sign in required' : hasExistingProgress ? 'Update Progress' : 'Save Progress'}
       </button>
     </div>
   );
