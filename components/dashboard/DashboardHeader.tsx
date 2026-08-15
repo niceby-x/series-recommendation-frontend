@@ -59,6 +59,15 @@ export default function DashboardHeader({ title, subtitle }: { title?: string; s
   // Cmd/Ctrl+K focuses.
   const [recentSearches, setRecentSearches] = useState<string[]>(() => loadRecentSearches());
   const [searchFocused, setSearchFocused] = useState(false);
+  // D3-03: below md, DashboardHeader's search form was `hidden md:block`
+  // with no substitute -- and Navbar.tsx (which does have a mobile search
+  // toggle) hides itself entirely on dashboard routes like /series (see
+  // its DASHBOARD_ROUTES check), so a logged-in mobile user on Discover
+  // had no reachable search entry point at all. This mirrors Navbar's own
+  // icon-toggle-to-full-width-form pattern instead of duplicating the
+  // form: the existing form becomes visible on mobile once toggled open,
+  // rather than a second, separate mobile search implementation.
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const searchFormRef = useRef<HTMLFormElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   // Real toggle -- app/globals.css already ships a full .dark palette, this
@@ -112,6 +121,10 @@ export default function DashboardHeader({ title, subtitle }: { title?: string; s
   // apps. Ignored while typing in another input/textarea so it doesn't
   // steal a literal "k" keystroke.
   useEffect(() => {
+    if (mobileSearchOpen) searchInputRef.current?.focus();
+  }, [mobileSearchOpen]);
+
+  useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         const active = document.activeElement;
@@ -153,6 +166,7 @@ export default function DashboardHeader({ title, subtitle }: { title?: string; s
       saveRecentSearches(next);
     }
     setSearchFocused(false);
+    setMobileSearchOpen(false);
     searchInputRef.current?.blur();
     router.push(trimmed ? '/series?q=' + encodeURIComponent(trimmed) : '/series');
   }
@@ -218,8 +232,26 @@ export default function DashboardHeader({ title, subtitle }: { title?: string; s
         <p className="text-muted-foreground text-[15px] mt-1">{subtitle ?? 'What are we discovering tonight?'}</p>
       </div>
 
-      <div className="flex items-center gap-3 min-w-0 ml-auto sm:ml-0">
-        <form onSubmit={handleSearchSubmit} ref={searchFormRef} className="relative hidden md:block flex-1 min-w-[140px] max-w-[288px]">
+      <div className="flex flex-wrap items-center gap-3 min-w-0 ml-auto sm:ml-0">
+        <button
+          type="button"
+          onClick={() => setMobileSearchOpen((open) => !open)}
+          aria-label="Search"
+          aria-expanded={mobileSearchOpen}
+          className="md:hidden flex items-center justify-center size-10 rounded-full bg-card border border-border text-foreground/70 hover:text-primary hover:bg-muted transition-colors shrink-0"
+        >
+          <Search className="size-4.5" />
+        </button>
+
+        <form
+          onSubmit={handleSearchSubmit}
+          ref={searchFormRef}
+          className={
+            'relative flex-1 min-w-[140px] max-w-[288px] md:block ' +
+            (mobileSearchOpen ? 'block w-full basis-full order-last mt-1' : 'hidden') +
+            ' md:w-auto md:basis-auto md:order-none md:mt-0'
+          }
+        >
           <div className="relative">
             <input
               ref={searchInputRef}
@@ -230,6 +262,7 @@ export default function DashboardHeader({ title, subtitle }: { title?: string; s
               onKeyDown={(e) => {
                 if (e.key === 'Escape') {
                   setSearchFocused(false);
+                  setMobileSearchOpen(false);
                   searchInputRef.current?.blur();
                 }
               }}
