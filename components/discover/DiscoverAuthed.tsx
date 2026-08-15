@@ -293,13 +293,20 @@ export default function DiscoverAuthed({
                       </button>
                     </div>
                   )}
-                  {filteredLoading ? (
-                    <p className="text-muted-foreground text-sm mb-6">Loading series...</p>
-                  ) : (
-                    <p className="text-muted-foreground text-sm mb-6">
-                      Showing {filteredSeries.length} series
-                    </p>
-                  )}
+                  {/* D3-02: a stable wrapper with aria-live, not aria-live on the
+                      <p> itself -- the <p> swaps between "Loading series..." and
+                      "Showing N series" (different elements), so a screen reader
+                      needs a live region that persists across that swap to pick
+                      up the change at all. */}
+                  <div aria-live="polite" aria-atomic="true">
+                    {filteredLoading ? (
+                      <p className="text-muted-foreground text-sm mb-6">Loading series...</p>
+                    ) : (
+                      <p className="text-muted-foreground text-sm mb-6">
+                        Showing {filteredSeries.length} series
+                      </p>
+                    )}
+                  </div>
                   {!filteredLoading && filteredSeries.length === 0 ? (
                     <p className="text-muted-foreground">
                       No series found. Try adjusting your filters, or{' '}
