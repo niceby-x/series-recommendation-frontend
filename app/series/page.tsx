@@ -16,26 +16,29 @@ const PAGE_SIZE = 24;
 // front to compute matches/rankings/search results correctly, so those
 // deliberately keep the old no-params full-list call.
 async function getSeries(): Promise<{ data: SeriesCardData[]; pagination: SeriesPagination | null }> {
-  try {
-    const res = await fetch(
-      process.env.NEXT_PUBLIC_API_URL + '/series?page=1&limit=' + PAGE_SIZE,
-      { cache: 'no-store' }
-    );
+  const res = await fetch(
+    process.env.NEXT_PUBLIC_API_URL + '/series?page=1&limit=' + PAGE_SIZE,
+    { cache: 'no-store' }
+  );
 
-    if (!res.ok) {
-      console.error('Series fetch failed with status ' + res.status);
-      return { data: [], pagination: null };
-    }
-
-    const json = await res.json();
-    return {
-      data: (json.data || []) as SeriesCardData[],
-      pagination: (json.pagination ?? null) as SeriesPagination | null,
-    };
-  } catch (err) {
-    console.error('Series fetch threw an error:', err);
-    return { data: [], pagination: null };
+  // D1-01: a genuine failure here (5xx, network error) used to fall back
+  // to { data: [], pagination: null } -- the exact same shape a
+  // legitimately empty catalog returns, so a real outage rendered as an
+  // indistinguishable "no series" page. Throwing instead routes this to
+  // the nearest error.tsx boundary (same pattern getSeriesById already
+  // uses for its own non-404 failures, see app/series/[id]/page.tsx),
+  // which shows a distinct "something went wrong, try again" state. An
+  // actually-empty catalog still reaches the normal empty-grid UI below,
+  // since res.ok is true and json.data is just [].
+  if (!res.ok) {
+    throw new Error('Failed to load series: ' + res.status);
   }
+
+  const json = await res.json();
+  return {
+    data: (json.data || []) as SeriesCardData[],
+    pagination: (json.pagination ?? null) as SeriesPagination | null,
+  };
 }
 
 // Same HomeGate split as app/page.tsx, app/moods/page.tsx, etc: logged-out
