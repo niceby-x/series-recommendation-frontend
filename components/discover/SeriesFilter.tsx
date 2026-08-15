@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import SeriesCard, { type SeriesCardData } from '../shared/SeriesCard';
 import LoadMoreSeriesButton from '../shared/LoadMoreSeriesButton';
 import ExploreHero from '../explore/ExploreHero';
@@ -45,6 +45,7 @@ export default function SeriesFilter({ seriesList: initialSeriesList, initialPag
   );
   const searchParams = useSearchParams();
   const router = useRouter();
+  const pathname = usePathname();
   const [search] = useState(searchParams.get('q') ?? '');
 
   const countries = useMemo(
@@ -87,15 +88,46 @@ export default function SeriesFilter({ seriesList: initialSeriesList, initialPag
           ? 'top_rated'
           : 'all';
 
-  const [filters, setFilters] = useState<ExploreFilters>({
+  // D2-05: country/genre/year now live in the URL (same derive-and-write-
+  // back pattern as DiscoverAuthed.tsx) instead of local-only state, so a
+  // refresh, shared link, or browser back/forward preserves them --
+  // country partially did this already (read once on mount, never
+  // written back); genre/year didn't read the URL at all. navCategory/
+  // episodes/rating aren't part of this item's scope and stay local state.
+  const [localFilters, setLocalFilters] = useState<Pick<ExploreFilters, 'navCategory' | 'episodes' | 'rating'>>({
     navCategory: initialNavCategory,
-    country: searchParams.get('country') ?? 'All',
-    genre: 'All',
-    yearMin: dataYearMin,
-    yearMax: dataYearMax,
     episodes: 'Any',
     rating: 'Any',
   });
+  const countryParam = searchParams.get('country') ?? 'All';
+  const genreParam = searchParams.get('genre') ?? 'All';
+  const yearMinRaw = searchParams.get('year_min');
+  const yearMaxRaw = searchParams.get('year_max');
+  const yearMinParam = yearMinRaw !== null && !Number.isNaN(Number(yearMinRaw)) ? Number(yearMinRaw) : dataYearMin;
+  const yearMaxParam = yearMaxRaw !== null && !Number.isNaN(Number(yearMaxRaw)) ? Number(yearMaxRaw) : dataYearMax;
+
+  const filters = useMemo<ExploreFilters>(
+    () => ({ ...localFilters, country: countryParam, genre: genreParam, yearMin: yearMinParam, yearMax: yearMaxParam }),
+    [localFilters, countryParam, genreParam, yearMinParam, yearMaxParam]
+  );
+
+  // Mirrors React's setState signature (plain value or updater fn), same
+  // as ExploreSidebar's onChange and the handleGenreStripSelect/
+  // handleBrowseByGenreSelect/handleContinueExploringSelect call sites
+  // below already expect -- navCategory/episodes/rating go to local
+  // state, country/genre/year go to the URL.
+  function setFilters(update: ExploreFilters | ((prev: ExploreFilters) => ExploreFilters)) {
+    const next = typeof update === 'function' ? update(filters) : update;
+    setLocalFilters({ navCategory: next.navCategory, episodes: next.episodes, rating: next.rating });
+
+    const params = new URLSearchParams(searchParams.toString());
+    if (next.country === 'All') params.delete('country'); else params.set('country', next.country);
+    if (next.genre === 'All') params.delete('genre'); else params.set('genre', next.genre);
+    if (next.yearMin === dataYearMin) params.delete('year_min'); else params.set('year_min', String(next.yearMin));
+    if (next.yearMax === dataYearMax) params.delete('year_max'); else params.set('year_max', String(next.yearMax));
+    const qs = params.toString();
+    router.replace(pathname + (qs ? '?' + qs : ''), { scroll: false });
+  }
 
   const isFiltering =
     search.trim() !== '' ||

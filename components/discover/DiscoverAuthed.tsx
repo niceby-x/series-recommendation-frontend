@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { X } from 'lucide-react';
 import DashboardSidebar from '../dashboard/DashboardSidebar';
 import DashboardHeader from '../dashboard/DashboardHeader';
@@ -65,6 +65,8 @@ export default function DiscoverAuthed({
     initialPagination
   );
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
   // Navbar's search form pushes to /series?q=<term> for both logged-in and
   // logged-out users (see components/shared/Navbar.tsx). SeriesFilter.tsx
   // (logged-out) already reads it; mirror that here so the same submit
@@ -104,12 +106,35 @@ export default function DiscoverAuthed({
     [allSeries]
   );
 
-  const [filters, setFilters] = useState<DiscoverFilterState>({
-    country: 'All',
-    genre: 'All',
-    year: 'All',
-    sort: 'popular',
-  });
+  // D2-05: country/genre/year/sort now live in the URL, same as search/trope
+  // above, instead of local-only state -- a refresh, shared link, or
+  // browser back/forward previously lost these. Kept as plain derived
+  // values (not synced into state via useEffect) for the same reason
+  // tropeFilter avoids that pattern: useSearchParams is already reactive,
+  // so there's no need to shadow it in a second source of truth.
+  const countryParam = searchParams.get('country') ?? 'All';
+  const genreParam = searchParams.get('genre') ?? 'All';
+  const yearParam = searchParams.get('year') ?? 'All';
+  const sortParam = (searchParams.get('sort') as DiscoverFilterState['sort']) ?? 'popular';
+  const filters = useMemo<DiscoverFilterState>(
+    () => ({ country: countryParam, genre: genreParam, year: yearParam, sort: sortParam }),
+    [countryParam, genreParam, yearParam, sortParam]
+  );
+
+  // Mirrors React's setState signature (plain value or updater fn) so every
+  // existing call site -- DiscoverFiltersBar's onChange, the sort
+  // shortcut buttons, ExploreByGenreCard's onSelect -- keeps working
+  // unchanged; this just writes the result to the URL instead of state.
+  function setFilters(update: DiscoverFilterState | ((prev: DiscoverFilterState) => DiscoverFilterState)) {
+    const next = typeof update === 'function' ? update(filters) : update;
+    const params = new URLSearchParams(searchParams.toString());
+    if (next.country === 'All') params.delete('country'); else params.set('country', next.country);
+    if (next.genre === 'All') params.delete('genre'); else params.set('genre', next.genre);
+    if (next.year === 'All') params.delete('year'); else params.set('year', next.year);
+    if (next.sort === 'popular') params.delete('sort'); else params.set('sort', next.sort);
+    const qs = params.toString();
+    router.replace(pathname + (qs ? '?' + qs : ''), { scroll: false });
+  }
 
   const isFiltering =
     search.trim() !== '' ||
