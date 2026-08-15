@@ -13,22 +13,27 @@ import TopMoodCard from './TopMoodCard';
 import PopularInMoodCard from './PopularInMoodCard';
 import MoodFeedbackCard from './MoodFeedbackCard';
 import { MOOD_FILTERS, MOOD_SECTIONS, MOCK_POPULAR_IN_MOOD, type MoodCardItem } from '../../lib/moodsContent';
-import { seriesMatchesMoodKey } from '../../lib/moodMatch';
 
 const CARDS_PER_SECTION = 4;
 
-// The logged-in Moods page. Each section now matches series by their real
-// `mood`-dimension series_tags (see lib/moodMatch.ts) rather than taking a
-// positional slice of the catalog regardless of actual mood -- a series
-// only fills a "Romantic & Heartfelt" slot if it's actually tagged
-// romantic. Real matches fill each row first (most-recently-added first,
-// via reverse()), and curated mock cards fill whatever's left -- so a mood
-// with zero tagged series yet still renders its full editorial row instead
-// of going empty, and one with plenty of real tags gradually pushes the
-// mock cards out as tagging catches up. Same real-first-then-mock
-// convention as HomeAuthed/DiscoverAuthed, just driven by a real filter
-// instead of array position.
-export default function MoodsAuthed({ allSeries }: { allSeries: SeriesCardData[] }) {
+// The logged-in Moods page. Each section's real items now come pre-matched
+// from the backend (see app/moods/page.tsx's per-section GET /series?
+// tag_dimension=mood&tag_key=... calls, and the backend's ported
+// lib/moodMatch.ts logic) rather than this component filtering the full
+// catalog client-side (see G1-01) -- a series only fills a "Romantic &
+// Heartfelt" slot if it's actually tagged romantic, same as before, just
+// computed server-side now. Real matches fill each row first (in whatever
+// order GET /series already returns them), and curated mock cards fill
+// whatever's left -- so a mood with zero tagged series yet still renders
+// its full editorial row instead of going empty, and one with plenty of
+// real tags gradually pushes the mock cards out as tagging catches up.
+// Same real-first-then-mock convention as HomeAuthed/DiscoverAuthed, just
+// driven by a server-side filter instead of a client-side one.
+export default function MoodsAuthed({
+  realMatchesBySection,
+}: {
+  realMatchesBySection: Record<string, SeriesCardData[]>;
+}) {
   // Seeded from ?mood= (see H1-01 -- Home's mood cards link here with a
   // real key now). Falls back to 'all' for a missing/unrecognized param
   // rather than trusting an arbitrary URL value as a filter key.
@@ -40,7 +45,7 @@ export default function MoodsAuthed({ allSeries }: { allSeries: SeriesCardData[]
 
   const sections = useMemo(() => {
     return MOOD_SECTIONS.map((section) => {
-      const realMatches = allSeries.filter((s) => seriesMatchesMoodKey(s.tags, section.moodFilterKey));
+      const realMatches = realMatchesBySection[section.key] ?? [];
       const realItems: MoodCardItem[] = realMatches
         .slice(0, CARDS_PER_SECTION)
         .map((s) => ({
@@ -55,7 +60,7 @@ export default function MoodsAuthed({ allSeries }: { allSeries: SeriesCardData[]
       const mockFill = section.mockItems.slice(0, CARDS_PER_SECTION - realItems.length);
       return { ...section, items: [...realItems, ...mockFill] };
     });
-  }, [allSeries]);
+  }, [realMatchesBySection]);
 
   const visibleSections =
     selectedMood === 'all' ? sections : sections.filter((s) => s.moodFilterKey === selectedMood);

@@ -6,6 +6,7 @@ import DashboardSidebar from '../dashboard/DashboardSidebar';
 import DashboardHeader from '../dashboard/DashboardHeader';
 import SeriesCard, { type SeriesCardData } from '../shared/SeriesCard';
 import ScrollRow from '../dashboard/ScrollRow';
+import LoadMoreSeriesButton from '../shared/LoadMoreSeriesButton';
 import TrendingSidebarCard, { type TrendingSidebarItem } from '../dashboard/TrendingSidebarCard';
 import ReleaseFilterChips from './ReleaseFilterChips';
 import NewReleaseHero from './NewReleaseHero';
@@ -13,9 +14,17 @@ import JustReleasedCard from './JustReleasedCard';
 import UpcomingReleaseCard from './UpcomingReleaseCard';
 import NewReleaseHighlightsCard from './NewReleaseHighlightsCard';
 import ReleaseCalendarCard, { type CalendarDay, type TodayRelease } from './ReleaseCalendarCard';
-import { mockDaysAgoFor, formatMockReleaseDate, MOCK_UPCOMING } from '../../lib/newReleasesContent';
+import { isoDateDaysAgo, formatReleaseDate, MOCK_UPCOMING } from '../../lib/newReleasesContent';
+import { usePaginatedSeries, type SeriesQueryFilters } from '../../lib/usePaginatedSeries';
 
 const WEEKDAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+export interface NewReleasesInitialData {
+  justReleased: SeriesCardData[];
+  trending: SeriesCardData[];
+  newThisMonthCount: number;
+  thisWeekReleases: SeriesCardData[];
+}
 
 function startOfWeek(d: Date): Date {
   const day = d.getDay(); // 0 = Sun
@@ -30,73 +39,73 @@ function isSameDay(a: Date, b: Date): boolean {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 
-export default function NewReleasesAuthed({ allSeries }: { allSeries: SeriesCardData[] }) {
+// release_date is a plain YYYY-MM-DD column -- parsed at UTC midnight,
+// same convention as lib/newReleasesContent.ts's formatReleaseDate, so a
+// series' release day never shifts based on the viewer's local offset.
+function parseReleaseDate(releaseDate: string | null | undefined): Date | null {
+  if (!releaseDate) return null;
+  return new Date(releaseDate + 'T00:00:00Z');
+}
+
+// G1-01: release_date is now a real column (see the backend's migrations/
+// 010_series_release_date.sql), replacing the old client-side
+// mockDaysAgoFor hash that ran over the full unpaginated catalog.
+// `initialData` arrives pre-fetched, per-purpose, from app/new-releases/
+// page.tsx (justReleased via sort=newest_release, trending via
+// sort=top_rated, newThisMonthCount and thisWeekReleases via
+// release_date_min) -- this component no longer holds or scans the whole
+// catalog itself. The week/month grid (`filter !== 'all'`) fetches its own
+// page via usePaginatedSeries + release_date_min, same Load More pattern
+// Series/Discover already uses.
+export default function NewReleasesAuthed({ initialData }: { initialData: NewReleasesInitialData }) {
   const [filter, setFilter] = useState('all');
-
-  // Real series, each given a deterministic mock release date -- see
-  // lib/newReleasesContent.ts header for why this isn't a real column yet.
-  // Rating is the real average_rating field from GET /series (see P1-04).
-  const withDates = useMemo(
-    () =>
-      allSeries
-        .map((s) => ({
-          series: s,
-          daysAgo: mockDaysAgoFor(s.id),
-          rating: s.average_rating ?? null,
-        }))
-        .sort((a, b) => a.daysAgo - b.daysAgo),
-    [allSeries]
-  );
-
-  const justReleased = withDates.slice(0, 4);
 
   const heroSlides = useMemo(
     () =>
-      justReleased.map(({ series, rating }) => ({
-        id: series.id,
-        title: series.title,
-        country: series.country,
-        year: series.year,
-        rating,
-        synopsis: series.synopsis?.trim() || 'A new story worth discovering.',
-        imageUrl: series.backdrop_url ?? series.poster_url,
-      })),
-    [justReleased]
-  );
-
-  const newThisMonthCount = withDates.filter((w) => w.daysAgo <= 30).length;
-  const comingThisWeekCount = MOCK_UPCOMING.filter((u) => u.daysUntil <= 7).length;
-  const mostAnticipated = MOCK_UPCOMING[0]?.title ?? '';
-
-  const trendingItems: TrendingSidebarItem[] = useMemo(() => {
-    const TRENDS: TrendingSidebarItem['trend'][] = ['up', 'up', 'down', 'up', 'flat'];
-    return [...allSeries]
-      .sort((a, b) => (b.average_rating ?? 0) - (a.average_rating ?? 0))
-      .slice(0, 5)
-      .map((s, i) => ({
+      initialData.justReleased.map((s) => ({
         id: s.id,
         title: s.title,
         country: s.country,
-        mediaType: 'Series',
+        year: s.year,
         rating: s.average_rating ?? null,
+        synopsis: s.synopsis?.trim() || 'A new story worth discovering.',
         imageUrl: s.backdrop_url ?? s.poster_url,
-        trend: TRENDS[i],
-        isReal: true,
-      }));
-  }, [allSeries]);
+      })),
+    [initialData.justReleased]
+  );
+
+  const newThisMonthCount = initialData.newThisMonthCount;
+  const comingThisWeekCount = MOCK_UPCOMING.filter((u) => u.daysUntil <= 7).length;
+  const mostAnticipated = MOCK_UPCOMING[0]?.title ?? '';
+
+  // Real week-over-week trend direction isn't tracked for this sidebar
+  // specifically (see H2-01's rank_trend for the one that is) -- same
+  // placeholder cycle as before, just applied to a server-sorted top 5
+  // instead of a client-sorted one.
+  const trendingItems: TrendingSidebarItem[] = useMemo(() => {
+    const TRENDS: TrendingSidebarItem['trend'][] = ['up', 'up', 'down', 'up', 'flat'];
+    return initialData.trending.map((s, i) => ({
+      id: s.id,
+      title: s.title,
+      country: s.country,
+      mediaType: 'Series',
+      rating: s.average_rating ?? null,
+      imageUrl: s.backdrop_url ?? s.poster_url,
+      trend: TRENDS[i],
+      isReal: true,
+    }));
+  }, [initialData.trending]);
 
   // Real week (Mon-Sun) built from the actual current date -- a release
-  // "dot" lands on a day if any real series' mock release date or any
+  // "dot" lands on a day if any real series' real release_date or any
   // MOCK_UPCOMING item's target date falls on it.
   const { calendarDays, todayReleases, todayLabel } = useMemo(() => {
     const today = new Date();
     const weekStart = startOfWeek(today);
 
-    const realDates = withDates.map((w) => {
-      const d = new Date(today);
-      d.setDate(today.getDate() - w.daysAgo);
-      return { date: d, series: w.series };
-    });
+    const realDates = initialData.thisWeekReleases
+      .map((s) => ({ date: parseReleaseDate(s.release_date), series: s }))
+      .filter((r): r is { date: Date; series: SeriesCardData } => r.date !== null);
     const upcomingDates = MOCK_UPCOMING.map((u) => {
       const d = new Date(today);
       d.setDate(today.getDate() + u.daysUntil);
@@ -116,9 +125,11 @@ export default function NewReleasesAuthed({ allSeries }: { allSeries: SeriesCard
       .map((r) => ({ id: r.series.id, title: r.series.title, country: r.series.country, imageUrl: r.series.backdrop_url ?? r.series.poster_url }));
 
     // No real release lands on today -- show the most recent one instead
-    // of an empty widget (same reasoning as DiscoverAuthed's Recommended row).
-    if (releases.length === 0 && withDates.length > 0) {
-      const latest = withDates[0].series;
+    // of an empty widget (same reasoning as DiscoverAuthed's Recommended
+    // row). thisWeekReleases already arrives sorted newest-first
+    // (sort=newest_release), so [0] is the most recent.
+    if (releases.length === 0 && initialData.thisWeekReleases.length > 0) {
+      const latest = initialData.thisWeekReleases[0];
       releases = [{ id: latest.id, title: latest.title, country: latest.country, imageUrl: latest.backdrop_url ?? latest.poster_url }];
     }
 
@@ -127,13 +138,21 @@ export default function NewReleasesAuthed({ allSeries }: { allSeries: SeriesCard
       todayReleases: releases.slice(0, 3),
       todayLabel: today.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
     };
-  }, [withDates]);
+  }, [initialData.thisWeekReleases]);
 
-  const filteredGrid = useMemo(() => {
-    if (filter === 'week') return withDates.filter((w) => w.daysAgo <= 7).map((w) => w.series);
-    if (filter === 'month') return withDates.filter((w) => w.daysAgo <= 30).map((w) => w.series);
-    return [];
-  }, [withDates, filter]);
+  // G1-01: the week/month grid is its own paginated fetch (release_date_min
+  // pushed into GET /series's SQL query, see the backend handoff), grown
+  // via Load More -- same pattern Series/Discover already uses for its
+  // own filtered results, rather than slicing an already-fetched full
+  // catalog client-side.
+  const filters: SeriesQueryFilters | undefined =
+    filter === 'week'
+      ? { release_date_min: isoDateDaysAgo(7), sort: 'newest_release' }
+      : filter === 'month'
+        ? { release_date_min: isoDateDaysAgo(30), sort: 'newest_release' }
+        : undefined;
+  const { series: filteredSeries, hasMore: filteredHasMore, loading: filteredLoading, loadingMore: filteredLoadingMore, loadMore: loadMoreFiltered } =
+    usePaginatedSeries([], null, filters);
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -165,16 +184,16 @@ export default function NewReleasesAuthed({ allSeries }: { allSeries: SeriesCard
                       </button>
                     </div>
                     <ScrollRow>
-                      {justReleased.map(({ series, rating, daysAgo }) => (
+                      {initialData.justReleased.map((series) => (
                         <JustReleasedCard
                           key={series.id}
                           item={{
                             id: series.id,
                             title: series.title,
                             country: series.country,
-                            rating,
+                            rating: series.average_rating ?? null,
                             imageUrl: series.backdrop_url ?? series.poster_url,
-                            releaseDateLabel: formatMockReleaseDate(daysAgo),
+                            releaseDateLabel: formatReleaseDate(series.release_date),
                           }}
                         />
                       ))}
@@ -203,8 +222,10 @@ export default function NewReleasesAuthed({ allSeries }: { allSeries: SeriesCard
 
               {(filter === 'week' || filter === 'month') && (
                 <section>
-                  <p className="text-muted-foreground text-sm mb-6">{filteredGrid.length} series</p>
-                  {filteredGrid.length === 0 ? (
+                  <p className="text-muted-foreground text-sm mb-6">
+                    {filteredLoading ? 'Loading…' : filteredSeries.length + ' series'}
+                  </p>
+                  {!filteredLoading && filteredSeries.length === 0 ? (
                     <p className="text-muted-foreground">
                       Nothing released {filter === 'week' ? 'this week' : 'this month'} yet.{' '}
                       <Link href="/series" className="text-primary font-semibold hover:opacity-80 transition-opacity">
@@ -213,11 +234,14 @@ export default function NewReleasesAuthed({ allSeries }: { allSeries: SeriesCard
                       .
                     </p>
                   ) : (
-                    <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
-                      {filteredGrid.map((series) => (
-                        <SeriesCard key={series.id} series={series} rating={series.average_rating ?? null} />
-                      ))}
-                    </div>
+                    <>
+                      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
+                        {filteredSeries.map((series) => (
+                          <SeriesCard key={series.id} series={series} rating={series.average_rating ?? null} />
+                        ))}
+                      </div>
+                      <LoadMoreSeriesButton hasMore={filteredHasMore} loading={filteredLoadingMore} onClick={loadMoreFiltered} />
+                    </>
                   )}
                 </section>
               )}

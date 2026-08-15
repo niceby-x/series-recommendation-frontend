@@ -1,10 +1,13 @@
 import Link from 'next/link';
 import { Star, Calendar, Flame, ChevronRight } from 'lucide-react';
 
-// The two counts are real arithmetic over the page's data (real catalog
-// filtered by mockDaysAgoFor, mock upcoming list filtered by daysUntil) --
-// not hardcoded -- "Most anticipated" is just the first curated upcoming
-// title, there's no real anticipation signal to rank by yet.
+// G1-01: the two counts are real arithmetic over real data now --
+// newThisMonth comes from the backend's release_date_min filter
+// (app/new-releases/page.tsx), comingThisWeek is still the mock upcoming
+// list filtered by daysUntil (see lib/newReleasesContent.ts -- there's no
+// real "upcoming, not yet in the catalog" data source yet). "Most
+// anticipated" is just the first curated upcoming title, there's no real
+// anticipation signal to rank by yet.
 export default function NewReleaseHighlightsCard({
   newThisMonth,
   comingThisWeek,

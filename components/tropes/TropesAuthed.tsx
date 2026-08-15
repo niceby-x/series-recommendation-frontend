@@ -14,45 +14,51 @@ import TopTropesCard from './TopTropesCard';
 import TrendingTropesCard from './TrendingTropesCard';
 import TropeSuggestCard from './TropeSuggestCard';
 import { POPULAR_TROPES, BROWSE_CATEGORIES, NEW_TROPES } from '../../lib/tropesContent';
-import { realTropeMatches } from '../../lib/moodMatch';
-import type { SeriesCardData } from '../shared/SeriesCard';
+
+// G1-01: real match count + poster images per trope key, fetched
+// server-side (see app/tropes/page.tsx) instead of computed here from a
+// client-fetched full catalog.
+export interface TropeMatches {
+  count: number;
+  posterUrls: (string | null)[];
+}
 
 // The logged-in Tropes page. Popular/New Tropes cards now carry real data
-// two ways once a trope has real series_tags matches (see lib/moodMatch.ts):
-// a poster collage/image sourced from the actual matching series, and a
-// working link to /series?trope=key (read by DiscoverAuthed's filter,
-// see components/discover/DiscoverAuthed.tsx) instead of the plain
-// catalog link. A trope with zero real tags yet keeps its original
-// editorial icon/count/link -- same real-if-available-else-curated
-// convention as before, just extended from "just the count" to "the whole
-// card's real-vs-mock presentation."
-export default function TropesAuthed({ allSeries }: { allSeries: SeriesCardData[] }) {
+// two ways once a trope has real series_tags matches: a poster
+// collage/image sourced from the actual matching series, and a working
+// link to /series?trope=key (read by DiscoverAuthed's filter, see
+// components/discover/DiscoverAuthed.tsx) instead of the plain catalog
+// link. A trope with zero real tags yet keeps its original editorial
+// icon/count/link -- same real-if-available-else-curated convention as
+// before, just extended from "just the count" to "the whole card's
+// real-vs-mock presentation."
+export default function TropesAuthed({ tropeMatches }: { tropeMatches: Record<string, TropeMatches> }) {
   const [selectedTrope, setSelectedTrope] = useState('all');
 
   const popularTropes = useMemo(
     () =>
       POPULAR_TROPES.map((t) => {
-        const matches = realTropeMatches(allSeries, t.key);
-        if (matches.length === 0) return { trope: t, posterUrls: undefined as (string | null)[] | undefined };
+        const matches = tropeMatches[t.key];
+        if (!matches || matches.count === 0) return { trope: t, posterUrls: undefined as (string | null)[] | undefined };
         return {
-          trope: { ...t, seriesCount: matches.length },
-          posterUrls: matches.slice(0, 3).map((s) => s.backdrop_url ?? s.poster_url),
+          trope: { ...t, seriesCount: matches.count },
+          posterUrls: matches.posterUrls,
         };
       }),
-    [allSeries]
+    [tropeMatches]
   );
 
   const newTropes = useMemo(
     () =>
       NEW_TROPES.map((t) => {
-        const matches = realTropeMatches(allSeries, t.key);
-        if (matches.length === 0) return { trope: t, posterUrl: undefined as string | null | undefined };
+        const matches = tropeMatches[t.key];
+        if (!matches || matches.count === 0) return { trope: t, posterUrl: undefined as string | null | undefined };
         return {
-          trope: { ...t, seriesCount: matches.length },
-          posterUrl: matches[0].backdrop_url ?? matches[0].poster_url,
+          trope: { ...t, seriesCount: matches.count },
+          posterUrl: matches.posterUrls[0] ?? null,
         };
       }),
-    [allSeries]
+    [tropeMatches]
   );
 
   return (

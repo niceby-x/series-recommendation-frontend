@@ -45,6 +45,11 @@ export interface SeriesCardData {
   // reason as `tags` above.
   rank?: number | null;
   rank_trend?: 'up' | 'down' | 'flat' | 'new' | null;
+  // G1-01: real release date backfilled server-side (see the backend's
+  // migrations/010_series_release_date.sql), replacing the old
+  // client-only mockDaysAgoFor hash New Releases used to compute over the
+  // full catalog. Optional for the same reason as `tags` above.
+  release_date?: string | null;
 }
 
 const STATUS_LABELS: Record<string, string> = {

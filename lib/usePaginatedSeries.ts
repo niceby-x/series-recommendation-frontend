@@ -30,6 +30,15 @@ export interface SeriesQueryFilters {
   episode_max?: number | string;
   rating_min?: number | string;
   sort?: string;
+  // G1-01: release_date is a real column now (see the backend's
+  // migrations/010_series_release_date.sql) -- min/max are pushed
+  // straight into the SQL query, same as year_min/year_max.
+  release_date_min?: string;
+  release_date_max?: string;
+  // G1-01: mood/trope real-match filtering, moved server-side from
+  // lib/moodMatch.ts. Both must be set together to take effect.
+  tag_dimension?: string;
+  tag_key?: string;
 }
 
 function buildSeriesUrl(page: number, limit: number, filters?: SeriesQueryFilters): string {
