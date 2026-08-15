@@ -182,6 +182,23 @@ export default function SeriesFilter({ seriesList: initialSeriesList, initialPag
     loadMore: loadMoreFiltered,
   } = usePaginatedSeries([], null, filteredQuery);
 
+  // D1-02: resets every active filter, including search now that D3-04
+  // fixed search to read live from the URL -- one router.replace so the
+  // navCategory/episodes/rating local-state reset and the
+  // q/country/genre/year URL clear land together, not as two separate
+  // replaces racing on a stale searchParams snapshot.
+  function handleClearFilters() {
+    setLocalFilters({ navCategory: 'all', episodes: 'Any', rating: 'Any' });
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete('q');
+    params.delete('country');
+    params.delete('genre');
+    params.delete('year_min');
+    params.delete('year_max');
+    const qs = params.toString();
+    router.replace(pathname + (qs ? '?' + qs : ''), { scroll: false });
+  }
+
   function handleSurpriseMe() {
     if (seriesList.length === 0) return;
     router.push(`/series/${pickRandom(seriesList).id}`);
@@ -215,6 +232,7 @@ export default function SeriesFilter({ seriesList: initialSeriesList, initialPag
         dataYearMin={dataYearMin}
         dataYearMax={dataYearMax}
         onSurpriseMe={handleSurpriseMe}
+        onClearAll={handleClearFilters}
       />
 
       <div className="flex-1 min-w-0 space-y-8">
@@ -226,7 +244,13 @@ export default function SeriesFilter({ seriesList: initialSeriesList, initialPag
               <p className="text-muted-foreground text-sm mb-6">Showing {filtered.length} series</p>
             )}
             {!filteredLoading && filtered.length === 0 ? (
-              <p className="text-muted-foreground">No series found. Try adjusting your filters.</p>
+              <p className="text-muted-foreground">
+                No series found. Try adjusting your filters, or{' '}
+                <button type="button" onClick={handleClearFilters} className="text-primary hover:text-brand-purple-vivid font-medium">
+                  clear all filters
+                </button>
+                .
+              </p>
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
                 {filtered.map((series) => (

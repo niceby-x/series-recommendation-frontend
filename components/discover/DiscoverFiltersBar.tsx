@@ -66,15 +66,17 @@ export default function DiscoverFiltersBar({
   countries,
   years,
   genres,
+  onClear,
 }: {
   filters: DiscoverFilterState;
   onChange: (filters: DiscoverFilterState) => void;
   countries: string[];
   years: number[];
   genres: string[];
+  onClear: () => void;
 }) {
   return (
-    <div className="flex flex-wrap gap-3 mb-8">
+    <div className="flex flex-wrap items-center gap-3 mb-8">
       <FilterSelect
         icon={Globe2}
         ariaLabel="Filter by country"
@@ -106,6 +108,13 @@ export default function DiscoverFiltersBar({
           label: 'Sort by: ' + SORT_LABELS[key],
         }))}
       />
+      <button
+        type="button"
+        onClick={onClear}
+        className="text-primary text-sm font-semibold hover:opacity-80 transition-opacity px-1"
+      >
+        Clear all
+      </button>
     </div>
   );
 }

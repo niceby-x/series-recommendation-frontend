@@ -33,6 +33,11 @@ interface ExploreSidebarProps {
   dataYearMin: number;
   dataYearMax: number;
   onSurpriseMe: () => void;
+  // D1-02: a separate callback from onChange so Clear All can also reset
+  // the search term -- onChange only knows about the ExploreFilters shape
+  // (navCategory/country/genre/year/episodes/rating), not search, which
+  // lives outside it in the URL (see SeriesFilter.tsx's handleClearFilters).
+  onClearAll: () => void;
 }
 
 const NAV_ITEMS: { key: NavCategory; label: string; icon: typeof LayoutGrid }[] = [
@@ -44,14 +49,6 @@ const NAV_ITEMS: { key: NavCategory; label: string; icon: typeof LayoutGrid }[] 
   { key: 'completed', label: 'Just Completed', icon: CheckCircle2 },
 ];
 
-const DEFAULT_FILTERS: Omit<ExploreFilters, 'yearMin' | 'yearMax'> = {
-  navCategory: 'all',
-  country: 'All',
-  genre: 'All',
-  episodes: 'Any',
-  rating: 'Any',
-};
-
 export default function ExploreSidebar({
   filters,
   onChange,
@@ -60,13 +57,10 @@ export default function ExploreSidebar({
   dataYearMin,
   dataYearMax,
   onSurpriseMe,
+  onClearAll,
 }: ExploreSidebarProps) {
   function set<K extends keyof ExploreFilters>(key: K, value: ExploreFilters[K]) {
     onChange({ ...filters, [key]: value });
-  }
-
-  function clearAll() {
-    onChange({ ...DEFAULT_FILTERS, yearMin: dataYearMin, yearMax: dataYearMax });
   }
 
   return (
@@ -95,7 +89,7 @@ export default function ExploreSidebar({
           <h2 className="text-[13px] font-bold text-foreground">Filters</h2>
           <button
             type="button"
-            onClick={clearAll}
+            onClick={onClearAll}
             className="text-[11px] font-semibold text-primary hover:opacity-80 transition-opacity"
           >
             Clear All

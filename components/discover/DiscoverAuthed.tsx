@@ -136,6 +136,24 @@ export default function DiscoverAuthed({
     router.replace(pathname + (qs ? '?' + qs : ''), { scroll: false });
   }
 
+  // D1-02: resets every active filter (search, country, genre, year, sort,
+  // trope) in one go -- shared by DiscoverFiltersBar's "Clear all" button
+  // and the empty-results message's inline reset link below. Doesn't
+  // reuse setFilters since that only knows about country/genre/year/sort;
+  // q needs clearing too, and trope goes through its own tropeCleared
+  // flag rather than the URL (see tropeFilter above).
+  function handleClearAll() {
+    setTropeCleared(true);
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete('q');
+    params.delete('country');
+    params.delete('genre');
+    params.delete('year');
+    params.delete('sort');
+    const qs = params.toString();
+    router.replace(pathname + (qs ? '?' + qs : ''), { scroll: false });
+  }
+
   const isFiltering =
     search.trim() !== '' ||
     filters.country !== 'All' ||
@@ -251,7 +269,14 @@ export default function DiscoverAuthed({
 
           <div className="grid grid-cols-1 xl:grid-cols-[1fr_336px] gap-8 items-start">
             <main className="min-w-0">
-              <DiscoverFiltersBar filters={filters} onChange={setFilters} countries={countries} years={years} genres={genres} />
+              <DiscoverFiltersBar
+                filters={filters}
+                onChange={setFilters}
+                countries={countries}
+                years={years}
+                genres={genres}
+                onClear={handleClearAll}
+              />
 
               {isFiltering ? (
                 <section>
@@ -276,7 +301,13 @@ export default function DiscoverAuthed({
                     </p>
                   )}
                   {!filteredLoading && filteredSeries.length === 0 ? (
-                    <p className="text-muted-foreground">No series found. Try adjusting your filters.</p>
+                    <p className="text-muted-foreground">
+                      No series found. Try adjusting your filters, or{' '}
+                      <button type="button" onClick={handleClearAll} className="text-primary hover:text-brand-purple-vivid font-medium">
+                        clear all filters
+                      </button>
+                      .
+                    </p>
                   ) : (
                     <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
                       {filteredSeries.map((series) => (
