@@ -1,11 +1,7 @@
-'use client';
-
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { supabase } from '../../lib/supabase';
-import { useAuthModal } from '../../lib/AuthModalContext';
-import type { User } from '@supabase/supabase-js';
+import SignInPrompt from '../../components/shared/SignInPrompt';
+import { getServerSession } from '../../lib/getServerSession';
 
 type Status = 'plan_to_watch' | 'watching' | 'completed';
 
@@ -38,18 +34,6 @@ interface WatchlistEntry {
   status: Status;
   updated_at: string;
   series: Series;
-}
-
-function SkeletonCard() {
-  return (
-    <div className="bg-card border border-border rounded-xl overflow-hidden animate-pulse">
-      <div className="aspect-[2/3] bg-muted" />
-      <div className="p-4 space-y-2">
-        <div className="h-4 bg-muted rounded w-3/4" />
-        <div className="h-3 bg-muted rounded w-1/2" />
-      </div>
-    </div>
-  );
 }
 
 function SeriesCard({ entry }: { entry: WatchlistEntry }) {
@@ -101,68 +85,45 @@ function SeriesCard({ entry }: { entry: WatchlistEntry }) {
   );
 }
 
-export default function MyListPage() {
-  const { open: openAuthModal } = useAuthModal();
-  const [user, setUser] = useState<User | null>(null);
-  const [checkingSession, setCheckingSession] = useState(true);
-  const [entries, setEntries] = useState<WatchlistEntry[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      setCheckingSession(false);
+async function fetchWatchlist(accessToken: string): Promise<{ entries: WatchlistEntry[]; error: string }> {
+  try {
+    const res = await fetch(process.env.NEXT_PUBLIC_API_URL + '/watchlist', {
+      headers: { Authorization: 'Bearer ' + accessToken },
+      cache: 'no-store',
     });
-  }, []);
 
-  useEffect(() => {
-    if (!user) return;
-
-    async function fetchWatchlist() {
-      setLoading(true);
-      setError('');
-
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        setLoading(false);
-        return;
-      }
-
-      const res = await fetch(process.env.NEXT_PUBLIC_API_URL + '/watchlist', {
-        headers: { Authorization: 'Bearer ' + session.access_token },
-      });
-
-      if (!res.ok) {
-        setError('Could not load your list. Try refreshing the page.');
-        setLoading(false);
-        return;
-      }
-
-      const json = await res.json();
-      setEntries(json.data);
-      setLoading(false);
+    if (!res.ok) {
+      return { entries: [], error: 'Could not load your list. Try refreshing the page.' };
     }
 
-    fetchWatchlist();
-  }, [user]);
-
-  if (checkingSession) {
-    return null;
+    const json = await res.json();
+    return { entries: (json.data || []) as WatchlistEntry[], error: '' };
+  } catch (err) {
+    console.error('Watchlist fetch threw an error:', err);
+    return { entries: [], error: 'Could not load your list. Try refreshing the page.' };
   }
+}
 
-  if (!user) {
+// G2-02: this used to be a client component that spent its first render
+// blank (checkingSession) and its second loading a skeleton grid while
+// supabase.auth.getSession() and then the /watchlist fetch both resolved
+// client-side. Now a plain Server Component: the session (see
+// lib/getServerSession.ts) and the watchlist itself are both read before
+// anything is sent to the browser, so there's no loading state left --
+// the first thing rendered is the real list (or the real "sign in"
+// prompt, or the real error message).
+export default async function MyListPage() {
+  const { user, accessToken } = await getServerSession();
+
+  if (!user || !accessToken) {
     return (
       <main className="min-h-screen bg-background text-foreground p-8">
-        <p className="text-muted-foreground">
-          <button type="button" onClick={() => openAuthModal('login')} className="text-primary hover:text-brand-purple-vivid">
-            Sign in
-          </button>{' '}
-          to see your list.
-        </p>
+        <SignInPrompt message="to see your list." />
       </main>
     );
   }
+
+  const { entries, error } = await fetchWatchlist(accessToken);
 
   return (
     <main className="min-h-screen bg-background text-foreground p-8">
@@ -171,15 +132,7 @@ export default function MyListPage() {
 
       {error && <p className="text-destructive">{error}</p>}
 
-      {loading && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <SkeletonCard key={i} />
-          ))}
-        </div>
-      )}
-
-      {!loading && !error && entries.length === 0 && (
+      {!error && entries.length === 0 && (
         <p className="text-muted-foreground">
           Your list is empty.{' '}
           <Link href="/series" className="text-primary hover:text-brand-purple-vivid">
@@ -189,7 +142,7 @@ export default function MyListPage() {
         </p>
       )}
 
-      {!loading && !error && entries.length > 0 && (
+      {!error && entries.length > 0 && (
         <div className="flex flex-col gap-10">
           {STATUS_ORDER.map((status) => {
             const groupEntries = entries.filter((e) => e.status === status);

@@ -1,9 +1,3 @@
-'use client';
-
-import { useEffect, useState } from 'react';
-import type { User } from '@supabase/supabase-js';
-import { supabase } from '../../lib/supabase';
-import { useAuthModal } from '../../lib/AuthModalContext';
 import AdminSidebar from '../../components/admin/AdminSidebar';
 import AdminHeader from '../../components/admin/AdminHeader';
 import StatCard from '../../components/admin/StatCard';
@@ -12,8 +6,10 @@ import RecentlyPublishedCard from '../../components/admin/RecentlyPublishedCard'
 import RecentActivityCard from '../../components/admin/RecentActivityCard';
 import TopMoodsCard from '../../components/admin/TopMoodsCard';
 import QuickActionsCard from '../../components/admin/QuickActionsCard';
+import SignInPrompt from '../../components/shared/SignInPrompt';
 import { STAT_CARDS, MOCK_CURATORS } from '../../lib/adminContent';
 import type { SeriesCardData } from '../../components/shared/SeriesCard';
+import { getServerSession } from '../../lib/getServerSession';
 
 interface Counts {
   pending: number;
@@ -36,8 +32,6 @@ interface PendingCandidate {
   created_at: string;
 }
 
-type AccessState = 'checking' | 'signed_out' | 'forbidden' | 'ok' | 'error';
-
 const LONG_RUNNING_THRESHOLD = 60;
 const QUEUE_PREVIEW_SIZE = 6;
 
@@ -59,91 +53,82 @@ function priorityFor(c: PendingCandidate): QueueRow['priority'] {
   return 'Low';
 }
 
-export default function AdminDashboardPage() {
-  const { open: openAuthModal } = useAuthModal();
-  const [user, setUser] = useState<User | null>(null);
-  const [access, setAccess] = useState<AccessState>('checking');
-  const [counts, setCounts] = useState<Counts>({ pending: 0, approved: 0, rejected: 0 });
-  const [queue, setQueue] = useState<PendingCandidate[]>([]);
-  const [allSeries, setAllSeries] = useState<SeriesCardData[]>([]);
-  const [userCount, setUserCount] = useState(0);
+type AdminData =
+  | { access: 'forbidden' }
+  | { access: 'error' }
+  | {
+      access: 'ok';
+      counts: Counts;
+      queue: PendingCandidate[];
+      allSeries: SeriesCardData[];
+      userCount: number;
+    };
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (!session?.user) setAccess('signed_out');
-    });
-  }, []);
+async function loadAdminData(accessToken: string): Promise<AdminData> {
+  const authHeader = { Authorization: 'Bearer ' + accessToken };
 
-  useEffect(() => {
-    if (!user) return;
+  const [countsRes, queueRes, seriesRes, usersRes] = await Promise.all([
+    fetch(process.env.NEXT_PUBLIC_API_URL + '/admin/candidates/counts', { headers: authHeader, cache: 'no-store' }),
+    fetch(process.env.NEXT_PUBLIC_API_URL + '/admin/candidates?status=pending', { headers: authHeader, cache: 'no-store' }),
+    fetch(process.env.NEXT_PUBLIC_API_URL + '/series', { cache: 'no-store' }),
+    fetch(process.env.NEXT_PUBLIC_API_URL + '/admin/users', { headers: authHeader, cache: 'no-store' }),
+  ]);
 
-    async function loadAll() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        setAccess('signed_out');
-        return;
-      }
-      const authHeader = { Authorization: 'Bearer ' + session.access_token };
+  // A 401 here would mean the backend independently rejected the token
+  // this route already validated server-side (see lib/getServerSession.ts)
+  // -- defensive, not expected in normal operation, but kept as a real
+  // check rather than assumed away now that the initial auth gate moved
+  // server-side.
+  if (countsRes.status === 401 || queueRes.status === 401 || usersRes.status === 401) {
+    return { access: 'forbidden' };
+  }
+  if (countsRes.status === 403 || queueRes.status === 403 || usersRes.status === 403) {
+    return { access: 'forbidden' };
+  }
+  if (!countsRes.ok || !queueRes.ok) {
+    return { access: 'error' };
+  }
 
-      const [countsRes, queueRes, seriesRes, usersRes] = await Promise.all([
-        fetch(process.env.NEXT_PUBLIC_API_URL + '/admin/candidates/counts', { headers: authHeader }),
-        fetch(process.env.NEXT_PUBLIC_API_URL + '/admin/candidates?status=pending', { headers: authHeader }),
-        fetch(process.env.NEXT_PUBLIC_API_URL + '/series', { cache: 'no-store' }),
-        fetch(process.env.NEXT_PUBLIC_API_URL + '/admin/users', { headers: authHeader }),
-      ]);
+  const countsJson = await countsRes.json();
+  const queueJson = await queueRes.json();
+  const seriesJson = seriesRes.ok ? await seriesRes.json() : { data: [] };
+  const usersJson = usersRes.ok ? await usersRes.json() : { count: 0 };
 
-      if (countsRes.status === 401 || queueRes.status === 401 || usersRes.status === 401) {
-        setAccess('signed_out');
-        return;
-      }
-      if (countsRes.status === 403 || queueRes.status === 403 || usersRes.status === 403) {
-        setAccess('forbidden');
-        return;
-      }
-      if (!countsRes.ok || !queueRes.ok) {
-        setAccess('error');
-        return;
-      }
+  return {
+    access: 'ok',
+    counts: { pending: countsJson.pending, approved: countsJson.approved, rejected: countsJson.rejected },
+    queue: (queueJson.data || []).slice(0, QUEUE_PREVIEW_SIZE),
+    allSeries: seriesJson.data || [],
+    userCount: usersJson.count || 0,
+  };
+}
 
-      const countsJson = await countsRes.json();
-      setCounts({ pending: countsJson.pending, approved: countsJson.approved, rejected: countsJson.rejected });
+// G2-02: this used to be a client component that spent its first render
+// blank (access: 'checking') while supabase.auth.getSession() and then
+// the admin API calls both resolved client-side -- a flash on every load,
+// and nothing real for a crawler (moot here since /admin is already
+// excluded from the sitemap/robots.txt, but the flash was real for actual
+// admins too). Now a plain Server Component: the session (see
+// lib/getServerSession.ts) is read from cookies and the dashboard data is
+// fetched before anything is sent to the browser. The is_admin
+// authorization check itself is unchanged -- it was always the backend's
+// 401/403 responses that decided forbidden vs. ok, not anything client-
+// side, so that part doesn't move, only the session lookup that gates it
+// does.
+export default async function AdminDashboardPage() {
+  const { user, accessToken } = await getServerSession();
 
-      const queueJson = await queueRes.json();
-      setQueue((queueJson.data || []).slice(0, QUEUE_PREVIEW_SIZE));
-
-      if (seriesRes.ok) {
-        const seriesJson = await seriesRes.json();
-        setAllSeries(seriesJson.data || []);
-      }
-
-      if (usersRes.ok) {
-        const usersJson = await usersRes.json();
-        setUserCount(usersJson.count || 0);
-      }
-
-      setAccess('ok');
-    }
-
-    loadAll();
-  }, [user]);
-
-  if (access === 'checking') return null;
-
-  if (access === 'signed_out') {
+  if (!user || !accessToken) {
     return (
       <main className="min-h-screen bg-background p-8">
-        <p className="text-muted-foreground">
-          <button type="button" onClick={() => openAuthModal('login')} className="text-primary font-semibold hover:opacity-80">
-            Sign in
-          </button>{' '}
-          to access the admin dashboard.
-        </p>
+        <SignInPrompt message="to access the admin dashboard." />
       </main>
     );
   }
 
-  if (access === 'forbidden') {
+  const data = await loadAdminData(accessToken);
+
+  if (data.access === 'forbidden') {
     return (
       <main className="min-h-screen bg-background p-8">
         <p className="text-rose-500 font-semibold">You don&apos;t have access to this page.</p>
@@ -151,13 +136,15 @@ export default function AdminDashboardPage() {
     );
   }
 
-  if (access === 'error') {
+  if (data.access === 'error') {
     return (
       <main className="min-h-screen bg-background p-8">
         <p className="text-rose-500">Could not load the admin dashboard. Try refreshing the page.</p>
       </main>
     );
   }
+
+  const { counts, queue, allSeries, userCount } = data;
 
   const queueRows: QueueRow[] = queue.map((c, i) => ({
     id: c.id,

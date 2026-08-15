@@ -131,9 +131,12 @@ export default function AuthModal({
   async function handleGoogleSignIn() {
     setLoading(true);
     setMessage('');
+    // G2-02: routes through app/auth/callback/route.ts now instead of
+    // landing here directly -- see that file for why (a server-side code
+    // exchange, now that the session lives in cookies).
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: window.location.origin + '/' },
+      options: { redirectTo: window.location.origin + '/auth/callback?next=/' },
     });
     if (error) {
       setMessage(error.message);
