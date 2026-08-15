@@ -46,7 +46,7 @@ export default function SeriesFilter({ seriesList: initialSeriesList, initialPag
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
-  const [search] = useState(searchParams.get('q') ?? '');
+  const search = searchParams.get('q') ?? '';
 
   const countries = useMemo(
     () => ['All', ...Array.from(new Set(seriesList.map((s) => s.country)))],
