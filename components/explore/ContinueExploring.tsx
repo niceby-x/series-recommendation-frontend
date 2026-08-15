@@ -10,7 +10,10 @@ interface PromoTile {
   gradient: string;
 }
 
-// Series counts are mock — see BrowseByGenre.tsx / lib/exploreMock.ts for why.
+// Series counts here are still curated/hardcoded promotional copy for this
+// component's own tiles (distinct from BrowseByGenre.tsx's genre counts,
+// which are real as of D2-03) -- there's no per-tile aggregate query for
+// these categories yet.
 const TILES: PromoTile[] = [
   {
     key: 'new-releases',

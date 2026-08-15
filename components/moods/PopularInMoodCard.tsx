@@ -20,9 +20,11 @@ function Row({ item }: { item: MoodCardItem }) {
         <p className="text-foreground text-[13.5px] font-semibold truncate">{item.title}</p>
         <p className="text-muted-foreground text-[11.5px] truncate flex items-center gap-1">
           {item.country} · {item.mediaType}
-          <span className="inline-flex items-center gap-0.5 text-brand-gold ml-0.5">
-            <Star className="size-2.5" fill="currentColor" /> {item.rating.toFixed(1)}
-          </span>
+          {item.rating != null && (
+            <span className="inline-flex items-center gap-0.5 text-brand-gold ml-0.5">
+              <Star className="size-2.5" fill="currentColor" /> {item.rating.toFixed(1)}
+            </span>
+          )}
         </p>
       </div>
     </div>

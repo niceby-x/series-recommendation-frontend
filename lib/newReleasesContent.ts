@@ -5,10 +5,10 @@
 //
 // There's no release_date column on `series` yet, so mockDaysAgoFor() is a
 // deterministic seeded assignment (same series id -> same "days ago",
-// consistent across reloads, not random) -- same pattern as
-// lib/exploreMock.ts's mockGenresFor/mockRatingFor. "Just Released" /
-// "This Week" / "This Month" filtering on this page is REAL filtering, it
-// just runs on this mock date instead of a real one.
+// consistent across reloads, not random). "Just Released" / "This Week" /
+// "This Month" filtering on this page is REAL filtering, it just runs on
+// this mock date instead of a real one. Ratings shown alongside it are
+// real (average_rating from GET /series, see P1-04), not mock.
 //
 // "Upcoming Releases" is different in kind, not just mock-vs-real: these
 // are series that don't exist in the catalog at all yet (nothing to link

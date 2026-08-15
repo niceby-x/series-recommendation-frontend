@@ -1,12 +1,11 @@
 import Link from 'next/link';
 import { Star } from 'lucide-react';
 import type { SeriesCardData } from '../shared/SeriesCard';
-import { mockRatingFor } from '../../lib/exploreMock';
 
 // Real catalog data (the /series list is, by definition, everything
-// that's live) -- unlike most of this dashboard's right rail, this section
-// isn't a placeholder. Rating still borrows the same mockRatingFor helper
-// Discover uses, since the `ratings` table itself is still empty.
+// that's live) -- rating is the real average_rating field from GET
+// /series (see P1-04); a series with no ratings yet just shows no star
+// badge rather than a fabricated score.
 export default function RecentlyPublishedCard({ series }: { series: SeriesCardData[] }) {
   return (
     <section>
@@ -52,9 +51,11 @@ export default function RecentlyPublishedCard({ series }: { series: SeriesCardDa
                   <span className="text-[10.5px] font-semibold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">
                     Published
                   </span>
-                  <span className="inline-flex items-center gap-0.5 text-[11.5px] font-semibold text-brand-gold">
-                    <Star className="size-3" fill="currentColor" /> {mockRatingFor(s.id).toFixed(1)}
-                  </span>
+                  {s.average_rating != null && (
+                    <span className="inline-flex items-center gap-0.5 text-[11.5px] font-semibold text-brand-gold">
+                      <Star className="size-3" fill="currentColor" /> {s.average_rating.toFixed(1)}
+                    </span>
+                  )}
                 </div>
               </div>
             </Link>

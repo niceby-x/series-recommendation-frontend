@@ -6,7 +6,7 @@ export interface JustReleasedItem {
   id: number | string;
   title: string;
   country: string;
-  rating: number;
+  rating: number | null;
   imageUrl: string | null;
   releaseDateLabel: string;
 }
@@ -44,9 +44,11 @@ export default function JustReleasedCard({ item }: { item: JustReleasedItem }) {
         </h3>
         <p className="text-muted-foreground text-[13px] mt-0.5 flex items-center gap-1">
           {item.country} · Series
-          <span className="inline-flex items-center gap-0.5 text-brand-gold ml-1">
-            <Star className="size-3" fill="currentColor" /> {item.rating.toFixed(1)}
-          </span>
+          {item.rating != null && (
+            <span className="inline-flex items-center gap-0.5 text-brand-gold ml-1">
+              <Star className="size-3" fill="currentColor" /> {item.rating.toFixed(1)}
+            </span>
+          )}
         </p>
         <p className="mt-1.5 inline-flex items-center gap-1.5 text-[11.5px] font-medium text-muted-foreground">
           <span className="bg-muted px-1.5 py-0.5 rounded text-foreground/70">EP 1</span>

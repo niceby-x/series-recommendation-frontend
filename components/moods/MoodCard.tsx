@@ -37,9 +37,11 @@ export default function MoodCard({ item }: { item: MoodCardItem }) {
         </h3>
         <p className="text-muted-foreground text-[13px] flex items-center gap-1">
           {item.country} · {item.mediaType}
-          <span className="inline-flex items-center gap-0.5 text-brand-gold ml-1">
-            <Star className="size-3" fill="currentColor" /> {item.rating.toFixed(1)}
-          </span>
+          {item.rating != null && (
+            <span className="inline-flex items-center gap-0.5 text-brand-gold ml-1">
+              <Star className="size-3" fill="currentColor" /> {item.rating.toFixed(1)}
+            </span>
+          )}
         </p>
       </div>
     </div>

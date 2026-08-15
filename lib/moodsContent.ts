@@ -1,12 +1,15 @@
 // lib/moodsContent.ts
 //
 // Content for the Moods page (components/moods/MoodsAuthed.tsx). Mood
-// tagging isn't a real column on `series` yet (see AGENTS.md / DiscoverAuthed's
-// note on mockGenresFor) -- same PLACEHOLDER pattern used everywhere else in
-// this app: mock cards render with imageUrl: null (honest gradient+title
-// fallback, never a guessed photo) and isReal: false so they never link out.
-// Real catalog rows get blended in real-first by MoodsAuthed, same
-// real-first-then-mock convention as HomeAuthed/DiscoverAuthed.
+// tagging isn't a real column on `series` yet (see AGENTS.md) -- same
+// PLACEHOLDER pattern used everywhere else in this app: mock cards render
+// with imageUrl: null (honest gradient+title fallback, never a guessed
+// photo) and isReal: false so they never link out. Real catalog rows get
+// blended in real-first by MoodsAuthed, same real-first-then-mock
+// convention as HomeAuthed/DiscoverAuthed. Real items' rating is the real
+// average_rating field from GET /series (see P1-04), which is why
+// MoodCardItem.rating is nullable -- mock items always supply a curated
+// number, real items can be null when a series has no ratings yet.
 
 import { LayoutGrid, Smile, Heart, Droplet, Zap, Frown, Leaf, type LucideIcon } from 'lucide-react';
 
@@ -31,7 +34,7 @@ export interface MoodCardItem {
   title: string;
   country: string;
   mediaType: string;
-  rating: number;
+  rating: number | null;
   imageUrl: string | null;
   isReal: boolean;
 }

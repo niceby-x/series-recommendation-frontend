@@ -13,7 +13,6 @@ import TopMoodCard from './TopMoodCard';
 import PopularInMoodCard from './PopularInMoodCard';
 import MoodFeedbackCard from './MoodFeedbackCard';
 import { MOOD_FILTERS, MOOD_SECTIONS, MOCK_POPULAR_IN_MOOD, type MoodCardItem } from '../../lib/moodsContent';
-import { mockRatingFor } from '../../lib/exploreMock';
 import { seriesMatchesMoodKey } from '../../lib/moodMatch';
 
 const CARDS_PER_SECTION = 4;
@@ -49,7 +48,7 @@ export default function MoodsAuthed({ allSeries }: { allSeries: SeriesCardData[]
           title: s.title,
           country: s.country,
           mediaType: 'Series',
-          rating: mockRatingFor(s.id),
+          rating: s.average_rating ?? null,
           imageUrl: s.backdrop_url ?? s.poster_url,
           isReal: true,
         }));

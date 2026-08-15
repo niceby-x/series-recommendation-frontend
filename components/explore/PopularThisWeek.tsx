@@ -5,7 +5,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Bookmark, ChevronRight, Flame, Star } from 'lucide-react';
 import type { SeriesCardData } from '../shared/SeriesCard';
-import { mockGenreLabelsFor } from '../../lib/exploreMock';
 
 const TOP_BADGE_CLASSES: Record<number, string> = {
   1: 'bg-gradient-to-r from-amber-400 to-pink-400',
@@ -19,7 +18,10 @@ function PopularCard({ series, rank }: { series: SeriesCardData; rank: number })
   // series has no ratings yet, so the star badge is dropped below rather
   // than showing a fake "0.0".
   const rating = series.average_rating ?? null;
-  const genres = mockGenreLabelsFor(series.id).slice(0, 2);
+  // Real genres from GET /series's genre_names field (see P2-06/D2-03) --
+  // an unclassified series just shows no genre chips, same honest-empty
+  // convention as the rating badge above.
+  const genres = (series.genre_names ?? []).slice(0, 2);
 
   return (
     <Link

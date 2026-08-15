@@ -68,9 +68,9 @@ const RANK_CLASSES: Record<number, string> = {
 interface SeriesCardProps {
   series: SeriesCardData;
   rank?: number; // renders a numbered badge, top-left — used on the Trending row
-  rating?: number | null; // renders a star badge, bottom-right of the poster. Real
-  // rating data isn't populated yet (the `ratings` table is currently empty) — see
-  // app/page.tsx for how mock ratings are used to fill this in until that changes.
+  rating?: number | null; // renders a star badge, bottom-right of the poster -- the real
+  // average_rating field (see SeriesCardData.average_rating above); null/absent hides the
+  // badge instead of showing a fabricated score.
 }
 
 export default function SeriesCard({ series, rank, rating }: SeriesCardProps) {

@@ -11,7 +11,7 @@ export interface NewReleaseHeroSlide {
   title: string;
   country: string;
   year: number;
-  rating: number;
+  rating: number | null;
   synopsis: string;
   imageUrl: string | null;
 }
@@ -67,9 +67,11 @@ export default function NewReleaseHero({ slides }: { slides: NewReleaseHeroSlide
             <h2 className="font-heading text-2xl md:text-4xl font-normal text-white mb-2 leading-tight">{slide.title}</h2>
             <p className="text-white/75 text-[14px] flex items-center gap-1.5 mb-3">
               {slide.country} · Series · {slide.year}
-              <span className="inline-flex items-center gap-1 text-brand-gold ml-1.5">
-                <Star className="size-3.5" fill="currentColor" /> {slide.rating.toFixed(1)}
-              </span>
+              {slide.rating != null && (
+                <span className="inline-flex items-center gap-1 text-brand-gold ml-1.5">
+                  <Star className="size-3.5" fill="currentColor" /> {slide.rating.toFixed(1)}
+                </span>
+              )}
             </p>
             <p className="text-white/80 text-[14.5px] leading-relaxed line-clamp-3 mb-5">{slide.synopsis}</p>
             <div className="flex items-center gap-2.5">

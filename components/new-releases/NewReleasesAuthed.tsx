@@ -14,7 +14,6 @@ import UpcomingReleaseCard from './UpcomingReleaseCard';
 import NewReleaseHighlightsCard from './NewReleaseHighlightsCard';
 import ReleaseCalendarCard, { type CalendarDay, type TodayRelease } from './ReleaseCalendarCard';
 import { mockDaysAgoFor, formatMockReleaseDate, MOCK_UPCOMING } from '../../lib/newReleasesContent';
-import { mockRatingFor } from '../../lib/exploreMock';
 
 const WEEKDAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
@@ -36,13 +35,14 @@ export default function NewReleasesAuthed({ allSeries }: { allSeries: SeriesCard
 
   // Real series, each given a deterministic mock release date -- see
   // lib/newReleasesContent.ts header for why this isn't a real column yet.
+  // Rating is the real average_rating field from GET /series (see P1-04).
   const withDates = useMemo(
     () =>
       allSeries
         .map((s) => ({
           series: s,
           daysAgo: mockDaysAgoFor(s.id),
-          rating: mockRatingFor(s.id),
+          rating: s.average_rating ?? null,
         }))
         .sort((a, b) => a.daysAgo - b.daysAgo),
     [allSeries]
@@ -71,14 +71,14 @@ export default function NewReleasesAuthed({ allSeries }: { allSeries: SeriesCard
   const trendingItems: TrendingSidebarItem[] = useMemo(() => {
     const TRENDS: TrendingSidebarItem['trend'][] = ['up', 'up', 'down', 'up', 'flat'];
     return [...allSeries]
-      .sort((a, b) => mockRatingFor(b.id) - mockRatingFor(a.id))
+      .sort((a, b) => (b.average_rating ?? 0) - (a.average_rating ?? 0))
       .slice(0, 5)
       .map((s, i) => ({
         id: s.id,
         title: s.title,
         country: s.country,
         mediaType: 'Series',
-        rating: mockRatingFor(s.id),
+        rating: s.average_rating ?? null,
         imageUrl: s.backdrop_url ?? s.poster_url,
         trend: TRENDS[i],
         isReal: true,
@@ -215,7 +215,7 @@ export default function NewReleasesAuthed({ allSeries }: { allSeries: SeriesCard
                   ) : (
                     <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
                       {filteredGrid.map((series) => (
-                        <SeriesCard key={series.id} series={series} rating={mockRatingFor(series.id)} />
+                        <SeriesCard key={series.id} series={series} rating={series.average_rating ?? null} />
                       ))}
                     </div>
                   )}
