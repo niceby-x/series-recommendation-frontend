@@ -9,24 +9,27 @@ import {
   CheckCircle2,
   Wand2,
 } from 'lucide-react';
-import { GENRES } from '../../lib/exploreMock';
 
 export type NavCategory = 'all' | 'new' | 'trending' | 'top_rated' | 'coming_soon' | 'completed' | 'hidden_gems';
 
 export interface ExploreFilters {
   navCategory: NavCategory;
   country: string; // 'All' or a real country value from the catalog
-  genre: string; // 'All' or a GENRES key — mock, see lib/exploreMock.ts
+  genre: string; // 'All' or a real genre name from the catalog (see P2-07/D2-03)
   yearMin: number;
   yearMax: number;
   episodes: string; // 'Any' | '1-12' | '13-24' | '25+'
-  rating: string; // 'Any' | '9' | '8' | '7' — mock rating, see lib/exploreMock.ts
+  rating: string; // 'Any' | '9' | '8' | '7' -- threshold against the real average_rating field
 }
 
 interface ExploreSidebarProps {
   filters: ExploreFilters;
   onChange: (filters: ExploreFilters) => void;
   countries: string[];
+  // D2-03: real genre names derived from the catalog (GET /series's
+  // genre_names field), replacing the fixed mock GENRES taxonomy this
+  // dropdown used to render.
+  genres: string[];
   dataYearMin: number;
   dataYearMax: number;
   onSurpriseMe: () => void;
@@ -53,6 +56,7 @@ export default function ExploreSidebar({
   filters,
   onChange,
   countries,
+  genres,
   dataYearMin,
   dataYearMax,
   onSurpriseMe,
@@ -126,9 +130,9 @@ export default function ExploreSidebar({
               className="w-full bg-card border border-border rounded-lg px-3 py-2 text-[13px] text-foreground focus:outline-none focus:border-ring"
             >
               <option value="All">All Genres</option>
-              {GENRES.map((g) => (
-                <option key={g.key} value={g.key}>
-                  {g.label}
+              {genres.map((g) => (
+                <option key={g} value={g}>
+                  {g}
                 </option>
               ))}
             </select>

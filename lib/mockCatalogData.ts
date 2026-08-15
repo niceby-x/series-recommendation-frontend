@@ -60,6 +60,7 @@ export function displayGenresFor(series: SeriesCardData): string[] {
   return REAL_TRENDING_OVERRIDES[series.title]?.genres ?? PLACEHOLDER_GENRE_TAGS;
 }
 
-// Browse-by-Genre tile counts live in lib/exploreMock.ts (`GENRES`) — that's
-// the version actually used by BrowseByGenre.tsx and GenreStrip.tsx. Don't
-// re-add a second genre-count list here; import from exploreMock instead.
+// Browse-by-Genre tile counts are now real, derived from the loaded
+// catalog's genre_names field (see SeriesFilter.tsx's genreCounts and
+// D2-03) -- not a list in this file or in lib/exploreMock.ts's GENRES.
+// Don't re-add a mock genre-count list here.

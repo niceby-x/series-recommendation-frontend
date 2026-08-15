@@ -15,7 +15,7 @@ import ExploreByGenreCard from './ExploreByGenreCard';
 import PopularTagsCard from './PopularTagsCard';
 import { seriesMatchesTropeKey } from '../../lib/moodMatch';
 import { POPULAR_TROPES, NEW_TROPES } from '../../lib/tropesContent';
-import { usePaginatedSeries, type SeriesPagination } from '../../lib/usePaginatedSeries';
+import { usePaginatedSeries, type SeriesPagination, type SeriesQueryFilters } from '../../lib/usePaginatedSeries';
 
 // The logged-in Discover page. Country/genre/year/sort are REAL, working
 // filters over the real catalog (not decorative) -- genre_names comes from
@@ -30,12 +30,24 @@ import { usePaginatedSeries, type SeriesPagination } from '../../lib/usePaginate
 // grid, same isFiltering pattern SeriesFilter.tsx (the logged-out Explore
 // page) already uses.
 //
+// D2-01: search/country/genre/year/sort now query GET /series directly
+// (see lib/usePaginatedSeries.ts's SeriesQueryFilters) instead of
+// filtering/sorting client-side over whatever page has loaded so far.
+// `sort` is always sent, including the default 'popular' value -- the
+// backend's sort=popular now genuinely orders by the real rank field, so
+// this also closes D2-02 ("Sort by: Popular" doing nothing) as a direct
+// consequence of moving sort server-side at all, not a separate change.
+// Two independent usePaginatedSeries instances are in play: `catalog`
+// stays exactly as before (unfiltered, grown via its own Load More) and
+// still sources the country/genre/year dropdown options plus the curated
+// Trending Now/New Releases/Recommended rows; `filteredResults` is new,
+// only fetches once isFiltering is true, and drives the results grid.
+//
 // A `?trope=<key>` query param (set by PopularTropeCard/NewTropeCard on
 // the Tropes page once a trope has real series_tags matches) also filters
-// this grid, via seriesMatchesTropeKey -- this is a real tag-based filter,
-// unlike genre's deterministic mock. There's no dropdown for it in
-// DiscoverFiltersBar (trope isn't a small fixed list the way country/year
-// are), so it surfaces as a dismissible pill above the grid instead.
+// this grid, via seriesMatchesTropeKey -- unlike the filters above, the
+// backend has no trope query param, so this stays a client-side filter
+// applied on top of whatever page of filteredResults has been fetched.
 export default function DiscoverAuthed({
   allSeries: initialSeries,
   initialPagination = null,
@@ -107,24 +119,34 @@ export default function DiscoverAuthed({
     filters.sort !== 'popular' ||
     !!tropeFilter;
 
-  const filteredSeries = useMemo(() => {
-    let list = allSeries.filter((s) => {
-      const matchesSearch = s.title.toLowerCase().includes(search.trim().toLowerCase());
-      const matchesCountry = filters.country === 'All' || s.country === filters.country;
-      const matchesGenre = filters.genre === 'All' || (s.genre_names ?? []).includes(filters.genre);
-      const matchesYear = filters.year === 'All' || String(s.year) === filters.year;
-      const matchesTrope = !tropeFilter || seriesMatchesTropeKey(s.tags, tropeFilter);
-      return matchesSearch && matchesCountry && matchesGenre && matchesYear && matchesTrope;
-    });
-
-    if (filters.sort === 'newest') {
-      list = [...list].sort((a, b) => b.year - a.year);
-    } else if (filters.sort === 'top_rated') {
-      list = [...list].sort((a, b) => (b.average_rating ?? 0) - (a.average_rating ?? 0));
+  // Only built (and only triggers a fetch, see usePaginatedSeries) once
+  // isFiltering is true -- sort is always included so the default
+  // 'popular' value reaches the backend's real rank-based ordering.
+  const filteredQuery = useMemo<SeriesQueryFilters | undefined>(() => {
+    if (!isFiltering) return undefined;
+    const q: SeriesQueryFilters = { sort: filters.sort };
+    if (search.trim()) q.q = search.trim();
+    if (filters.country !== 'All') q.country = filters.country;
+    if (filters.genre !== 'All') q.genre = filters.genre;
+    if (filters.year !== 'All') {
+      q.year_min = filters.year;
+      q.year_max = filters.year;
     }
+    return q;
+  }, [isFiltering, search, filters]);
 
-    return list;
-  }, [allSeries, filters, search, tropeFilter]);
+  const {
+    series: filteredResults,
+    hasMore: filteredHasMore,
+    loading: filteredLoading,
+    loadingMore: filteredLoadingMore,
+    loadMore: loadMoreFiltered,
+  } = usePaginatedSeries([], null, filteredQuery);
+
+  const filteredSeries = useMemo(
+    () => (tropeFilter ? filteredResults.filter((s) => seriesMatchesTropeKey(s.tags, tropeFilter)) : filteredResults),
+    [filteredResults, tropeFilter]
+  );
 
   // Trending Now: top 4 by real average_rating. New Releases: top 4 by year.
   // These overlap with each other and with Recommended below when the
@@ -221,10 +243,14 @@ export default function DiscoverAuthed({
                       </button>
                     </div>
                   )}
-                  <p className="text-muted-foreground text-sm mb-6">
-                    Showing {filteredSeries.length} of {allSeries.length} series
-                  </p>
-                  {filteredSeries.length === 0 ? (
+                  {filteredLoading ? (
+                    <p className="text-muted-foreground text-sm mb-6">Loading series...</p>
+                  ) : (
+                    <p className="text-muted-foreground text-sm mb-6">
+                      Showing {filteredSeries.length} series
+                    </p>
+                  )}
+                  {!filteredLoading && filteredSeries.length === 0 ? (
                     <p className="text-muted-foreground">No series found. Try adjusting your filters.</p>
                   ) : (
                     <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -233,7 +259,7 @@ export default function DiscoverAuthed({
                       ))}
                     </div>
                   )}
-                  <LoadMoreSeriesButton hasMore={hasMore} loading={loadingMore} onClick={loadMore} />
+                  <LoadMoreSeriesButton hasMore={filteredHasMore} loading={filteredLoadingMore} onClick={loadMoreFiltered} />
                 </section>
               ) : (
                 <>
