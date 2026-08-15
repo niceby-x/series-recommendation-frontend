@@ -24,6 +24,12 @@ export default function RatingForm({ seriesId }: { seriesId: number }) {
   // upserting POST /ratings behave predictably instead of silently
   // overwriting a prior review with no indication it was ever there.
   const [hasExistingRating, setHasExistingRating] = useState(false);
+  // Separate from hasExistingRating: captures whether *this* submission was
+  // the first one, so the post-submit confirmation copy stays correct even
+  // though hasExistingRating flips to true in the same state update that
+  // shows the confirmation (a first-time submit would otherwise always read
+  // "updated" instead of "thanks").
+  const [justSubmittedFirstRating, setJustSubmittedFirstRating] = useState(false);
 
   useEffect(() => {
     if (!session) return;
@@ -88,6 +94,7 @@ export default function RatingForm({ seriesId }: { seriesId: number }) {
     }
 
     setSubmitted(true);
+    setJustSubmittedFirstRating(!hasExistingRating);
     setHasExistingRating(true);
     setSubmitting(false);
   }
@@ -113,7 +120,7 @@ export default function RatingForm({ seriesId }: { seriesId: number }) {
     return (
       <div className="bg-card rounded-xl p-6 border border-border shadow-sm mt-6">
         <p className="text-[#3D7A4F] font-medium">
-          {hasExistingRating ? 'Your rating has been updated!' : 'Thanks for rating this series!'}
+          {justSubmittedFirstRating ? 'Thanks for rating this series!' : 'Your rating has been updated!'}
         </p>
       </div>
     );
