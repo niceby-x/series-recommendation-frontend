@@ -221,7 +221,7 @@ export default async function AdminDashboardPage() {
           <AdminHeader user={user} />
 
           <div className="flex flex-wrap gap-4 mb-8">
-            {STAT_CARDS.map((card, i) => (
+            {STAT_CARDS.map((card) => (
               <StatCard
                 key={card.key}
                 label={card.label}
@@ -229,7 +229,6 @@ export default async function AdminDashboardPage() {
                 color={card.color}
                 value={statValues[card.key].value}
                 subtitle={statValues[card.key].subtitle}
-                seed={i + 1}
               />
             ))}
           </div>

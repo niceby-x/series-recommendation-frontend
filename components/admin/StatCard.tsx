@@ -1,5 +1,4 @@
 import type { LucideIcon } from 'lucide-react';
-import Sparkline from './Sparkline';
 
 const ICON_BG: Record<string, string> = {
   rose: 'bg-rose-100 text-rose-600',
@@ -15,14 +14,12 @@ export default function StatCard({
   subtitle,
   icon: Icon,
   color,
-  seed,
 }: {
   label: string;
   value: string;
   subtitle: string;
   icon: LucideIcon;
   color: 'rose' | 'orange' | 'emerald' | 'violet' | 'sky';
-  seed: number;
 }) {
   return (
     <div className="rounded-[20px] bg-card border border-border/60 shadow-sm p-5 flex flex-col min-w-[200px] flex-1">
@@ -35,10 +32,7 @@ export default function StatCard({
           <Icon className="size-[18px]" strokeWidth={2} />
         </span>
       </div>
-      <p className="text-muted-foreground text-[12.5px] mb-1">{subtitle}</p>
-      <div className="-mx-1 mt-auto">
-        <Sparkline seed={seed} color={color} />
-      </div>
+      <p className="text-muted-foreground text-[12.5px]">{subtitle}</p>
     </div>
   );
 }
