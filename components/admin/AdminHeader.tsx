@@ -185,7 +185,13 @@ export default function AdminHeader({ user }: { user: User | null }) {
           </span>
           <span className="hidden sm:block text-left">
             <span className="block text-[13.5px] font-semibold text-foreground leading-tight">{capitalizedName}</span>
-            <span className="block text-[11.5px] text-muted-foreground leading-tight">Super Admin</span>
+            {/* D3-02: was a hardcoded "Super Admin" implying a tiered
+                permission system that doesn't exist -- the schema has a
+                single is_admin boolean, no tiers. Reaching this header at
+                all already means is_admin is true (that's the page's own
+                access gate), so "Admin" states exactly what's real without
+                implying a rank this schema can't back up. */}
+            <span className="block text-[11.5px] text-muted-foreground leading-tight">Admin</span>
           </span>
         </div>
       </div>
