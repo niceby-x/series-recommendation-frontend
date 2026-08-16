@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { Search, Bell } from 'lucide-react';
+import { Search } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
 import FlowerIcon from '../shared/FlowerIcon';
 
@@ -39,7 +39,7 @@ const MIN_QUERY_LENGTH = 2;
 const SEARCH_DEBOUNCE_MS = 300;
 const MAX_RESULTS = 6;
 
-export default function AdminHeader({ user, notifCount }: { user: User | null; notifCount: number }) {
+export default function AdminHeader({ user }: { user: User | null }) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SeriesSearchResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -169,18 +169,15 @@ export default function AdminHeader({ user, notifCount }: { user: User | null; n
           )}
         </div>
 
-        <button
-          type="button"
-          aria-label="Notifications"
-          className="relative flex items-center justify-center size-10 rounded-full bg-card border border-border text-foreground/70 hover:text-primary hover:bg-muted transition-colors shrink-0"
-        >
-          <Bell className="size-4.5" />
-          {notifCount > 0 && (
-            <span className="absolute -top-1 -right-1 flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-rose-500 text-white text-[10px] font-bold">
-              {notifCount}
-            </span>
-          )}
-        </button>
+        {/* D2-04: the bell used to be here, but notifCount was literally
+            counts.pending -- the exact same number already badged on the
+            sidebar's Candidates row, shown again under a "Notifications"
+            label that implied a general activity stream that doesn't
+            exist. Removed rather than kept as an empty icon: there's
+            nothing frontend-only can wire it to that isn't already shown
+            elsewhere, and a real general notification source (a flagged
+            review, a new report, etc.) is backend work this task's scope
+            doesn't cover. Bring it back once that source exists. */}
 
         <div className="flex items-center gap-2.5 shrink-0">
           <span className="flex items-center justify-center size-10 rounded-full bg-brand-gradient text-white text-sm font-semibold font-heading">

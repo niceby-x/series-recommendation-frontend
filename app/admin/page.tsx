@@ -177,7 +177,7 @@ export default async function AdminDashboardPage() {
 
       <div className="flex-1 min-w-0 px-5 md:px-8 lg:px-10 py-6 md:py-8">
         <div className="w-full max-w-[1500px] mx-auto">
-          <AdminHeader user={user} notifCount={counts.pending} />
+          <AdminHeader user={user} />
 
           <div className="flex flex-wrap gap-4 mb-8">
             {STAT_CARDS.map((card, i) => (
