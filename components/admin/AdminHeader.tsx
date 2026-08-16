@@ -47,15 +47,36 @@ export default function AdminHeader({ user }: { user: User | null }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Lint fix: react-hooks/set-state-in-effect flagged setResults/setLoading
+  // being called directly (unconditionally, outside any timer/promise) in
+  // the effect body below -- calling setState synchronously within an
+  // effect can trigger cascading renders. Both calls belonged to reacting
+  // to the *keystroke itself* (clear stale results below the minimum
+  // length, or show a loading state while the debounce timer is pending),
+  // not to anything the effect's own async fetch produced -- so they
+  // belong in the change handler (a normal event handler, not an effect)
+  // instead. The effect now only ever calls setState from inside the
+  // timeout's async callback, which is exactly what the rule allows.
+  function handleQueryChange(value: string) {
+    setQuery(value);
+    setOpen(true);
+
+    if (value.trim().length < MIN_QUERY_LENGTH) {
+      setResults([]);
+      setLoading(false);
+    } else {
+      setLoading(true);
+    }
+  }
+
   useEffect(() => {
     const trimmed = query.trim();
     if (trimmed.length < MIN_QUERY_LENGTH) {
-      setResults([]);
-      setLoading(false);
+      // Nothing to fetch -- handleQueryChange already reset results/loading
+      // for this case, so the effect itself has no state to set here.
       return;
     }
 
-    setLoading(true);
     const timeout = setTimeout(async () => {
       try {
         const res = await fetch(
@@ -126,10 +147,7 @@ export default function AdminHeader({ user }: { user: User | null }) {
             ref={inputRef}
             type="text"
             value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              setOpen(true);
-            }}
+            onChange={(e) => handleQueryChange(e.target.value)}
             onFocus={() => setOpen(true)}
             placeholder="Search series..."
             className="w-full bg-card text-foreground placeholder:text-muted-foreground rounded-full pl-10 pr-14 py-2.5 text-sm border border-border shadow-sm focus:outline-none focus:border-ring transition-colors"
