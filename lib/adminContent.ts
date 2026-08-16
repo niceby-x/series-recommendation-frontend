@@ -4,10 +4,11 @@
 // Total Titles, Pending Review, Published, Users, Recently Published,
 // Recent Activity (D2-01 -- GET /admin/activity, backed by the
 // admin_actions audit log from A2-02), and Top Moods (D2-01 -- GET
-// /admin/top-moods, aggregated fresh from real series_tags/tags). Only
-// Comments and the StatCard week-over-week deltas remain placeholder,
-// pending a comments feature and real historical time-series data that
-// don't exist yet -- same honest-mock convention as lib/dashboardContent.ts.
+// /admin/top-moods, aggregated fresh from real series_tags/tags). The
+// Comments stat card was removed outright (see STAT_CARDS below) rather
+// than kept as a placeholder -- unlike the StatCard week-over-week
+// deltas, which remain placeholder pending real historical time-series
+// data, Comments never had a real feature or count behind it at all.
 
 import type { LucideIcon } from 'lucide-react';
 import {
@@ -104,12 +105,18 @@ export interface StatCardMeta {
 
 // value/delta/subtitle for each are filled in by app/admin/page.tsx (real
 // where the data exists, placeholder where it doesn't -- see file header).
+// The 5th card (Comments) was dropped: it had no real comments feature
+// behind it at all, just a hardcoded '2,340' / '71 this week (est.)' --
+// unlike the StatCard week-over-week deltas below, which are at least
+// real counts with a placeholder trend, this one had no real number to
+// start from. The 'Comments' sidebar nav item under Community stays --
+// that's an honestly-labeled 'Soon' placeholder, not a card presenting
+// fabricated numbers as current data.
 export const STAT_CARDS: StatCardMeta[] = [
   { key: 'total', label: 'Total Titles', color: 'rose', icon: Film },
   { key: 'pending', label: 'Pending Review', color: 'orange', icon: ClipboardList },
   { key: 'published', label: 'Published', color: 'emerald', icon: CheckCircle2 },
   { key: 'users', label: 'Users', color: 'violet', icon: Users },
-  { key: 'comments', label: 'Comments', color: 'sky', icon: MessageCircle },
 ];
 
 export interface QuickAction {

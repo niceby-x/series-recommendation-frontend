@@ -209,7 +209,6 @@ export default async function AdminDashboardPage() {
     pending: { value: String(counts.pending), subtitle: 'Requires your review' },
     published: { value: seriesTotal.toLocaleString(), subtitle: 'Live on site' },
     users: { value: userCount.toLocaleString(), subtitle: 'Registered accounts' },
-    comments: { value: '2,340', subtitle: '↑ 71 this week (est.)' },
   };
 
   return (
