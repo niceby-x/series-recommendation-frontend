@@ -575,6 +575,17 @@ function CandidateRow({
             <p className="text-xs text-muted-foreground truncate">{candidate.genre_names.join(' · ')}</p>
           )}
           {castNames && <p className="text-xs text-muted-foreground/70 truncate mt-0.5">Cast: {castNames}</p>}
+          {/* D2-02: real discovery keyword from series_candidates.source_keyword
+              (already returned by GET /admin/candidates via select('*')) --
+              this page used to show a fabricated MOCK_CURATORS name here
+              with no relationship to who or what actually surfaced the
+              candidate. Older rows imported before this column existed
+              have no keyword recorded, so there's nothing honest to show
+              for them -- the line just doesn't render rather than falling
+              back to a placeholder that implies data that isn't there. */}
+          {candidate.source_keyword && (
+            <p className="text-xs text-muted-foreground/70 truncate mt-0.5">Found via: &ldquo;{candidate.source_keyword}&rdquo;</p>
+          )}
           {link && (
             <a
               href={link}
