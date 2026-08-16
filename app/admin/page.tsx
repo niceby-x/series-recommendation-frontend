@@ -34,6 +34,11 @@ interface PendingCandidate {
 
 const LONG_RUNNING_THRESHOLD = 60;
 const QUEUE_PREVIEW_SIZE = 6;
+// D3-03: RecentlyPublishedCard only ever showed 6 series, but the fetch
+// below used to pull the entire catalog to get there. Separate constant
+// from QUEUE_PREVIEW_SIZE (both happen to be 6 today) since they're
+// unrelated previews that could diverge later.
+const RECENT_SERIES_PREVIEW_SIZE = 6;
 
 function relativeTime(iso: string): string {
   const diffMs = Date.now() - new Date(iso).getTime();
@@ -60,7 +65,8 @@ type AdminData =
       access: 'ok';
       counts: Counts;
       queue: PendingCandidate[];
-      allSeries: SeriesCardData[];
+      recentSeries: SeriesCardData[];
+      seriesTotal: number;
       userCount: number;
     };
 
@@ -70,7 +76,18 @@ async function loadAdminData(accessToken: string): Promise<AdminData> {
   const [countsRes, queueRes, seriesRes, usersRes] = await Promise.all([
     fetch(process.env.NEXT_PUBLIC_API_URL + '/admin/candidates/counts', { headers: authHeader, cache: 'no-store' }),
     fetch(process.env.NEXT_PUBLIC_API_URL + '/admin/candidates?status=pending', { headers: authHeader, cache: 'no-store' }),
-    fetch(process.env.NEXT_PUBLIC_API_URL + '/series', { cache: 'no-store' }),
+    // D3-03: this used to be a plain GET /series -- with no page/limit,
+    // that returns the *entire* catalog, just to read .length for two
+    // stat cards and slice(0, 6) for RecentlyPublishedCard below. GET
+    // /series already supports opt-in pagination (see series.ts) and
+    // returns an exact total in the response envelope whenever it's
+    // used, so requesting exactly the 6 rows this page actually renders
+    // gets both the preview rows *and* the real total in one lightweight
+    // query -- no separate count-only endpoint needed. Same default
+    // (unsorted -> id ascending) order as before, so which 6 rows show
+    // up here is unchanged, just fetched without the other however-many
+    // thousand rows.
+    fetch(process.env.NEXT_PUBLIC_API_URL + '/series?page=1&limit=' + RECENT_SERIES_PREVIEW_SIZE, { cache: 'no-store' }),
     fetch(process.env.NEXT_PUBLIC_API_URL + '/admin/users', { headers: authHeader, cache: 'no-store' }),
   ]);
 
@@ -91,14 +108,15 @@ async function loadAdminData(accessToken: string): Promise<AdminData> {
 
   const countsJson = await countsRes.json();
   const queueJson = await queueRes.json();
-  const seriesJson = seriesRes.ok ? await seriesRes.json() : { data: [] };
+  const seriesJson = seriesRes.ok ? await seriesRes.json() : { data: [], pagination: { total: 0 } };
   const usersJson = usersRes.ok ? await usersRes.json() : { count: 0 };
 
   return {
     access: 'ok',
     counts: { pending: countsJson.pending, approved: countsJson.approved, rejected: countsJson.rejected },
     queue: (queueJson.data || []).slice(0, QUEUE_PREVIEW_SIZE),
-    allSeries: seriesJson.data || [],
+    recentSeries: seriesJson.data || [],
+    seriesTotal: seriesJson.pagination?.total ?? 0,
     userCount: usersJson.count || 0,
   };
 }
@@ -144,7 +162,7 @@ export default async function AdminDashboardPage() {
     );
   }
 
-  const { counts, queue, allSeries, userCount } = data;
+  const { counts, queue, recentSeries, seriesTotal, userCount } = data;
 
   const queueRows: QueueRow[] = queue.map((c, i) => ({
     id: c.id,
@@ -162,11 +180,13 @@ export default async function AdminDashboardPage() {
   // see lib/adminContent.ts header for exactly why). Total = published
   // series + still-pending candidates -- not + counts.approved, since an
   // approved candidate becomes a series row, so that's already inside
-  // allSeries.
+  // seriesTotal. D3-03: seriesTotal comes from GET /series's own
+  // pagination.total (an exact DB count), not allSeries.length off a
+  // full-catalog fetch.
   const statValues: Record<string, { value: string; subtitle: string }> = {
-    total: { value: (allSeries.length + counts.pending).toLocaleString(), subtitle: 'Live + in review' },
+    total: { value: (seriesTotal + counts.pending).toLocaleString(), subtitle: 'Live + in review' },
     pending: { value: String(counts.pending), subtitle: 'Requires your review' },
-    published: { value: allSeries.length.toLocaleString(), subtitle: 'Live on site' },
+    published: { value: seriesTotal.toLocaleString(), subtitle: 'Live on site' },
     users: { value: userCount.toLocaleString(), subtitle: 'Registered accounts' },
     comments: { value: '2,340', subtitle: '↑ 71 this week (est.)' },
   };
@@ -212,7 +232,7 @@ export default async function AdminDashboardPage() {
                 <EditorialQueueTable rows={queueRows} />
               </section>
 
-              <RecentlyPublishedCard series={allSeries.slice(0, 6)} />
+              <RecentlyPublishedCard series={recentSeries} />
             </main>
 
             <aside className="flex flex-col gap-5 xl:sticky xl:top-8">
