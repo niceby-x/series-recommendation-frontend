@@ -112,13 +112,6 @@ export const STAT_CARDS: StatCardMeta[] = [
   { key: 'comments', label: 'Comments', color: 'sky', icon: MessageCircle },
 ];
 
-// Curator names cycled onto real pending candidates for the "Submitted By"
-// column -- candidates don't have a real submitted_by field (discovery is
-// an automated TMDb script per AGENTS.md, not per-curator submission), so
-// this is a display-only placeholder, not a claim about who really found
-// each title.
-export const MOCK_CURATORS = ['Nico', 'Hana', 'Mika', 'Aki', 'Yui'];
-
 export interface QuickAction {
   label: string;
   icon: LucideIcon;

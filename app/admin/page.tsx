@@ -7,7 +7,7 @@ import RecentActivityCard, { type RealActivityItem } from '../../components/admi
 import TopMoodsCard, { type RealTopMood } from '../../components/admin/TopMoodsCard';
 import QuickActionsCard from '../../components/admin/QuickActionsCard';
 import SignInPrompt from '../../components/shared/SignInPrompt';
-import { STAT_CARDS, MOCK_CURATORS } from '../../lib/adminContent';
+import { STAT_CARDS } from '../../lib/adminContent';
 import type { SeriesCardData } from '../../components/shared/SeriesCard';
 import { getServerSession } from '../../lib/getServerSession';
 
@@ -30,6 +30,7 @@ interface PendingCandidate {
   genre_names: string[] | null;
   cast_json: unknown[] | null;
   created_at: string;
+  source_keyword: string | null;
 }
 
 const LONG_RUNNING_THRESHOLD = 60;
@@ -180,14 +181,18 @@ export default async function AdminDashboardPage() {
 
   const { counts, queue, recentSeries, seriesTotal, userCount, activity, topMoods } = data;
 
-  const queueRows: QueueRow[] = queue.map((c, i) => ({
+  const queueRows: QueueRow[] = queue.map((c) => ({
     id: c.id,
     posterUrl: c.poster_url,
     title: c.title,
     country: c.country,
     year: c.year,
     typeLabel: c.media_type === 'movie' ? 'Movie' : 'Series',
-    submittedBy: MOCK_CURATORS[i % MOCK_CURATORS.length],
+    // D2-02: real discovery keyword from series_candidates.source_keyword
+    // (already returned by GET /admin/candidates), not a fabricated
+    // curator name. Older rows backfilled before this column existed
+    // fall back to an em dash in the table itself.
+    sourceKeyword: c.source_keyword || '',
     submittedAgo: relativeTime(c.created_at),
     priority: priorityFor(c),
   }));

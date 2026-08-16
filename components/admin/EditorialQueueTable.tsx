@@ -9,7 +9,7 @@ export interface QueueRow {
   country: string;
   year: number | null;
   typeLabel: string;
-  submittedBy: string;
+  sourceKeyword: string;
   submittedAgo: string;
   priority: 'High' | 'Medium' | 'Low';
 }
@@ -19,14 +19,6 @@ const PRIORITY_CLASS: Record<QueueRow['priority'], string> = {
   Medium: 'bg-amber-100 text-amber-700',
   Low: 'bg-emerald-100 text-emerald-700',
 };
-
-function CuratorAvatar({ name }: { name: string }) {
-  return (
-    <span className="flex items-center justify-center size-7 rounded-full bg-brand-lilac/40 text-[#5E4B6B] text-[11px] font-bold shrink-0">
-      {name.charAt(0).toUpperCase()}
-    </span>
-  );
-}
 
 export default function EditorialQueueTable({ rows }: { rows: QueueRow[] }) {
   if (rows.length === 0) {
@@ -47,7 +39,7 @@ export default function EditorialQueueTable({ rows }: { rows: QueueRow[] }) {
               <th className="px-5 py-3 font-bold">Title</th>
               <th className="px-3 py-3 font-bold">Type</th>
               <th className="px-3 py-3 font-bold">Source</th>
-              <th className="px-3 py-3 font-bold">Submitted By</th>
+              <th className="px-3 py-3 font-bold">Keyword</th>
               <th className="px-3 py-3 font-bold">Submitted</th>
               <th className="px-3 py-3 font-bold">Priority</th>
               <th className="px-5 py-3 font-bold text-right">Actions</th>
@@ -80,11 +72,8 @@ export default function EditorialQueueTable({ rows }: { rows: QueueRow[] }) {
                   </span>
                 </td>
                 <td className="px-3 py-3 text-[13px] text-muted-foreground whitespace-nowrap">TMDB</td>
-                <td className="px-3 py-3">
-                  <div className="flex items-center gap-2 whitespace-nowrap">
-                    <CuratorAvatar name={row.submittedBy} />
-                    <span className="text-[13px] text-foreground">{row.submittedBy}</span>
-                  </div>
+                <td className="px-3 py-3 text-[13px] text-foreground whitespace-nowrap">
+                  {row.sourceKeyword || '—'}
                 </td>
                 <td className="px-3 py-3 text-[13px] text-muted-foreground whitespace-nowrap">{row.submittedAgo}</td>
                 <td className="px-3 py-3">
