@@ -7,7 +7,7 @@ import { supabase } from '../../../lib/supabase';
 import { useAuthModal } from '../../../lib/AuthModalContext';
 import AdminSidebar from '../../../components/admin/AdminSidebar';
 import SeriesList, { type AdminSeries } from '../../../components/admin/SeriesList';
-import SeriesEditModal, { type SeriesEditForm, type CollectionOption } from '../../../components/admin/SeriesEditModal';
+import SeriesEditModal, { type SeriesEditForm, type CollectionOption, type GenreOption } from '../../../components/admin/SeriesEditModal';
 import type { Tag, TagDimension } from '../../../lib/taxonomy';
 
 type AccessState = 'checking' | 'signed_out' | 'forbidden' | 'ok' | 'error';
@@ -28,6 +28,7 @@ export default function AdminSeriesPage() {
   const [pendingCount, setPendingCount] = useState(0);
   const [availableTags, setAvailableTags] = useState<Record<TagDimension, Tag[]>>(EMPTY_TAGS);
   const [availableCollections, setAvailableCollections] = useState<CollectionOption[]>([]);
+  const [availableGenres, setAvailableGenres] = useState<GenreOption[]>([]);
   const [search, setSearch] = useState('');
   const [busyIds, setBusyIds] = useState<Set<number>>(new Set());
   const [editingSeries, setEditingSeries] = useState<AdminSeries | null>(null);
@@ -57,11 +58,15 @@ export default function AdminSeriesPage() {
       // counts call doubles as our own admin-access check for this page --
       // same reasoning as the Reviews page, which isn't itself an admin-only
       // endpoint's response either.
-      const [seriesRes, countsRes, tagsRes, collectionsRes] = await Promise.all([
+      const [seriesRes, countsRes, tagsRes, collectionsRes, genresRes] = await Promise.all([
         fetch(process.env.NEXT_PUBLIC_API_URL + '/series'),
         fetch(process.env.NEXT_PUBLIC_API_URL + '/admin/candidates/counts', { headers: authHeader }),
         fetch(process.env.NEXT_PUBLIC_API_URL + '/admin/tags', { headers: authHeader }),
         fetch(process.env.NEXT_PUBLIC_API_URL + '/admin/collections', { headers: authHeader }),
+        // D3-01: real genres table, sourced the same way the taxonomy
+        // dimensions already are, instead of a free-text field prone to
+        // typos and casing drift.
+        fetch(process.env.NEXT_PUBLIC_API_URL + '/admin/genres', { headers: authHeader }),
       ]);
 
       if (countsRes.status === 401) {
@@ -92,6 +97,13 @@ export default function AdminSeriesPage() {
         const collectionsJson = await collectionsRes.json();
         setAvailableCollections(
           (collectionsJson.data || []).map((c: { id: number; title: string }) => ({ id: c.id, title: c.title }))
+        );
+      }
+
+      if (genresRes.ok) {
+        const genresJson = await genresRes.json();
+        setAvailableGenres(
+          (genresJson.data || []).map((g: { id: number; name: string }) => ({ id: g.id, name: g.name }))
         );
       }
 
@@ -137,10 +149,7 @@ export default function AdminSeriesPage() {
           status: form.status,
           poster_url: form.poster_url || null,
           backdrop_url: form.backdrop_url || null,
-          genre_names: form.genre_names
-            .split(',')
-            .map((g) => g.trim())
-            .filter(Boolean),
+          genre_names: form.genre_names,
           romance_pace: form.romance_pace || null,
           emotional_intensity: form.emotional_intensity || null,
           ending_type: form.ending_type || null,
@@ -172,7 +181,7 @@ export default function AdminSeriesPage() {
                 status: form.status,
                 poster_url: form.poster_url || null,
                 backdrop_url: form.backdrop_url || null,
-                genre_names: form.genre_names.split(',').map((g) => g.trim()).filter(Boolean),
+                genre_names: form.genre_names,
                 romance_pace: form.romance_pace || null,
                 emotional_intensity: form.emotional_intensity || null,
                 ending_type: form.ending_type || null,
@@ -304,6 +313,7 @@ export default function AdminSeriesPage() {
           series={editingSeries}
           availableTags={availableTags}
           availableCollections={availableCollections}
+          availableGenres={availableGenres}
           onSave={handleSave}
           onClose={() => setEditingSeries(null)}
         />

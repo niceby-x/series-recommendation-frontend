@@ -43,7 +43,7 @@ export interface SeriesEditForm {
   status: string;
   poster_url: string;
   backdrop_url: string;
-  genre_names: string; // comma-separated in the form, split into an array on save
+  genre_names: string[];
   romance_pace: string;
   emotional_intensity: string;
   ending_type: string;
@@ -57,6 +57,11 @@ export interface CollectionOption {
   title: string;
 }
 
+export interface GenreOption {
+  id: number;
+  name: string;
+}
+
 function toForm(series: AdminSeries): SeriesEditForm {
   return {
     title: series.title,
@@ -68,7 +73,7 @@ function toForm(series: AdminSeries): SeriesEditForm {
     status: series.status,
     poster_url: series.poster_url ?? '',
     backdrop_url: series.backdrop_url ?? '',
-    genre_names: (series.genre_names ?? []).join(', '),
+    genre_names: series.genre_names ?? [],
     romance_pace: series.romance_pace ?? '',
     emotional_intensity: series.emotional_intensity ?? '',
     ending_type: series.ending_type ?? '',
@@ -94,12 +99,14 @@ export default function SeriesEditModal({
   series,
   availableTags,
   availableCollections,
+  availableGenres,
   onSave,
   onClose,
 }: {
   series: AdminSeries;
   availableTags: Record<TagDimension, Tag[]>;
   availableCollections: CollectionOption[];
+  availableGenres: GenreOption[];
   onSave: (form: SeriesEditForm) => void;
   onClose: () => void;
 }) {
@@ -108,6 +115,15 @@ export default function SeriesEditModal({
 
   function field<K extends keyof SeriesEditForm>(key: K, value: SeriesEditForm[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
+  }
+
+  function toggleGenre(name: string) {
+    setForm((prev) => ({
+      ...prev,
+      genre_names: prev.genre_names.includes(name)
+        ? prev.genre_names.filter((g) => g !== name)
+        : [...prev.genre_names, name],
+    }));
   }
 
   function toggleTag(tagId: number) {
@@ -206,14 +222,35 @@ export default function SeriesEditModal({
             </Field>
           </div>
 
-          <Field label="Genres (comma-separated)">
-            <input
-              value={form.genre_names}
-              onChange={(e) => field('genre_names', e.target.value)}
-              placeholder="Romance, Drama, Fantasy"
-              className={inputClass}
-            />
-          </Field>
+          <div>
+            <div className="flex items-baseline justify-between mb-1.5">
+              <span className="text-xs text-muted-foreground">Genres</span>
+              <span className="text-[11px] text-muted-foreground/70">pick from the real genres table</span>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {availableGenres.length === 0 && (
+                <span className="text-[12px] text-muted-foreground/60">No genres yet.</span>
+              )}
+              {availableGenres.map((genre) => {
+                const active = form.genre_names.includes(genre.name);
+                return (
+                  <button
+                    key={genre.id}
+                    type="button"
+                    onClick={() => toggleGenre(genre.name)}
+                    className={
+                      'text-xs px-2.5 py-1 rounded-full border transition-colors ' +
+                      (active
+                        ? 'border-primary/60 bg-primary/10 text-primary'
+                        : 'border-border bg-muted/60 text-muted-foreground hover:border-ring')
+                    }
+                  >
+                    {genre.name}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
           <div className="grid grid-cols-2 gap-3">
             <Field label="Romance pace">
