@@ -16,6 +16,15 @@ function getGreeting() {
   return 'Good evening';
 }
 
+// G3-01: shape returned by GET /me/notifications for each unread entry.
+interface NotificationEntry {
+  series_id: number;
+  series_title: string;
+  poster_url: string | null;
+  episode_count: number;
+  episode_count_updated_at: string;
+}
+
 // Recent searches (see H3-02) -- client-only v1, stored in localStorage.
 // Cross-device persistence would need a backend table, which is a bigger
 // piece of work than this quick win calls for.
@@ -89,11 +98,24 @@ export default function DashboardHeader({ title, subtitle }: { title?: string; s
   // real access on every admin route either way.
   const [isAdmin, setIsAdmin] = useState(false);
 
+  // G3-01: real "new episode on a watchlisted series" notifications from
+  // GET /me/notifications, replacing the previously-always-static
+  // "You're all caught up!" bell. notifications holds the current unread
+  // list (used once the dropdown is open); unreadCount drives the badge
+  // dot and is what gets zeroed out locally the moment the bell opens, so
+  // the dot disappears immediately rather than waiting on the
+  // mark-as-seen request to round-trip.
+  const [notifications, setNotifications] = useState<NotificationEntry[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const accessTokenRef = useRef<string | null>(null);
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
 
       if (!session) return;
+
+      accessTokenRef.current = session.access_token;
 
       // Real username for the greeting (see H4-02) -- falls back to the
       // email-prefix below if this fails, so a slow/failed /me call never
@@ -112,6 +134,23 @@ export default function DashboardHeader({ title, subtitle }: { title?: string; s
         .catch(() => {
           // Greeting falls back to the email prefix below; Admin link
           // just won't show, which is the safe default on a failed check.
+        });
+
+      // G3-01: unread new-episode notifications for the badge dot. A
+      // failed fetch just leaves the bell showing no unread count, same
+      // fail-open posture as the /me call above.
+      fetch(process.env.NEXT_PUBLIC_API_URL + '/me/notifications', {
+        headers: { Authorization: 'Bearer ' + session.access_token },
+      })
+        .then((res) => (res.ok ? res.json() : null))
+        .then((json) => {
+          const data: NotificationEntry[] = Array.isArray(json?.data) ? json.data : [];
+          setNotifications(data);
+          setUnreadCount(data.length);
+        })
+        .catch(() => {
+          // No badge shown; the dropdown will just fall back to "all
+          // caught up" copy if it's opened while this is unresolved.
         });
     });
   }, []);
@@ -196,6 +235,28 @@ export default function DashboardHeader({ title, subtitle }: { title?: string; s
     const next = !darkMode;
     setDarkMode(next);
     document.documentElement.classList.toggle('dark', next);
+  }
+
+  // G3-01: opening the bell marks the current unread notifications as
+  // seen. unreadCount clears immediately (optimistic -- the dot shouldn't
+  // wait on a round trip), while `notifications` stays populated so the
+  // dropdown that's currently open keeps showing what was just marked
+  // read, rather than flashing empty mid-view.
+  function handleNotifToggle() {
+    setNotifOpen((open) => {
+      const opening = !open;
+      if (opening && unreadCount > 0 && accessTokenRef.current) {
+        setUnreadCount(0);
+        fetch(process.env.NEXT_PUBLIC_API_URL + '/me/notifications/seen', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer ' + accessTokenRef.current },
+        }).catch(() => {
+          // Worst case this resurfaces as unread again next load -- not
+          // worth blocking or erroring the dropdown over.
+        });
+      }
+      return opening;
+    });
   }
 
   // Real users.username (via GET /me) takes priority over the Supabase Auth
@@ -320,19 +381,45 @@ export default function DashboardHeader({ title, subtitle }: { title?: string; s
 
         <div className="relative shrink-0" ref={notifRef}>
           <button
-            onClick={() => setNotifOpen((open) => !open)}
+            onClick={handleNotifToggle}
             aria-label="Notifications"
             className="relative flex items-center justify-center size-10 rounded-full bg-card border border-border text-foreground/70 hover:text-primary hover:bg-muted transition-colors"
           >
             <Bell className="size-4.5" />
-            <span className="absolute top-2 right-2.5 size-2 rounded-full bg-destructive" />
+            {unreadCount > 0 && <span className="absolute top-2 right-2.5 size-2 rounded-full bg-destructive" />}
           </button>
           {notifOpen && (
-            <div className="absolute right-0 mt-2 w-64 bg-popover border border-border rounded-2xl shadow-xl overflow-hidden p-4 text-center z-20">
-              <p className="text-sm text-popover-foreground flex items-center justify-center gap-1">
-                You&apos;re all caught up! <FlowerIcon className="size-3.5 text-primary" />
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">New episode alerts will show up here.</p>
+            <div className="absolute right-0 mt-2 w-72 bg-popover border border-border rounded-2xl shadow-xl overflow-hidden z-20">
+              {notifications.length === 0 ? (
+                <div className="p-4 text-center">
+                  <p className="text-sm text-popover-foreground flex items-center justify-center gap-1">
+                    You&apos;re all caught up! <FlowerIcon className="size-3.5 text-primary" />
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">New episode alerts will show up here.</p>
+                </div>
+              ) : (
+                <ul className="max-h-80 overflow-y-auto py-1">
+                  {notifications.map((n) => (
+                    <li key={n.series_id}>
+                      <Link
+                        href={'/series/' + n.series_id}
+                        onClick={() => setNotifOpen(false)}
+                        className="flex items-start gap-2.5 px-4 py-2.5 hover:bg-muted transition-colors"
+                      >
+                        <Bell className="size-4 text-primary shrink-0 mt-0.5" />
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-sm font-medium text-popover-foreground truncate">
+                            {n.series_title}
+                          </span>
+                          <span className="block text-xs text-muted-foreground">
+                            Now at {n.episode_count} episode{n.episode_count === 1 ? '' : 's'}
+                          </span>
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           )}
         </div>
