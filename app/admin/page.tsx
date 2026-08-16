@@ -3,8 +3,8 @@ import AdminHeader from '../../components/admin/AdminHeader';
 import StatCard from '../../components/admin/StatCard';
 import EditorialQueueTable, { type QueueRow } from '../../components/admin/EditorialQueueTable';
 import RecentlyPublishedCard from '../../components/admin/RecentlyPublishedCard';
-import RecentActivityCard from '../../components/admin/RecentActivityCard';
-import TopMoodsCard from '../../components/admin/TopMoodsCard';
+import RecentActivityCard, { type RealActivityItem } from '../../components/admin/RecentActivityCard';
+import TopMoodsCard, { type RealTopMood } from '../../components/admin/TopMoodsCard';
 import QuickActionsCard from '../../components/admin/QuickActionsCard';
 import SignInPrompt from '../../components/shared/SignInPrompt';
 import { STAT_CARDS, MOCK_CURATORS } from '../../lib/adminContent';
@@ -68,12 +68,14 @@ type AdminData =
       recentSeries: SeriesCardData[];
       seriesTotal: number;
       userCount: number;
+      activity: RealActivityItem[];
+      topMoods: RealTopMood[];
     };
 
 async function loadAdminData(accessToken: string): Promise<AdminData> {
   const authHeader = { Authorization: 'Bearer ' + accessToken };
 
-  const [countsRes, queueRes, seriesRes, usersRes] = await Promise.all([
+  const [countsRes, queueRes, seriesRes, usersRes, activityRes, topMoodsRes] = await Promise.all([
     fetch(process.env.NEXT_PUBLIC_API_URL + '/admin/candidates/counts', { headers: authHeader, cache: 'no-store' }),
     fetch(process.env.NEXT_PUBLIC_API_URL + '/admin/candidates?status=pending', { headers: authHeader, cache: 'no-store' }),
     // D3-03: this used to be a plain GET /series -- with no page/limit,
@@ -89,6 +91,12 @@ async function loadAdminData(accessToken: string): Promise<AdminData> {
     // thousand rows.
     fetch(process.env.NEXT_PUBLIC_API_URL + '/series?page=1&limit=' + RECENT_SERIES_PREVIEW_SIZE, { cache: 'no-store' }),
     fetch(process.env.NEXT_PUBLIC_API_URL + '/admin/users', { headers: authHeader, cache: 'no-store' }),
+    // D2-01: RecentActivityCard/TopMoodsCard's real data, fetched
+    // alongside everything else this page already needs rather than as
+    // separate client-side requests -- see the backend handoff on this
+    // item for the response shapes.
+    fetch(process.env.NEXT_PUBLIC_API_URL + '/admin/activity?limit=5', { headers: authHeader, cache: 'no-store' }),
+    fetch(process.env.NEXT_PUBLIC_API_URL + '/admin/top-moods', { headers: authHeader, cache: 'no-store' }),
   ]);
 
   // A 401 here would mean the backend independently rejected the token
@@ -110,6 +118,12 @@ async function loadAdminData(accessToken: string): Promise<AdminData> {
   const queueJson = await queueRes.json();
   const seriesJson = seriesRes.ok ? await seriesRes.json() : { data: [], pagination: { total: 0 } };
   const usersJson = usersRes.ok ? await usersRes.json() : { count: 0 };
+  // Sidebar widgets, not the primary page content -- a failure here
+  // degrades to an empty state (each card already renders one when given
+  // []) rather than failing the whole dashboard the way a queue/counts
+  // failure does above.
+  const activityJson = activityRes.ok ? await activityRes.json() : { data: [] };
+  const topMoodsJson = topMoodsRes.ok ? await topMoodsRes.json() : { data: [] };
 
   return {
     access: 'ok',
@@ -118,6 +132,8 @@ async function loadAdminData(accessToken: string): Promise<AdminData> {
     recentSeries: seriesJson.data || [],
     seriesTotal: seriesJson.pagination?.total ?? 0,
     userCount: usersJson.count || 0,
+    activity: activityJson.data || [],
+    topMoods: topMoodsJson.data || [],
   };
 }
 
@@ -162,7 +178,7 @@ export default async function AdminDashboardPage() {
     );
   }
 
-  const { counts, queue, recentSeries, seriesTotal, userCount } = data;
+  const { counts, queue, recentSeries, seriesTotal, userCount, activity, topMoods } = data;
 
   const queueRows: QueueRow[] = queue.map((c, i) => ({
     id: c.id,
@@ -236,8 +252,8 @@ export default async function AdminDashboardPage() {
             </main>
 
             <aside className="flex flex-col gap-5 xl:sticky xl:top-8">
-              <RecentActivityCard />
-              <TopMoodsCard />
+              <RecentActivityCard items={activity} />
+              <TopMoodsCard moods={topMoods} />
               <QuickActionsCard />
             </aside>
           </div>

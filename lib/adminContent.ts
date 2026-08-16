@@ -1,13 +1,13 @@
 // lib/adminContent.ts
 //
-// Content for the Admin Dashboard (app/admin/page.tsx). Real data (fetched
-// via the existing /admin/candidates/counts, /admin/users, and /series
-// endpoints) covers Total Titles, Pending Review, Published, Users, and
-// Recently Published -- those numbers are true today. Everything else here
-// (Comments, Recent Activity, Top Moods percentages, week-over-week
-// deltas) is PLACEHOLDER pending real tables/endpoints that don't exist yet
-// (no comments feature, no activity log, no mood-tag column on series) --
-// same honest-mock convention as lib/dashboardContent.ts.
+// Content for the Admin Dashboard (app/admin/page.tsx). Real data covers
+// Total Titles, Pending Review, Published, Users, Recently Published,
+// Recent Activity (D2-01 -- GET /admin/activity, backed by the
+// admin_actions audit log from A2-02), and Top Moods (D2-01 -- GET
+// /admin/top-moods, aggregated fresh from real series_tags/tags). Only
+// Comments and the StatCard week-over-week deltas remain placeholder,
+// pending a comments feature and real historical time-series data that
+// don't exist yet -- same honest-mock convention as lib/dashboardContent.ts.
 
 import type { LucideIcon } from 'lucide-react';
 import {
@@ -29,11 +29,6 @@ import {
   Boxes,
   RefreshCw,
   FileText,
-  Heart,
-  Leaf,
-  Zap,
-  Coffee,
-  CloudRain,
   PlusCircle,
   FolderPlus,
   Wand2,
@@ -123,46 +118,6 @@ export const STAT_CARDS: StatCardMeta[] = [
 // this is a display-only placeholder, not a claim about who really found
 // each title.
 export const MOCK_CURATORS = ['Nico', 'Hana', 'Mika', 'Aki', 'Yui'];
-
-export interface ActivityItem {
-  id: string;
-  icon: LucideIcon;
-  iconClass: string;
-  text: string;
-  target: string;
-  actor: string;
-  timeAgo: string;
-}
-
-// Placeholder pending a real admin activity/audit-log table (tracked
-// separately as A2-02 -- the personal version of this, MOCK_RECENT_ACTIVITY
-// in dashboardContent.ts, is now real, see H2-04).
-export const MOCK_ADMIN_ACTIVITY: ActivityItem[] = [
-  { id: 'aa1', icon: CheckCircle2, iconClass: 'bg-emerald-100 text-emerald-600', text: 'was published', target: 'Cherry Magic', actor: 'Hana', timeAgo: '1h ago' },
-  { id: 'aa2', icon: Star, iconClass: 'bg-violet-100 text-violet-600', text: 'added new mood', target: '"Healing"', actor: 'Admin', timeAgo: '3h ago' },
-  { id: 'aa3', icon: FileText, iconClass: 'bg-sky-100 text-sky-600', text: 'updated', target: 'Step by Step', actor: 'Mika', timeAgo: '5h ago' },
-  { id: 'aa4', icon: Flag, iconClass: 'bg-rose-100 text-rose-600', text: 'reported a comment on', target: 'Love in The Air', actor: 'A user', timeAgo: '8h ago' },
-  { id: 'aa5', icon: FolderOpen, iconClass: 'bg-amber-100 text-amber-600', text: 'created new collection', target: '"Office Romance"', actor: 'Yui', timeAgo: '1d ago' },
-];
-
-export interface TopMoodItem {
-  name: string;
-  icon: LucideIcon;
-  colorClass: string; // bg-* for the progress bar
-  pct: number;
-}
-
-// Placeholder pending a real mood tag on `series` + aggregate query (no
-// per-title mood column yet -- see lib/moodsContent.ts's own note). Uses
-// the same six canonical mood names as lib/landingContent.ts's MOCK_MOODS
-// so this never disagrees with the rest of the app about what a "mood" is.
-export const MOCK_TOP_MOODS: TopMoodItem[] = [
-  { name: 'Healing', icon: Leaf, colorClass: 'bg-violet-400', pct: 28 },
-  { name: 'Heartwarming', icon: Heart, colorClass: 'bg-rose-400', pct: 24 },
-  { name: 'Angsty', icon: Zap, colorClass: 'bg-amber-400', pct: 18 },
-  { name: 'Cozy', icon: Coffee, colorClass: 'bg-orange-300', pct: 15 },
-  { name: 'Melancholic', icon: CloudRain, colorClass: 'bg-slate-400', pct: 15 },
-];
 
 export interface QuickAction {
   label: string;
