@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { supabase } from '../../../lib/supabase';
 import { useAuthModal } from '../../../lib/AuthModalContext';
-import AdminSidebar from '../../../components/admin/AdminSidebar';
 import GenreManager, { type AdminGenre } from '../../../components/admin/GenreManager';
 
 type AccessState = 'checking' | 'signed_out' | 'forbidden' | 'ok' | 'error';
@@ -13,7 +12,6 @@ export default function AdminGenresPage() {
   const { open: openAuthModal } = useAuthModal();
   const [user, setUser] = useState<User | null>(null);
   const [access, setAccess] = useState<AccessState>('checking');
-  const [pendingCount, setPendingCount] = useState(0);
   const [genres, setGenres] = useState<AdminGenre[]>([]);
   const [busyIds, setBusyIds] = useState<Set<number>>(new Set());
 
@@ -57,9 +55,6 @@ export default function AdminGenresPage() {
 
       const genresJson = await genresRes.json();
       setGenres(genresJson.data || []);
-
-      const countsJson = await countsRes.json();
-      setPendingCount(countsJson.pending || 0);
 
       setAccess('ok');
     }
@@ -159,38 +154,35 @@ export default function AdminGenresPage() {
 
   if (access === 'signed_out') {
     return (
-      <main className="min-h-screen bg-background p-8">
+      <div className="p-8">
         <p className="text-muted-foreground">
           <button type="button" onClick={() => openAuthModal('login')} className="text-primary font-semibold hover:opacity-80">
             Sign in
           </button>{' '}
           to access the admin dashboard.
         </p>
-      </main>
+      </div>
     );
   }
 
   if (access === 'forbidden') {
     return (
-      <main className="min-h-screen bg-background p-8">
+      <div className="p-8">
         <p className="text-rose-500 font-semibold">You don&apos;t have access to this page.</p>
-      </main>
+      </div>
     );
   }
 
   if (access === 'error') {
     return (
-      <main className="min-h-screen bg-background p-8">
+      <div className="p-8">
         <p className="text-rose-500">Could not load genres. Try refreshing the page.</p>
-      </main>
+      </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen bg-background">
-      <AdminSidebar pendingCount={pendingCount} />
-
-      <div className="flex-1 min-w-0 px-5 md:px-8 lg:px-10 py-6 md:py-8">
+    <div className="px-5 md:px-8 lg:px-10 py-6 md:py-8">
         <div className="w-full max-w-[820px] mx-auto">
           <div className="mb-6">
             <h1 className="font-heading text-[26px] md:text-[30px] leading-tight font-normal text-foreground">Genres</h1>
@@ -203,6 +195,5 @@ export default function AdminGenresPage() {
           <GenreManager genres={genres} busyIds={busyIds} onRename={handleRename} onDelete={handleDelete} onMerge={handleMerge} />
         </div>
       </div>
-    </div>
   );
 }

@@ -5,7 +5,6 @@ import { Check, X, Pencil, Tag as TagIcon } from 'lucide-react';
 import { useAuthModal } from '../../../lib/AuthModalContext';
 import { supabase } from '../../../lib/supabase';
 import type { User } from '@supabase/supabase-js';
-import AdminSidebar from '../../../components/admin/AdminSidebar';
 import type { Tag, TagDimension, RomancePace, EmotionalIntensity, EndingType, ContentLevel } from '../../../lib/taxonomy';
 import {
   ROMANCE_PACE_DISPLAY,
@@ -575,17 +574,6 @@ function CandidateRow({
             <p className="text-xs text-muted-foreground truncate">{candidate.genre_names.join(' · ')}</p>
           )}
           {castNames && <p className="text-xs text-muted-foreground/70 truncate mt-0.5">Cast: {castNames}</p>}
-          {/* D2-02: real discovery keyword from series_candidates.source_keyword
-              (already returned by GET /admin/candidates via select('*')) --
-              this page used to show a fabricated MOCK_CURATORS name here
-              with no relationship to who or what actually surfaced the
-              candidate. Older rows imported before this column existed
-              have no keyword recorded, so there's nothing honest to show
-              for them -- the line just doesn't render rather than falling
-              back to a placeholder that implies data that isn't there. */}
-          {candidate.source_keyword && (
-            <p className="text-xs text-muted-foreground/70 truncate mt-0.5">Found via: &ldquo;{candidate.source_keyword}&rdquo;</p>
-          )}
           {link && (
             <a
               href={link}
@@ -875,36 +863,27 @@ export default function AdminCandidatesPage() {
 
   if (access === 'signed_out') {
     return (
-      <div className="flex min-h-screen bg-background">
-        <AdminSidebar pendingCount={counts.pending} />
-        <main className="flex-1 text-foreground p-8">
-          <p className="text-muted-foreground">
-            <button type="button" onClick={() => openAuthModal('login')} className="text-primary hover:opacity-80">
-              Sign in
-            </button>{' '}
-            to access this page.
-          </p>
-        </main>
+      <div className="p-8">
+        <p className="text-muted-foreground">
+          <button type="button" onClick={() => openAuthModal('login')} className="text-primary hover:opacity-80">
+            Sign in
+          </button>{' '}
+          to access this page.
+        </p>
       </div>
     );
   }
 
   if (access === 'forbidden') {
     return (
-      <div className="flex min-h-screen bg-background">
-        <AdminSidebar pendingCount={counts.pending} />
-        <main className="flex-1 text-foreground p-8">
-          <p className="text-rose-600">You don&apos;t have access to this page.</p>
-        </main>
+      <div className="p-8">
+        <p className="text-rose-600">You don&apos;t have access to this page.</p>
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen bg-background">
-      <AdminSidebar pendingCount={counts.pending} />
-      <main className="flex-1 min-w-0 text-foreground">
-      <div className="max-w-[1400px] mx-auto p-6 md:p-8">
+    <div className="max-w-[1400px] mx-auto p-6 md:p-8">
         <div className="mb-1 text-xs font-medium text-primary/80 uppercase tracking-wider">Admin</div>
         <h1 className="font-heading text-2xl font-normal text-foreground tracking-tight mb-5">Editorial Queue</h1>
 
@@ -1049,7 +1028,5 @@ export default function AdminCandidatesPage() {
           </div>
         )}
       </div>
-      </main>
-    </div>
   );
 }

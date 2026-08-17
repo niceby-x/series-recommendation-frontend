@@ -5,7 +5,6 @@ import { Search } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
 import { supabase } from '../../../lib/supabase';
 import { useAuthModal } from '../../../lib/AuthModalContext';
-import AdminSidebar from '../../../components/admin/AdminSidebar';
 import SeriesList, { type AdminSeries } from '../../../components/admin/SeriesList';
 import SeriesEditModal, { type SeriesEditForm, type CollectionOption, type GenreOption } from '../../../components/admin/SeriesEditModal';
 import type { Tag, TagDimension } from '../../../lib/taxonomy';
@@ -25,7 +24,6 @@ export default function AdminSeriesPage() {
   const [user, setUser] = useState<User | null>(null);
   const [access, setAccess] = useState<AccessState>('checking');
   const [series, setSeries] = useState<AdminSeries[]>([]);
-  const [pendingCount, setPendingCount] = useState(0);
   const [availableTags, setAvailableTags] = useState<Record<TagDimension, Tag[]>>(EMPTY_TAGS);
   const [availableCollections, setAvailableCollections] = useState<CollectionOption[]>([]);
   const [availableGenres, setAvailableGenres] = useState<GenreOption[]>([]);
@@ -84,9 +82,6 @@ export default function AdminSeriesPage() {
 
       const seriesJson = await seriesRes.json();
       setSeries(seriesJson.data || []);
-
-      const countsJson = await countsRes.json();
-      setPendingCount(countsJson.pending || 0);
 
       if (tagsRes.ok) {
         const tagsJson = await tagsRes.json();
@@ -246,38 +241,36 @@ export default function AdminSeriesPage() {
 
   if (access === 'signed_out') {
     return (
-      <main className="min-h-screen bg-background p-8">
+      <div className="p-8">
         <p className="text-muted-foreground">
           <button type="button" onClick={() => openAuthModal('login')} className="text-primary font-semibold hover:opacity-80">
             Sign in
           </button>{' '}
           to access the admin dashboard.
         </p>
-      </main>
+      </div>
     );
   }
 
   if (access === 'forbidden') {
     return (
-      <main className="min-h-screen bg-background p-8">
+      <div className="p-8">
         <p className="text-rose-500 font-semibold">You don&apos;t have access to this page.</p>
-      </main>
+      </div>
     );
   }
 
   if (access === 'error') {
     return (
-      <main className="min-h-screen bg-background p-8">
+      <div className="p-8">
         <p className="text-rose-500">Could not load series. Try refreshing the page.</p>
-      </main>
+      </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen bg-background">
-      <AdminSidebar pendingCount={pendingCount} />
-
-      <div className="flex-1 min-w-0 px-5 md:px-8 lg:px-10 py-6 md:py-8">
+    <>
+      <div className="px-5 md:px-8 lg:px-10 py-6 md:py-8">
         <div className="w-full max-w-[900px] mx-auto">
           <div className="flex flex-wrap items-end justify-between gap-3 mb-6">
             <div>
@@ -318,6 +311,6 @@ export default function AdminSeriesPage() {
           onClose={() => setEditingSeries(null)}
         />
       )}
-    </div>
+    </>
   );
 }

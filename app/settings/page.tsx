@@ -5,7 +5,7 @@ import { Moon } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
 import { supabase } from '../../lib/supabase';
 import { useAuthModal } from '../../lib/AuthModalContext';
-import DashboardSidebar from '../../components/dashboard/DashboardSidebar';
+import DashboardShell from '../../components/dashboard/DashboardShell';
 import DashboardHeader from '../../components/dashboard/DashboardHeader';
 
 // Minimal placeholder Settings destination (see H4-04) -- a real page to
@@ -61,11 +61,8 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="flex min-h-screen bg-background">
-      <DashboardSidebar />
-
-      <div className="flex-1 min-w-0 flex justify-center px-5 md:px-8 lg:px-10 py-6 md:py-8">
-        <div className="w-full max-w-[720px]">
+    <DashboardShell>
+      <div className="w-full max-w-[720px]">
           <DashboardHeader title="Settings" subtitle="Manage your BLumi experience." />
 
           <section className="rounded-[20px] bg-card border border-border/60 shadow-sm p-5 mb-6">
@@ -105,8 +102,7 @@ export default function SettingsPage() {
               Notifications, privacy, and account preferences are on the way.
             </p>
           </section>
-        </div>
       </div>
-    </div>
+    </DashboardShell>
   );
 }

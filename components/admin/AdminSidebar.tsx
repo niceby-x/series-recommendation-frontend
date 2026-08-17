@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, X, ArrowLeft, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
-import FlowerIcon from '../shared/FlowerIcon';
+import { Menu, X, ArrowLeft, PanelLeftClose, PanelLeftOpen, ChevronDown, ChevronsUpDown, LogOut } from 'lucide-react';
 import Logo from '../shared/Logo';
+import { supabase } from '../../lib/supabase';
 import { ADMIN_NAV_SECTIONS, ADMIN_DASHBOARD_ITEM, type AdminNavItem } from '../../lib/adminContent';
 
 const COLLAPSE_STORAGE_KEY = 'admin-sidebar-collapsed';
@@ -24,7 +24,7 @@ function loadCollapsedPref(): boolean {
   }
 }
 
-// Desktop rail can now be toggled between the full 256px layout (labels,
+// Desktop rail can now be toggled between the full 260px layout (labels,
 // section headers, badge counts) and a 76px icon-only rail -- same
 // collapsed width as the public DashboardSidebar's rail, for visual
 // consistency between the two, though the interaction itself is
@@ -109,6 +109,140 @@ function NavRow({
   );
 }
 
+// Each section header is now its own toggle -- clicking it collapses just
+// that group's rows, chevron rotates to match. Purely a display grouping
+// (state lives here, not persisted) -- collapsing "Community" doesn't
+// affect whether its links are reachable, same as the reference this
+// mirrors. Ignored entirely in the icon-only rail: with no room for a
+// section label there's nothing to click, so every row in the rail always
+// renders regardless of a section's expanded/collapsed state elsewhere.
+function NavSection({
+  section,
+  pathname,
+  pendingCount,
+  collapsed,
+  onNavigate,
+}: {
+  section: (typeof ADMIN_NAV_SECTIONS)[number];
+  pathname: string;
+  pendingCount: number;
+  collapsed?: boolean;
+  onNavigate?: () => void;
+}) {
+  const [open, setOpen] = useState(true);
+  const expanded = collapsed || open;
+
+  return (
+    <div>
+      {!collapsed && (
+        <button
+          type="button"
+          onClick={() => setOpen((prev) => !prev)}
+          aria-expanded={open}
+          className="w-full flex items-center justify-between gap-1 px-3 py-1 mb-1 text-[11px] font-bold uppercase tracking-wide text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <span>{section.label}</span>
+          <ChevronDown className={'size-3.5 shrink-0 transition-transform duration-150 ' + (open ? '' : '-rotate-90')} />
+        </button>
+      )}
+      {expanded && (
+        <div className="flex flex-col gap-0.5">
+          {section.items.map((item) => (
+            <NavRow
+              key={item.label}
+              item={item}
+              active={!!item.href && pathname.startsWith(item.href)}
+              badgeCount={item.badgeKey === 'pending' ? pendingCount : undefined}
+              collapsed={collapsed}
+              onNavigate={onNavigate}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Bottom-pinned account control -- avatar (+ name/email when expanded),
+// opens a small dropdown with who's signed in and a real Log out action.
+// Replaces the old static "built with love" card, which didn't do
+// anything; this does the one thing every admin eventually needs from
+// their own sidebar. Deliberately just Signed-in-as + Log out -- no
+// Billing/Upgrade-style entries, since nothing like that exists in this
+// app and a dropdown item that goes nowhere is exactly the "looks real,
+// isn't" pattern the D2 checklist spent a whole pass removing.
+function UserFooter({ email, collapsed }: { email: string | null; collapsed?: boolean }) {
+  const [open, setOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const initial = email ? email.charAt(0).toUpperCase() : 'A';
+  const displayName = email ? email.split('@')[0] : 'Admin';
+
+  async function handleLogout() {
+    await supabase.auth.signOut();
+    window.location.href = '/';
+  }
+
+  return (
+    <div className="relative mt-auto pt-3 border-t border-border/60" ref={menuRef}>
+      <button
+        type="button"
+        onClick={() => setOpen((prev) => !prev)}
+        title={collapsed ? (email ?? 'Account') : undefined}
+        className={
+          'w-full flex items-center gap-2.5 rounded-xl px-2 py-2 hover:bg-muted transition-colors ' +
+          (collapsed ? 'justify-center' : '')
+        }
+      >
+        <span className="flex items-center justify-center size-8 rounded-full bg-brand-gradient text-white text-[13px] font-semibold font-heading shrink-0">
+          {initial}
+        </span>
+        {!collapsed && (
+          <>
+            <span className="min-w-0 flex-1 text-left">
+              <span className="block text-[13px] font-semibold text-foreground truncate capitalize">{displayName}</span>
+              <span className="block text-[11.5px] text-muted-foreground truncate">{email ?? 'Not signed in'}</span>
+            </span>
+            <ChevronsUpDown className="size-3.5 text-muted-foreground/70 shrink-0" />
+          </>
+        )}
+      </button>
+
+      {open && (
+        <div
+          className={
+            'absolute z-20 w-64 bg-popover border border-border rounded-2xl shadow-xl overflow-hidden ' +
+            (collapsed ? 'bottom-0 left-full ml-2' : 'bottom-full left-0 mb-2')
+          }
+        >
+          <div className="px-3.5 py-3 border-b border-border">
+            <p className="text-[11px] text-muted-foreground">Signed in as</p>
+            <p className="text-[13px] font-medium text-popover-foreground truncate">{email ?? 'Not signed in'}</p>
+          </div>
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="w-full flex items-center gap-2.5 text-left px-3.5 py-2.5 text-sm text-popover-foreground hover:bg-muted transition-colors"
+          >
+            <LogOut className="size-4" />
+            Log out
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // D1-01: below the lg breakpoint, the aside below is `hidden` with no
 // substitute at all -- an admin on a tablet, or anyone who resizes a
 // window narrow, previously had no way to move between sections once it
@@ -118,20 +252,18 @@ function NavRow({
 //
 // Self-contained trigger + drawer, same pattern Navbar.tsx already uses
 // for its own mobile menu (button + panel both owned by one component,
-// no cross-component state) -- AdminSidebar and AdminHeader are rendered
-// as independent siblings by every one of the ~12 admin page files, so a
-// shared "drawer open" context split across two components would mean
-// either new plumbing through all of those pages or a new context file
-// neither the checklist nor this fix actually needs: the drawer only
-// ever needs to know about itself.
+// no cross-component state) -- the drawer only ever needs to know about
+// itself.
 function NavContent({
   pathname,
   pendingCount,
+  email,
   collapsed,
   onNavigate,
 }: {
   pathname: string;
   pendingCount: number;
+  email: string | null;
   collapsed?: boolean;
   onNavigate?: () => void;
 }) {
@@ -146,44 +278,31 @@ function NavContent({
         />
       </div>
 
-      <nav className="flex flex-col gap-5">
+      <nav className="flex flex-col gap-4 flex-1 min-h-0 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {ADMIN_NAV_SECTIONS.map((section) => (
-          <div key={section.label}>
-            {!collapsed && (
-              <p className="px-3 mb-1.5 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
-                {section.label}
-              </p>
-            )}
-            <div className="flex flex-col gap-0.5">
-              {section.items.map((item) => (
-                <NavRow
-                  key={item.label}
-                  item={item}
-                  active={!!item.href && pathname.startsWith(item.href)}
-                  badgeCount={item.badgeKey === 'pending' ? pendingCount : undefined}
-                  collapsed={collapsed}
-                  onNavigate={onNavigate}
-                />
-              ))}
-            </div>
-          </div>
+          <NavSection
+            key={section.label}
+            section={section}
+            pathname={pathname}
+            pendingCount={pendingCount}
+            collapsed={collapsed}
+            onNavigate={onNavigate}
+          />
         ))}
       </nav>
 
-      {!collapsed && (
-        <div className="mt-auto pt-6">
-          <div className="rounded-2xl bg-gradient-to-br from-brand-blush/30 to-brand-lilac/25 border border-border/60 p-4">
-            <FlowerIcon className="size-5 text-primary mb-2" />
-            <p className="text-[13px] font-semibold text-foreground leading-snug">BLumi is built with love for stories.</p>
-            <p className="text-[12px] text-muted-foreground mt-1 leading-snug">Keep curating beautiful BL stories.</p>
-          </div>
-        </div>
-      )}
+      <UserFooter email={email} collapsed={collapsed} />
     </>
   );
 }
 
-export default function AdminSidebar({ pendingCount }: { pendingCount: number }) {
+export default function AdminSidebar({
+  pendingCount,
+  email = null,
+}: {
+  pendingCount: number;
+  email?: string | null;
+}) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -257,10 +376,15 @@ export default function AdminSidebar({ pendingCount }: { pendingCount: number })
         <Menu className="size-5" />
       </button>
 
+      {/* h-full + no sticky positioning -- this now lives inside
+          AdminShell's bounded, rounded flex row rather than being the
+          page's own top-level layout driver, so it just fills its
+          parent's height and scrolls its own nav region (see NavContent's
+          own overflow-y-auto) instead of the whole viewport. */}
       <aside
         className={
-          'hidden lg:flex flex-col shrink-0 h-screen sticky top-0 overflow-y-auto border-r border-border bg-card px-4 py-6 transition-[width] duration-200 ease-out [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ' +
-          (collapsed ? 'w-[76px]' : 'w-[256px]')
+          'hidden lg:flex flex-col shrink-0 h-full border-r border-border bg-card px-4 py-5 transition-[width] duration-200 ease-out ' +
+          (collapsed ? 'w-[76px]' : 'w-[260px]')
         }
       >
         <Link
@@ -297,7 +421,7 @@ export default function AdminSidebar({ pendingCount }: { pendingCount: number })
           </button>
         </div>
 
-        <NavContent pathname={pathname} pendingCount={pendingCount} collapsed={collapsed} />
+        <NavContent pathname={pathname} pendingCount={pendingCount} email={email} collapsed={collapsed} />
       </aside>
 
       {mobileOpen && (
@@ -307,7 +431,7 @@ export default function AdminSidebar({ pendingCount }: { pendingCount: number })
             onClick={() => setMobileOpen(false)}
             aria-hidden="true"
           />
-          <aside className="relative flex flex-col w-[280px] max-w-[85vw] h-full overflow-y-auto bg-card px-4 py-6 shadow-xl [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <aside className="relative flex flex-col w-[280px] max-w-[85vw] h-full bg-card px-4 py-6 shadow-xl">
             <div className="flex items-center justify-between px-1 mb-1">
               <div>
                 <Logo variant="full" theme="brand" size={30} />
@@ -334,7 +458,12 @@ export default function AdminSidebar({ pendingCount }: { pendingCount: number })
               <span>Back to site</span>
             </Link>
 
-            <NavContent pathname={pathname} pendingCount={pendingCount} onNavigate={() => setMobileOpen(false)} />
+            <NavContent
+              pathname={pathname}
+              pendingCount={pendingCount}
+              email={email}
+              onNavigate={() => setMobileOpen(false)}
+            />
           </aside>
         </div>
       )}

@@ -5,7 +5,6 @@ import { Play, Loader2, CheckCircle2, XCircle, UploadCloud } from 'lucide-react'
 import type { User } from '@supabase/supabase-js';
 import { supabase } from '../../../lib/supabase';
 import { useAuthModal } from '../../../lib/AuthModalContext';
-import AdminSidebar from '../../../components/admin/AdminSidebar';
 
 type AccessState = 'checking' | 'signed_out' | 'forbidden' | 'ok' | 'error';
 
@@ -38,7 +37,6 @@ export default function AdminImportPage() {
   const { open: openAuthModal } = useAuthModal();
   const [user, setUser] = useState<User | null>(null);
   const [access, setAccess] = useState<AccessState>('checking');
-  const [pendingCount, setPendingCount] = useState(0);
   const [status, setStatus] = useState<ImportStatus | null>(null);
   const [limitInput, setLimitInput] = useState('150');
   const [starting, setStarting] = useState(false);
@@ -78,22 +76,11 @@ export default function AdminImportPage() {
     setAccess('ok');
   }
 
-  async function loadCounts() {
-    const header = await authHeader();
-    if (!header) return;
-    const res = await fetch(process.env.NEXT_PUBLIC_API_URL + '/admin/candidates/counts', { headers: header });
-    if (res.ok) {
-      const json = await res.json();
-      setPendingCount(json.pending || 0);
-    }
-  }
-
   useEffect(() => {
     if (!user) return;
 
     async function load() {
       await fetchStatus();
-      await loadCounts();
     }
 
     load();
@@ -149,40 +136,37 @@ export default function AdminImportPage() {
 
   if (access === 'signed_out') {
     return (
-      <main className="min-h-screen bg-background p-8">
+      <div className="p-8">
         <p className="text-muted-foreground">
           <button type="button" onClick={() => openAuthModal('login')} className="text-primary font-semibold hover:opacity-80">
             Sign in
           </button>{' '}
           to access the admin dashboard.
         </p>
-      </main>
+      </div>
     );
   }
 
   if (access === 'forbidden') {
     return (
-      <main className="min-h-screen bg-background p-8">
+      <div className="p-8">
         <p className="text-rose-500 font-semibold">You don&apos;t have access to this page.</p>
-      </main>
+      </div>
     );
   }
 
   if (access === 'error') {
     return (
-      <main className="min-h-screen bg-background p-8">
+      <div className="p-8">
         <p className="text-rose-500">Could not load import status. Try refreshing the page.</p>
-      </main>
+      </div>
     );
   }
 
   const running = status?.running ?? false;
 
   return (
-    <div className="flex min-h-screen bg-background">
-      <AdminSidebar pendingCount={pendingCount} />
-
-      <div className="flex-1 min-w-0 px-5 md:px-8 lg:px-10 py-6 md:py-8">
+    <div className="px-5 md:px-8 lg:px-10 py-6 md:py-8">
         <div className="w-full max-w-[900px] mx-auto">
           <div className="mb-6">
             <h1 className="font-heading text-[26px] md:text-[30px] leading-tight font-normal text-foreground">Import &amp; Sync</h1>
@@ -253,7 +237,6 @@ export default function AdminImportPage() {
           </div>
         </div>
       </div>
-    </div>
   );
 }
 

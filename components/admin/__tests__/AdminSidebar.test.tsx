@@ -7,6 +7,19 @@ vi.mock('next/navigation', () => ({
   usePathname: () => '/admin',
 }));
 
+// AdminSidebar's new user-footer (Log out) needs supabase.auth.signOut(),
+// and the module-level `createBrowserClient()` call in lib/supabase.ts
+// throws without real env vars in a test environment -- same mock
+// DashboardHeader's own test file already uses for the same reason.
+vi.mock('@/lib/supabase', () => ({
+  supabase: {
+    auth: {
+      getSession: () => Promise.resolve({ data: { session: null } }),
+      signOut: () => Promise.resolve({ error: null }),
+    },
+  },
+}));
+
 describe('AdminSidebar mobile navigation (D1-01)', () => {
   beforeEach(() => {
     document.body.style.overflow = '';

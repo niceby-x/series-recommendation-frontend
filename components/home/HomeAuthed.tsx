@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import type { SeriesCardData } from '../shared/SeriesCard';
-import DashboardSidebar from '../dashboard/DashboardSidebar';
+import DashboardShell from '../dashboard/DashboardShell';
 import DashboardHeader from '../dashboard/DashboardHeader';
 import MoodFeelingRow from './MoodFeelingRow';
 import DashboardDiscoverRow, { type DashboardDiscoverCard } from './DashboardDiscoverRow';
@@ -149,12 +149,9 @@ export default function HomeAuthed({
       : CURATOR_FEATURE_SYNOPSIS);
 
   return (
-    <div className="flex min-h-screen bg-background">
-      <DashboardSidebar />
-
-      <div className="flex-1 min-w-0 flex justify-center px-5 md:px-8 lg:px-10 py-6 md:py-8">
-        <div className="w-full max-w-[1400px]">
-          <DashboardHeader />
+    <DashboardShell>
+      <div className="w-full max-w-[1400px]">
+        <DashboardHeader />
 
           <div className="grid grid-cols-1 xl:grid-cols-[1fr_336px] gap-8 items-start">
             <main className="min-w-0">
@@ -191,8 +188,7 @@ export default function HomeAuthed({
               <RecentActivityCard />
             </aside>
           </div>
-        </div>
       </div>
-    </div>
+    </DashboardShell>
   );
 }

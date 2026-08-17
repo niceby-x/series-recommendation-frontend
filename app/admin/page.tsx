@@ -1,4 +1,3 @@
-import AdminSidebar from '../../components/admin/AdminSidebar';
 import AdminHeader from '../../components/admin/AdminHeader';
 import StatCard from '../../components/admin/StatCard';
 import EditorialQueueTable, { type QueueRow } from '../../components/admin/EditorialQueueTable';
@@ -155,9 +154,9 @@ export default async function AdminDashboardPage() {
 
   if (!user || !accessToken) {
     return (
-      <main className="min-h-screen bg-background p-8">
+      <div className="p-8">
         <SignInPrompt message="to access the admin dashboard." />
-      </main>
+      </div>
     );
   }
 
@@ -165,17 +164,17 @@ export default async function AdminDashboardPage() {
 
   if (data.access === 'forbidden') {
     return (
-      <main className="min-h-screen bg-background p-8">
+      <div className="p-8">
         <p className="text-rose-500 font-semibold">You don&apos;t have access to this page.</p>
-      </main>
+      </div>
     );
   }
 
   if (data.access === 'error') {
     return (
-      <main className="min-h-screen bg-background p-8">
+      <div className="p-8">
         <p className="text-rose-500">Could not load the admin dashboard. Try refreshing the page.</p>
-      </main>
+      </div>
     );
   }
 
@@ -212,10 +211,7 @@ export default async function AdminDashboardPage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-background">
-      <AdminSidebar pendingCount={counts.pending} />
-
-      <div className="flex-1 min-w-0 px-5 md:px-8 lg:px-10 py-6 md:py-8">
+    <div className="px-5 md:px-8 lg:px-10 py-6 md:py-8">
         <div className="w-full max-w-[1500px] mx-auto">
           <AdminHeader user={user} />
 
@@ -262,6 +258,5 @@ export default async function AdminDashboardPage() {
           </div>
         </div>
       </div>
-    </div>
   );
 }

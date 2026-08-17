@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import DashboardSidebar from '../dashboard/DashboardSidebar';
+import DashboardShell from '../dashboard/DashboardShell';
 import DashboardHeader from '../dashboard/DashboardHeader';
 import SeriesCard, { type SeriesCardData } from '../shared/SeriesCard';
 import ScrollRow from '../dashboard/ScrollRow';
@@ -155,11 +155,8 @@ export default function NewReleasesAuthed({ initialData }: { initialData: NewRel
     usePaginatedSeries([], null, filters);
 
   return (
-    <div className="flex min-h-screen bg-background">
-      <DashboardSidebar />
-
-      <div className="flex-1 min-w-0 flex justify-center px-5 md:px-8 lg:px-10 py-6 md:py-8">
-        <div className="w-full max-w-[1400px]">
+    <DashboardShell>
+      <div className="w-full max-w-[1400px]">
           <DashboardHeader title="New Releases" subtitle="Stay updated with the latest series and never miss a new story." />
 
           <div className="grid grid-cols-1 xl:grid-cols-[1fr_336px] gap-8 items-start">
@@ -270,8 +267,7 @@ export default function NewReleasesAuthed({ initialData }: { initialData: NewRel
               <ReleaseCalendarCard days={calendarDays} todayLabel={todayLabel} releases={todayReleases} />
             </aside>
           </div>
-        </div>
       </div>
-    </div>
+    </DashboardShell>
   );
 }

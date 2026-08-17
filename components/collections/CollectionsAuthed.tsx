@@ -5,7 +5,7 @@ import { ChevronDown, Plus } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { usePaginatedCollections } from '../../lib/usePaginatedCollections';
 import LoadMoreSeriesButton from '../shared/LoadMoreSeriesButton';
-import DashboardSidebar from '../dashboard/DashboardSidebar';
+import DashboardShell from '../dashboard/DashboardShell';
 import DashboardHeader from '../dashboard/DashboardHeader';
 import CollectionFilterChips from './CollectionFilterChips';
 import CollectionCard, { type RealCollection } from './CollectionCard';
@@ -168,10 +168,8 @@ export default function CollectionsAuthed() {
   }
 
   return (
-    <div className="flex min-h-screen bg-background">
-      <DashboardSidebar />
-
-      <div className="flex-1 min-w-0 flex justify-center px-5 md:px-8 lg:px-10 py-6 md:py-8">
+    <>
+      <DashboardShell>
         <div className="w-full max-w-[1400px]">
           <DashboardHeader title="Collections" subtitle="Organize and revisit your favorite series." />
 
@@ -261,10 +259,10 @@ export default function CollectionsAuthed() {
               <CreateCollectionCTA onCreate={() => setModalOpen(true)} />
             </aside>
           </div>
-        </div>
       </div>
+      </DashboardShell>
 
       {modalOpen && <CreateCollectionModal onClose={() => setModalOpen(false)} onCreate={handleCreate} />}
-    </div>
+    </>
   );
 }

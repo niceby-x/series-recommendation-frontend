@@ -5,7 +5,6 @@ import { Search, ChevronDown } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
 import { supabase } from '../../../lib/supabase';
 import { useAuthModal } from '../../../lib/AuthModalContext';
-import AdminSidebar from '../../../components/admin/AdminSidebar';
 import UsersTable, { type UserRow } from '../../../components/admin/UsersTable';
 
 type AccessState = 'checking' | 'signed_out' | 'forbidden' | 'ok' | 'error';
@@ -23,7 +22,6 @@ export default function AdminUsersPage() {
   const [user, setUser] = useState<User | null>(null);
   const [access, setAccess] = useState<AccessState>('checking');
   const [users, setUsers] = useState<UserRow[]>([]);
-  const [pendingCount, setPendingCount] = useState(0);
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState<SortKey>('newest');
   const [busyIds, setBusyIds] = useState<Set<number>>(new Set());
@@ -68,9 +66,6 @@ export default function AdminUsersPage() {
 
       const usersJson = await usersRes.json();
       setUsers(usersJson.data || []);
-
-      const countsJson = await countsRes.json();
-      setPendingCount(countsJson.pending || 0);
 
       setAccess('ok');
     }
@@ -183,38 +178,35 @@ export default function AdminUsersPage() {
 
   if (access === 'signed_out') {
     return (
-      <main className="min-h-screen bg-background p-8">
+      <div className="p-8">
         <p className="text-muted-foreground">
           <button type="button" onClick={() => openAuthModal('login')} className="text-primary font-semibold hover:opacity-80">
             Sign in
           </button>{' '}
           to access the admin dashboard.
         </p>
-      </main>
+      </div>
     );
   }
 
   if (access === 'forbidden') {
     return (
-      <main className="min-h-screen bg-background p-8">
+      <div className="p-8">
         <p className="text-rose-500 font-semibold">You don&apos;t have access to this page.</p>
-      </main>
+      </div>
     );
   }
 
   if (access === 'error') {
     return (
-      <main className="min-h-screen bg-background p-8">
+      <div className="p-8">
         <p className="text-rose-500">Could not load users. Try refreshing the page.</p>
-      </main>
+      </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen bg-background">
-      <AdminSidebar pendingCount={pendingCount} />
-
-      <div className="flex-1 min-w-0 px-5 md:px-8 lg:px-10 py-6 md:py-8">
+    <div className="px-5 md:px-8 lg:px-10 py-6 md:py-8">
         <div className="w-full max-w-[1100px] mx-auto">
           <div className="flex flex-wrap items-end justify-between gap-3 mb-6">
             <div>
@@ -263,6 +255,5 @@ export default function AdminUsersPage() {
           />
         </div>
       </div>
-    </div>
   );
 }

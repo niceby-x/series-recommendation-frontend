@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import DashboardSidebar from '../dashboard/DashboardSidebar';
+import DashboardShell from '../dashboard/DashboardShell';
 import DashboardHeader from '../dashboard/DashboardHeader';
 import type { SeriesCardData } from '../shared/SeriesCard';
 import MoodFilterChips from './MoodFilterChips';
@@ -66,11 +66,8 @@ export default function MoodsAuthed({
     selectedMood === 'all' ? sections : sections.filter((s) => s.moodFilterKey === selectedMood);
 
   return (
-    <div className="flex min-h-screen bg-background">
-      <DashboardSidebar />
-
-      <div className="flex-1 min-w-0 flex justify-center px-5 md:px-8 lg:px-10 py-6 md:py-8">
-        <div className="w-full max-w-[1400px]">
+    <DashboardShell>
+      <div className="w-full max-w-[1400px]">
           <DashboardHeader title="Moods" subtitle="How are you feeling today?" />
 
           <div className="grid grid-cols-1 xl:grid-cols-[1fr_336px] gap-8 items-start">
@@ -118,8 +115,7 @@ export default function MoodsAuthed({
               <MoodFeedbackCard />
             </aside>
           </div>
-        </div>
       </div>
-    </div>
+    </DashboardShell>
   );
 }
