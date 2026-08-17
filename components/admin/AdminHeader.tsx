@@ -124,7 +124,6 @@ export default function AdminHeader({ user }: { user: User | null }) {
 
   const displayName = user?.email ? user.email.split('@')[0] : 'Admin';
   const capitalizedName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
-  const initial = displayName.charAt(0).toUpperCase();
   const trimmedQuery = query.trim();
   const showDropdown = open && trimmedQuery.length >= MIN_QUERY_LENGTH;
 
@@ -197,21 +196,13 @@ export default function AdminHeader({ user }: { user: User | null }) {
             review, a new report, etc.) is backend work this task's scope
             doesn't cover. Bring it back once that source exists. */}
 
-        <div className="flex items-center gap-2.5 shrink-0">
-          <span className="flex items-center justify-center size-10 rounded-full bg-brand-gradient text-white text-sm font-semibold font-heading">
-            {initial}
-          </span>
-          <span className="hidden sm:block text-left">
-            <span className="block text-[13.5px] font-semibold text-foreground leading-tight">{capitalizedName}</span>
-            {/* D3-02: was a hardcoded "Super Admin" implying a tiered
-                permission system that doesn't exist -- the schema has a
-                single is_admin boolean, no tiers. Reaching this header at
-                all already means is_admin is true (that's the page's own
-                access gate), so "Admin" states exactly what's real without
-                implying a rank this schema can't back up. */}
-            <span className="block text-[11.5px] text-muted-foreground leading-tight">Admin</span>
-          </span>
-        </div>
+        {/* The avatar + name/"Admin" block that used to live here was
+            removed: it was a static, non-interactive duplicate of the
+            account control AdminShell now renders once for every admin
+            page (see AdminAccountMenu), which also carries the actual
+            Signed-in-as/Log-out dropdown. Keeping both meant two "who's
+            signed in" avatars on the dashboard specifically, one of which
+            didn't do anything. */}
       </div>
     </div>
   );

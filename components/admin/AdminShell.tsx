@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import AdminSidebar from './AdminSidebar';
+import AdminAccountMenu from './AdminAccountMenu';
 
 // Rendered once by app/admin/layout.tsx, wrapping every /admin/* route --
 // previously each of the ~12 admin page files duplicated its own
@@ -64,8 +65,18 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   return (
     <div className="min-h-screen bg-muted/40 p-2.5 md:p-4">
       <div className="mx-auto flex h-[calc(100vh-1.25rem)] md:h-[calc(100vh-2rem)] max-w-[1800px] overflow-hidden rounded-[20px] md:rounded-[26px] border border-border/60 bg-background shadow-[0_1px_2px_rgba(0,0,0,0.04),0_16px_40px_-16px_rgba(0,0,0,0.16)]">
-        <AdminSidebar pendingCount={pendingCount} email={email} />
-        <main className="flex-1 min-w-0 h-full overflow-y-auto">{children}</main>
+        <AdminSidebar pendingCount={pendingCount} />
+        <div className="flex-1 min-w-0 h-full flex flex-col">
+          {/* Single account control for the whole panel, mounted once here
+              so it's the same avatar + Signed-in-as/Log-out dropdown on
+              every admin page -- not just the dashboard, which used to be
+              the only place with a (non-functional) avatar of its own
+              while the sidebar's footer carried the real logout control. */}
+          <div className="flex items-center justify-end px-5 md:px-8 lg:px-10 py-3 border-b border-border/60 shrink-0">
+            <AdminAccountMenu email={email} />
+          </div>
+          <main className="flex-1 min-w-0 overflow-y-auto">{children}</main>
+        </div>
       </div>
     </div>
   );

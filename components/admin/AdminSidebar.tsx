@@ -1,11 +1,10 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, X, ArrowLeft, PanelLeftClose, PanelLeftOpen, ChevronDown, ChevronsUpDown, LogOut } from 'lucide-react';
+import { Menu, X, ArrowLeft, PanelLeftClose, PanelLeftOpen, ChevronDown } from 'lucide-react';
 import Logo from '../shared/Logo';
-import { supabase } from '../../lib/supabase';
 import { ADMIN_NAV_SECTIONS, ADMIN_DASHBOARD_ITEM, type AdminNavItem } from '../../lib/adminContent';
 
 const COLLAPSE_STORAGE_KEY = 'admin-sidebar-collapsed';
@@ -163,86 +162,6 @@ function NavSection({
   );
 }
 
-// Bottom-pinned account control -- avatar (+ name/email when expanded),
-// opens a small dropdown with who's signed in and a real Log out action.
-// Replaces the old static "built with love" card, which didn't do
-// anything; this does the one thing every admin eventually needs from
-// their own sidebar. Deliberately just Signed-in-as + Log out -- no
-// Billing/Upgrade-style entries, since nothing like that exists in this
-// app and a dropdown item that goes nowhere is exactly the "looks real,
-// isn't" pattern the D2 checklist spent a whole pass removing.
-function UserFooter({ email, collapsed }: { email: string | null; collapsed?: boolean }) {
-  const [open, setOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const initial = email ? email.charAt(0).toUpperCase() : 'A';
-  const displayName = email ? email.split('@')[0] : 'Admin';
-
-  async function handleLogout() {
-    await supabase.auth.signOut();
-    window.location.href = '/';
-  }
-
-  return (
-    <div className="relative mt-auto pt-3 border-t border-border/60" ref={menuRef}>
-      <button
-        type="button"
-        onClick={() => setOpen((prev) => !prev)}
-        title={collapsed ? (email ?? 'Account') : undefined}
-        className={
-          'w-full flex items-center gap-2.5 rounded-xl px-2 py-2 hover:bg-muted transition-colors ' +
-          (collapsed ? 'justify-center' : '')
-        }
-      >
-        <span className="flex items-center justify-center size-8 rounded-full bg-brand-gradient text-white text-[13px] font-semibold font-heading shrink-0">
-          {initial}
-        </span>
-        {!collapsed && (
-          <>
-            <span className="min-w-0 flex-1 text-left">
-              <span className="block text-[13px] font-semibold text-foreground truncate capitalize">{displayName}</span>
-              <span className="block text-[11.5px] text-muted-foreground truncate">{email ?? 'Not signed in'}</span>
-            </span>
-            <ChevronsUpDown className="size-3.5 text-muted-foreground/70 shrink-0" />
-          </>
-        )}
-      </button>
-
-      {open && (
-        <div
-          className={
-            'absolute z-20 w-64 bg-popover border border-border rounded-2xl shadow-xl overflow-hidden ' +
-            (collapsed ? 'bottom-0 left-full ml-2' : 'bottom-full left-0 mb-2')
-          }
-        >
-          <div className="px-3.5 py-3 border-b border-border">
-            <p className="text-[11px] text-muted-foreground">Signed in as</p>
-            <p className="text-[13px] font-medium text-popover-foreground truncate">{email ?? 'Not signed in'}</p>
-          </div>
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="w-full flex items-center gap-2.5 text-left px-3.5 py-2.5 text-sm text-popover-foreground hover:bg-muted transition-colors"
-          >
-            <LogOut className="size-4" />
-            Log out
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
-
 // D1-01: below the lg breakpoint, the aside below is `hidden` with no
 // substitute at all -- an admin on a tablet, or anyone who resizes a
 // window narrow, previously had no way to move between sections once it
@@ -257,13 +176,11 @@ function UserFooter({ email, collapsed }: { email: string | null; collapsed?: bo
 function NavContent({
   pathname,
   pendingCount,
-  email,
   collapsed,
   onNavigate,
 }: {
   pathname: string;
   pendingCount: number;
-  email: string | null;
   collapsed?: boolean;
   onNavigate?: () => void;
 }) {
@@ -290,18 +207,14 @@ function NavContent({
           />
         ))}
       </nav>
-
-      <UserFooter email={email} collapsed={collapsed} />
     </>
   );
 }
 
 export default function AdminSidebar({
   pendingCount,
-  email = null,
 }: {
   pendingCount: number;
-  email?: string | null;
 }) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -421,7 +334,7 @@ export default function AdminSidebar({
           </button>
         </div>
 
-        <NavContent pathname={pathname} pendingCount={pendingCount} email={email} collapsed={collapsed} />
+        <NavContent pathname={pathname} pendingCount={pendingCount} collapsed={collapsed} />
       </aside>
 
       {mobileOpen && (
@@ -461,7 +374,6 @@ export default function AdminSidebar({
             <NavContent
               pathname={pathname}
               pendingCount={pendingCount}
-              email={email}
               onNavigate={() => setMobileOpen(false)}
             />
           </aside>
