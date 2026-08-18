@@ -137,10 +137,21 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
               would need the bar repositioned as a sticky/absolute overlay
               inside the same scroll container as <main>, which touches how
               every admin page beneath it is laid out -- a bigger change
-              than this pass, flag it if that's actually what's wanted. */}
+              than this pass, flag it if that's actually what's wanted.
+
+              `relative z-30`: backdrop-blur-md forces this bar into its
+              own stacking context regardless of z-index, but left at
+              auto that context was still only z:0 -- level with any
+              `position: sticky` descendant elsewhere in <main> (sticky
+              always gets its own stacking context too), which could then
+              win the paint order over this bar's own dropdowns purely by
+              coming later in the DOM. No admin page has sticky content
+              today, but DashboardShell hit exactly this with
+              BloomJourneyCard's sticky aside, so the same explicit z-30
+              is applied here to not carry the same latent bug. */}
           <div
             className={
-              'flex items-center gap-3 px-5 md:px-8 lg:px-10 justify-between border-b border-border/40 shrink-0 bg-background/70 backdrop-blur-md shadow-[0_4px_12px_-6px_rgba(0,0,0,0.12)] ' +
+              'relative z-30 flex items-center gap-3 px-5 md:px-8 lg:px-10 justify-between border-b border-border/40 shrink-0 bg-background/70 backdrop-blur-md shadow-[0_4px_12px_-6px_rgba(0,0,0,0.12)] ' +
               (isDashboard ? 'py-2.5' : 'py-3')
             }
           >

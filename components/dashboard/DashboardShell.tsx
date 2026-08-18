@@ -37,6 +37,16 @@ function loadCollapsedPref(): boolean {
 // AdminShell's bar, for the same reason: it's a bar floating above
 // content, not an overlay directly on top of scrolling content, but reads
 // as elevated/frosted against the card's own background either way.
+// `relative z-30` on that bar: backdrop-blur-md already forces it into
+// its own stacking context (backdrop-filter does that regardless of
+// z-index), but with z-index left at auto that context was still only
+// z:0 -- the same "weight" as a `position: sticky` descendant elsewhere
+// on the page (sticky elements always get their own stacking context
+// too, per spec). BloomJourneyCard's `xl:sticky` aside on the homepage
+// is exactly that, and being later in the DOM than this bar, it was
+// winning the paint order and covering the account/notification
+// dropdowns. Explicit z-30 (still well under AuthModal's z-[100]) settles
+// that regardless of DOM order.
 // py-2.5 matches AdminShell's dashboard-page bar exactly (not the
 // py-3 used by AdminShell's non-dashboard pages) -- DashboardHeader
 // renders on every one of these 7 pages, same as AdminHeader only renders
@@ -84,7 +94,7 @@ export default function DashboardShell({
         <DashboardSidebar collapsed={collapsed} />
         <div className="flex-1 min-w-0 h-full flex flex-col">
           {header && (
-            <div className="flex items-center gap-3 px-5 md:px-8 lg:px-10 py-2.5 border-b border-border/40 shrink-0 bg-background/70 backdrop-blur-md shadow-[0_4px_12px_-6px_rgba(0,0,0,0.12)]">
+            <div className="relative z-30 flex items-center gap-3 px-5 md:px-8 lg:px-10 py-2.5 border-b border-border/40 shrink-0 bg-background/70 backdrop-blur-md shadow-[0_4px_12px_-6px_rgba(0,0,0,0.12)]">
               <button
                 type="button"
                 onClick={toggleCollapsed}
