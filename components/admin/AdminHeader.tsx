@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Search } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
 import FlowerIcon from '../shared/FlowerIcon';
+import AdminAccountMenu from './AdminAccountMenu';
 
 function getGreeting() {
   const hour = new Date().getHours();
@@ -196,13 +197,13 @@ export default function AdminHeader({ user }: { user: User | null }) {
             review, a new report, etc.) is backend work this task's scope
             doesn't cover. Bring it back once that source exists. */}
 
-        {/* The avatar + name/"Admin" block that used to live here was
-            removed: it was a static, non-interactive duplicate of the
-            account control AdminShell now renders once for every admin
-            page (see AdminAccountMenu), which also carries the actual
-            Signed-in-as/Log-out dropdown. Keeping both meant two "who's
-            signed in" avatars on the dashboard specifically, one of which
-            didn't do anything. */}
+        {/* The avatar + name/"Admin" block that used to live here was a
+            static, non-interactive duplicate of the account control. Now
+            replaced with AdminAccountMenu itself, right in this row so the
+            greeting, search, and account pill all sit on one line -- same
+            avatar+chevron pill style as the public site's DashboardHeader,
+            with the real Signed-in-as/Log-out dropdown behind it. */}
+        <AdminAccountMenu email={user?.email ?? null} />
       </div>
     </div>
   );

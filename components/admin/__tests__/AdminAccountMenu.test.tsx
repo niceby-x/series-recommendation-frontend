@@ -23,12 +23,13 @@ describe('AdminAccountMenu (unified account control)', () => {
     vi.unstubAllGlobals();
   });
 
-  it('renders the avatar initial and name derived from the signed-in email, closed by default', () => {
+  it('renders as a compact avatar+chevron pill, closed by default', () => {
     render(<AdminAccountMenu email="nice@blumi.dev" />);
 
     expect(screen.getByText('N')).toBeInTheDocument();
-    expect(screen.getByText('Nice')).toBeInTheDocument();
-    expect(screen.getByText('Admin')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /account menu for nice/i })).toBeInTheDocument();
+    // The name/role/email only live inside the dropdown, not the trigger.
+    expect(screen.queryByText('Nice')).not.toBeInTheDocument();
     expect(screen.queryByText(/signed in as/i)).not.toBeInTheDocument();
   });
 
@@ -36,15 +37,16 @@ describe('AdminAccountMenu (unified account control)', () => {
     render(<AdminAccountMenu email={null} />);
 
     expect(screen.getByText('A')).toBeInTheDocument();
-    expect(screen.getAllByText('Admin').length).toBe(2);
+    expect(screen.getByRole('button', { name: /account menu for admin/i })).toBeInTheDocument();
   });
 
-  it('opens a dropdown with the signed-in email and a working Log out action on click', async () => {
+  it('opens a dropdown with the name, signed-in email, and a working Log out action on click', async () => {
     render(<AdminAccountMenu email="nice@blumi.dev" />);
 
-    await userEvent.click(screen.getByRole('button', { name: /nice/i }));
+    await userEvent.click(screen.getByRole('button', { name: /account menu for nice/i }));
 
-    expect(await screen.findByText(/signed in as/i)).toBeInTheDocument();
+    expect(await screen.findByText('Nice')).toBeInTheDocument();
+    expect(screen.getByText(/signed in as/i)).toBeInTheDocument();
     expect(screen.getByText('nice@blumi.dev')).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: /log out/i }));
@@ -62,7 +64,7 @@ describe('AdminAccountMenu (unified account control)', () => {
       </div>
     );
 
-    await userEvent.click(screen.getByRole('button', { name: /nice/i }));
+    await userEvent.click(screen.getByRole('button', { name: /account menu for nice/i }));
     expect(await screen.findByText(/signed in as/i)).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: 'outside' }));

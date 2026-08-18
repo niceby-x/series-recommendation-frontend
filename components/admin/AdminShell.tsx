@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { supabase } from '../../lib/supabase';
 import AdminSidebar from './AdminSidebar';
 import AdminAccountMenu from './AdminAccountMenu';
@@ -61,20 +62,25 @@ function useAdminSession(): { pendingCount: number; email: string | null } {
 
 export default function AdminShell({ children }: { children: React.ReactNode }) {
   const { pendingCount, email } = useAdminSession();
+  // The dashboard (/admin) renders AdminAccountMenu itself, inline in
+  // AdminHeader's own greeting/search row -- so it lines up on the same
+  // line instead of sitting in a separate strip above it. Every other
+  // admin page doesn't have an equivalent row to slot into, so this shell
+  // still carries a slim account-menu strip for them; skip it here to
+  // avoid showing the control twice on the one page that already has it.
+  const pathname = usePathname();
+  const showShellAccountMenu = pathname !== '/admin';
 
   return (
     <div className="min-h-screen bg-muted/40 p-2.5 md:p-4">
       <div className="mx-auto flex h-[calc(100vh-1.25rem)] md:h-[calc(100vh-2rem)] max-w-[1800px] overflow-hidden rounded-[20px] md:rounded-[26px] border border-border/60 bg-background shadow-[0_1px_2px_rgba(0,0,0,0.04),0_16px_40px_-16px_rgba(0,0,0,0.16)]">
         <AdminSidebar pendingCount={pendingCount} />
         <div className="flex-1 min-w-0 h-full flex flex-col">
-          {/* Single account control for the whole panel, mounted once here
-              so it's the same avatar + Signed-in-as/Log-out dropdown on
-              every admin page -- not just the dashboard, which used to be
-              the only place with a (non-functional) avatar of its own
-              while the sidebar's footer carried the real logout control. */}
-          <div className="flex items-center justify-end px-5 md:px-8 lg:px-10 py-3 border-b border-border/60 shrink-0">
-            <AdminAccountMenu email={email} />
-          </div>
+          {showShellAccountMenu && (
+            <div className="flex items-center justify-end px-5 md:px-8 lg:px-10 py-3 border-b border-border/60 shrink-0">
+              <AdminAccountMenu email={email} />
+            </div>
+          )}
           <main className="flex-1 min-w-0 overflow-y-auto">{children}</main>
         </div>
       </div>

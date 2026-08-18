@@ -9,9 +9,10 @@ import { supabase } from '../../lib/supabase';
 // no dropdown) and a functional one with a Signed-in-as/Log-out dropdown
 // tucked into the sidebar footer (previously AdminSidebar's UserFooter,
 // only reachable via the sidebar/mobile drawer). Unified into this single
-// component, mounted once in AdminShell so every admin page -- not just
-// the dashboard -- gets the same control in the same place, and there's
-// only one identity/logout affordance instead of two.
+// component -- a compact avatar+chevron pill, matching the public site's
+// own DashboardHeader account button -- so there's one identity/logout
+// affordance, styled consistently with the rest of the app, instead of
+// two different-looking ones.
 export default function AdminAccountMenu({ email }: { email: string | null }) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -42,21 +43,27 @@ export default function AdminAccountMenu({ email }: { email: string | null }) {
         onClick={() => setOpen((prev) => !prev)}
         aria-haspopup="menu"
         aria-expanded={open}
-        className="flex items-center gap-2 rounded-full pl-1 pr-2 py-1 hover:bg-muted transition-colors"
+        aria-label={'Account menu for ' + capitalizedName}
+        className="flex items-center gap-1.5 rounded-full pl-1 pr-2.5 py-1 bg-card border border-border hover:bg-muted transition-colors"
       >
-        <span className="flex items-center justify-center w-8 h-8 rounded-full bg-brand-gradient text-white text-sm font-semibold font-heading shrink-0">
+        <span className="flex items-center justify-center size-8 rounded-full bg-brand-gradient text-white text-sm font-semibold font-heading">
           {initial}
         </span>
-        <span className="hidden sm:block text-left">
-          <span className="block text-[13.5px] font-semibold text-foreground leading-tight">{capitalizedName}</span>
-          <span className="block text-[11.5px] text-muted-foreground leading-tight">Admin</span>
-        </span>
-        <ChevronDown className="size-3.5 text-foreground/60 shrink-0" />
+        <ChevronDown className="size-3.5 text-foreground/60" />
       </button>
 
       {open && (
         <div className="absolute right-0 top-[calc(100%+8px)] z-30 w-64 bg-popover border border-border rounded-2xl shadow-xl overflow-hidden">
-          <div className="px-3.5 py-3 border-b border-border">
+          <div className="flex items-center gap-2.5 px-3.5 py-3 border-b border-border">
+            <span className="flex items-center justify-center size-9 rounded-full bg-brand-gradient text-white text-sm font-semibold font-heading shrink-0">
+              {initial}
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-[13.5px] font-semibold text-popover-foreground truncate">{capitalizedName}</span>
+              <span className="block text-[11.5px] text-muted-foreground leading-tight">Admin</span>
+            </span>
+          </div>
+          <div className="px-3.5 py-2.5 border-b border-border">
             <p className="text-[11px] text-muted-foreground">Signed in as</p>
             <p className="text-[13px] font-medium text-popover-foreground truncate">{email ?? 'Not signed in'}</p>
           </div>
