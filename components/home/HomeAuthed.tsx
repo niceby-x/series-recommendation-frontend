@@ -149,9 +149,8 @@ export default function HomeAuthed({
       : CURATOR_FEATURE_SYNOPSIS);
 
   return (
-    <DashboardShell>
+    <DashboardShell header={<DashboardHeader />}>
       <div className="w-full max-w-[1400px]">
-        <DashboardHeader />
 
           <div className="grid grid-cols-1 xl:grid-cols-[1fr_336px] gap-8 items-start">
             <main className="min-w-0">

@@ -155,9 +155,12 @@ export default function NewReleasesAuthed({ initialData }: { initialData: NewRel
     usePaginatedSeries([], null, filters);
 
   return (
-    <DashboardShell>
+    <DashboardShell
+      header={
+        <DashboardHeader title="New Releases" subtitle="Stay updated with the latest series and never miss a new story." />
+      }
+    >
       <div className="w-full max-w-[1400px]">
-          <DashboardHeader title="New Releases" subtitle="Stay updated with the latest series and never miss a new story." />
 
           <div className="grid grid-cols-1 xl:grid-cols-[1fr_336px] gap-8 items-start">
             <main className="min-w-0">

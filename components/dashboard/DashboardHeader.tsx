@@ -268,7 +268,7 @@ export default function DashboardHeader({ title, subtitle }: { title?: string; s
   const initial = displayName.charAt(0).toUpperCase();
 
   return (
-    <div className="flex flex-wrap sm:flex-nowrap sm:items-center sm:justify-between gap-x-5 gap-y-4 mb-8">
+    <div className="flex flex-wrap sm:flex-nowrap sm:items-center sm:justify-between gap-x-5 gap-y-4 w-full">
       {/* shrink-0: the greeting keeps its natural width instead of being
           squeezed by the search bar -- a name should never get crushed
           down to 1-2 letters. If the row is too tight for both, the
@@ -278,19 +278,19 @@ export default function DashboardHeader({ title, subtitle }: { title?: string; s
           (e.g. an email local-part with no spaces) on very narrow screens. */}
       <div className="min-w-0 shrink-0 max-w-full">
         {title ? (
-          <h1 className="font-heading text-[30px] md:text-[34px] leading-tight font-normal text-foreground min-w-0 truncate">
+          <h1 className="font-heading text-[18px] md:text-[20px] leading-tight font-normal text-foreground min-w-0 truncate">
             {title}
           </h1>
         ) : (
-          <h1 className="font-heading text-[30px] md:text-[34px] leading-tight font-normal text-foreground flex items-center gap-2 min-w-0">
-            <FlowerIcon className="size-6 text-primary shrink-0" />
+          <h1 className="font-heading text-[18px] md:text-[20px] leading-tight font-normal text-foreground flex items-center gap-1.5 min-w-0">
+            <FlowerIcon className="size-3.5 text-primary shrink-0" />
             <span className="min-w-0 truncate">
               {getGreeting()}, {capitalizedName}
             </span>
-            <FlowerIcon className="size-6 text-primary shrink-0" />
+            <FlowerIcon className="size-3.5 text-primary shrink-0" />
           </h1>
         )}
-        <p className="text-muted-foreground text-[15px] mt-1">{subtitle ?? 'What are we discovering tonight?'}</p>
+        <p className="text-muted-foreground text-[12px] mt-0.5">{subtitle ?? 'What are we discovering tonight?'}</p>
       </div>
 
       <div className="flex flex-wrap items-center gap-3 min-w-0 ml-auto sm:ml-0">

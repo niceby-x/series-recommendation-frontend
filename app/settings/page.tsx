@@ -61,9 +61,8 @@ export default function SettingsPage() {
   }
 
   return (
-    <DashboardShell>
+    <DashboardShell header={<DashboardHeader title="Settings" subtitle="Manage your BLumi experience." />}>
       <div className="w-full max-w-[720px]">
-          <DashboardHeader title="Settings" subtitle="Manage your BLumi experience." />
 
           <section className="rounded-[20px] bg-card border border-border/60 shadow-sm p-5 mb-6">
             <h2 className="font-heading text-[16px] font-normal text-foreground mb-4">Appearance</h2>

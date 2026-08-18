@@ -66,9 +66,8 @@ export default function MoodsAuthed({
     selectedMood === 'all' ? sections : sections.filter((s) => s.moodFilterKey === selectedMood);
 
   return (
-    <DashboardShell>
+    <DashboardShell header={<DashboardHeader title="Moods" subtitle="How are you feeling today?" />}>
       <div className="w-full max-w-[1400px]">
-          <DashboardHeader title="Moods" subtitle="How are you feeling today?" />
 
           <div className="grid grid-cols-1 xl:grid-cols-[1fr_336px] gap-8 items-start">
             <main className="min-w-0">

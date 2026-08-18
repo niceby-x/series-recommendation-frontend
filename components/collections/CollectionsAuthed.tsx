@@ -169,9 +169,8 @@ export default function CollectionsAuthed() {
 
   return (
     <>
-      <DashboardShell>
+      <DashboardShell header={<DashboardHeader title="Collections" subtitle="Organize and revisit your favorite series." />}>
         <div className="w-full max-w-[1400px]">
-          <DashboardHeader title="Collections" subtitle="Organize and revisit your favorite series." />
 
           <div className="grid grid-cols-1 xl:grid-cols-[1fr_336px] gap-8 items-start">
             <main className="min-w-0">

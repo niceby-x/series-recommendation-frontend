@@ -62,9 +62,8 @@ export default function TropesAuthed({ tropeMatches }: { tropeMatches: Record<st
   );
 
   return (
-    <DashboardShell>
+    <DashboardShell header={<DashboardHeader title="Tropes" subtitle="Find stories you love by your favorite tropes." />}>
       <div className="w-full max-w-[1400px]">
-          <DashboardHeader title="Tropes" subtitle="Find stories you love by your favorite tropes." />
 
           <div className="grid grid-cols-1 xl:grid-cols-[1fr_336px] gap-8 items-start">
             <main className="min-w-0">
