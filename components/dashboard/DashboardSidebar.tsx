@@ -58,12 +58,11 @@ const SETTINGS_ITEM = { href: '/settings', label: 'Settings', icon: Settings };
 
 const COLLAPSE_STORAGE_KEY = 'dashboard-sidebar-collapsed';
 
-// Read once via useState's lazy initializer (matches the pattern
-// DashboardHeader's own recent-searches already use, and the same
-// approach AdminSidebar's redesign uses) rather than a useEffect that
-// calls setState.
+// Deliberately always returns false on the server (no window there) --
+// see the comment on DashboardSidebar's own useState/useEffect pairing
+// below for why this can't be read synchronously via a lazy useState
+// initializer instead.
 function loadCollapsedPref(): boolean {
-  if (typeof window === 'undefined') return false;
   try {
     return window.localStorage.getItem(COLLAPSE_STORAGE_KEY) === '1';
   } catch {
@@ -193,7 +192,32 @@ function NavContent({
 export default function DashboardSidebar() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [collapsed, setCollapsed] = useState<boolean>(() => loadCollapsedPref());
+  // Always starts false (collapsed=false) so the very first client render
+  // matches the server's -- SSR has no window/localStorage and would
+  // otherwise disagree with a client that has a saved '1' preference,
+  // producing a hydration mismatch on the <aside>'s width/className
+  // (exactly the "Client"/"Server" className diff Next.js's hydration
+  // error surfaces). The real preference, once known, is applied in the
+  // effect below, right after mount -- same server/client tradeoff G2-02
+  // already accepts for auth state elsewhere in this app: a possible
+  // one-frame flash from expanded to collapsed for returning users who'd
+  // previously collapsed it, in exchange for a hydration-safe first paint
+  // for everyone.
+  const [collapsed, setCollapsed] = useState(false);
+
+  // Deliberately reads localStorage in an effect rather than during
+  // render: this is the one case react-hooks/set-state-in-effect exists
+  // to catch a mistake for, but doesn't apply to -- there's no way to
+  // know the saved preference during the server render (no window there)
+  // or during the client's first render (has to match the server's to
+  // avoid a hydration mismatch), so syncing it in afterward is the
+  // correct, not the accidental, place for this setState call.
+  useEffect(() => {
+    if (loadCollapsedPref()) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setCollapsed(true);
+    }
+  }, []);
 
   function isActive(href: string) {
     const path = href.split('?')[0];
