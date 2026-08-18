@@ -81,9 +81,22 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
       <div className="mx-auto flex h-[calc(100vh-1.25rem)] md:h-[calc(100vh-2rem)] max-w-[1800px] overflow-hidden rounded-[20px] md:rounded-[26px] border border-border/60 bg-background shadow-[0_1px_2px_rgba(0,0,0,0.04),0_16px_40px_-16px_rgba(0,0,0,0.16)]">
         <AdminSidebar pendingCount={pendingCount} />
         <div className="flex-1 min-w-0 h-full flex flex-col">
+          {/* Glassy treatment: translucent bg-background/70 + backdrop-blur-md
+              instead of a flat bg-background, softened border-border/40
+              instead of /60, plus a soft downward shadow so the bar reads
+              as floating above the content rather than flush with it. This
+              bar is a flex sibling above <main>, not an overlay on top of
+              it, so there's no scrolling content directly behind it to
+              blur -- the blur/opacity/shadow combo still reads as a
+              frosted, elevated panel against the card's own background
+              either way. True "content blurs as it scrolls under the bar"
+              would need the bar repositioned as a sticky/absolute overlay
+              inside the same scroll container as <main>, which touches how
+              every admin page beneath it is laid out -- a bigger change
+              than this pass, flag it if that's actually what's wanted. */}
           <div
             className={
-              'flex items-center px-5 md:px-8 lg:px-10 border-b border-border/60 shrink-0 ' +
+              'flex items-center px-5 md:px-8 lg:px-10 border-b border-border/40 shrink-0 bg-background/70 backdrop-blur-md shadow-[0_4px_12px_-6px_rgba(0,0,0,0.12)] ' +
               (isDashboard ? 'justify-between py-2.5' : 'justify-end py-3')
             }
           >
