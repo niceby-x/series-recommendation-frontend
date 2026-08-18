@@ -22,7 +22,7 @@ import DashboardSidebar from './DashboardSidebar';
 // plain layout wrapper with nothing to fetch.
 export default function DashboardShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-muted/40 p-2.5 md:p-4">
+    <div className="min-h-screen bg-[#FED9E8] p-2.5 md:p-4">
       <div className="mx-auto flex h-[calc(100vh-1.25rem)] md:h-[calc(100vh-2rem)] max-w-[1800px] overflow-hidden rounded-[20px] md:rounded-[26px] border border-border/60 bg-background shadow-[0_1px_2px_rgba(0,0,0,0.04),0_16px_40px_-16px_rgba(0,0,0,0.16)]">
         <DashboardSidebar />
         <main className="flex-1 min-w-0 flex justify-center px-5 md:px-8 lg:px-10 py-6 md:py-8 h-full overflow-y-auto">
