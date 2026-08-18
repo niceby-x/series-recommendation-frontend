@@ -56,6 +56,15 @@ describe('AdminAccountMenu (unified account control)', () => {
     });
   });
 
+  it('includes a Back to site link pointing at the public homepage', async () => {
+    render(<AdminAccountMenu email="nice@blumi.dev" />);
+
+    await userEvent.click(screen.getByRole('button', { name: /account menu for nice/i }));
+
+    const backLink = await screen.findByRole('link', { name: /back to site/i });
+    expect(backLink).toHaveAttribute('href', '/');
+  });
+
   it('closes the dropdown on an outside click', async () => {
     render(
       <div>

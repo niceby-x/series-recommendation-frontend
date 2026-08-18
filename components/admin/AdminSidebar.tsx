@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, X, ArrowLeft, PanelLeftClose, PanelLeftOpen, ChevronDown } from 'lucide-react';
+import { Menu, X, PanelLeftClose, PanelLeftOpen, ChevronDown } from 'lucide-react';
 import Logo from '../shared/Logo';
 import { ADMIN_NAV_SECTIONS, ADMIN_DASHBOARD_ITEM, type AdminNavItem } from '../../lib/adminContent';
 
@@ -307,18 +307,14 @@ export default function AdminSidebar({
           (collapsed ? 'w-[76px]' : 'w-[260px]')
         }
       >
-        <Link
-          href="/"
-          title="Back to site"
-          className={
-            'flex items-center gap-2 px-2 py-2 mb-1 rounded-lg text-[12.5px] font-semibold text-foreground/55 hover:bg-muted hover:text-foreground transition-colors ' +
-            (collapsed ? 'justify-center' : '')
-          }
-        >
-          <ArrowLeft className="size-4 shrink-0" />
-          {!collapsed && <span>Back to site</span>}
-        </Link>
-
+        {/* "Back to site" used to be its own link here (and again in the
+            mobile drawer below) -- moved into AdminAccountMenu's dropdown
+            instead, since it's an account-level action like Log out, not
+            a nav destination, and belongs next to that rather than
+            competing with the real nav items for space up top. The
+            account menu is always visible (it's in AdminShell's top bar,
+            not gated behind lg:flex like this rail), so it's still
+            reachable at every viewport width. */}
         <div className={'px-1 mb-1 flex items-start ' + (collapsed ? 'flex-col gap-2' : 'justify-between')}>
           <div className={collapsed ? 'w-full flex justify-center' : ''}>
             <Logo variant={collapsed ? 'icon' : 'full'} theme="brand" size={30} />
@@ -368,15 +364,6 @@ export default function AdminSidebar({
                 <X className="size-4.5" />
               </button>
             </div>
-
-            <Link
-              href="/"
-              onClick={() => setMobileOpen(false)}
-              className="flex items-center gap-2 px-2 py-2 mb-2 rounded-lg text-[12.5px] font-semibold text-foreground/55 hover:bg-muted hover:text-foreground transition-colors"
-            >
-              <ArrowLeft className="size-4 shrink-0" />
-              <span>Back to site</span>
-            </Link>
 
             <NavContent
               pathname={pathname}
