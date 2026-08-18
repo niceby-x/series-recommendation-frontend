@@ -110,3 +110,41 @@ describe('AdminSidebar mobile navigation (D1-01)', () => {
     });
   });
 });
+
+const COLLAPSE_STORAGE_KEY = 'admin-sidebar-collapsed';
+
+// Regression test for a hydration mismatch: the sidebar's collapsed width
+// used to be read straight out of localStorage via useState's lazy
+// initializer, which returns different values on the server (no window,
+// always false) vs. a client with a saved '1' preference (true) -- same
+// class of bug already fixed once for the public DashboardSidebar's
+// identical pattern (see components/dashboard/__tests__/DashboardSidebar.
+// test.tsx). The fix always starts at the server's default (expanded)
+// and syncs the real preference in an effect after mount.
+describe('AdminSidebar collapse preference (hydration-safe read)', () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
+  afterEach(() => {
+    window.localStorage.clear();
+  });
+
+  it('applies a saved collapsed preference shortly after mount', async () => {
+    window.localStorage.setItem(COLLAPSE_STORAGE_KEY, '1');
+
+    render(<AdminSidebar pendingCount={0} />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('link', { name: /dashboard/i }).closest('aside')).toHaveClass('w-[76px]');
+    });
+  });
+
+  it('stays expanded when nothing is saved', async () => {
+    render(<AdminSidebar pendingCount={0} />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('link', { name: /dashboard/i }).closest('aside')).toHaveClass('w-[260px]');
+    });
+  });
+});

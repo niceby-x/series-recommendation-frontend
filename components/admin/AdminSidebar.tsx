@@ -9,11 +9,6 @@ import { ADMIN_NAV_SECTIONS, ADMIN_DASHBOARD_ITEM, type AdminNavItem } from '../
 
 const COLLAPSE_STORAGE_KEY = 'admin-sidebar-collapsed';
 
-// Read once via useState's lazy initializer (matches the pattern
-// DashboardHeader's recent-searches already use) rather than a useEffect
-// that calls setState -- the guard keeps this SSR-safe, and initializing
-// state this way avoids the extra render an effect-driven setState would
-// cost.
 function loadCollapsedPref(): boolean {
   if (typeof window === 'undefined') return false;
   try {
@@ -219,9 +214,21 @@ export default function AdminSidebar({
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  // Desktop-only collapse state, read once at init from localStorage (see
-  // loadCollapsedPref above) so there's no extra render/effect involved.
-  const [collapsed, setCollapsed] = useState<boolean>(() => loadCollapsedPref());
+  // Desktop-only collapse state. Starts false (matching the server's
+  // render, since there's no window there) and is only updated to the
+  // saved preference in an effect after mount -- reading localStorage
+  // during the lazy useState initializer looks appealing (skips an extra
+  // render) but runs on the client's first render too, which can return
+  // true there while the server rendered false, producing a hydration
+  // mismatch on the sidebar's own width/className. Same fix already
+  // applied to the public DashboardSidebar's identical pattern.
+  const [collapsed, setCollapsed] = useState(false);
+  useEffect(() => {
+    if (loadCollapsedPref()) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setCollapsed(true);
+    }
+  }, []);
 
   function toggleCollapsed() {
     setCollapsed((prev) => {

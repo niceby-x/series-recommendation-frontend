@@ -1,4 +1,3 @@
-import AdminHeader from '../../components/admin/AdminHeader';
 import StatCard from '../../components/admin/StatCard';
 import EditorialQueueTable, { type QueueRow } from '../../components/admin/EditorialQueueTable';
 import RecentlyPublishedCard from '../../components/admin/RecentlyPublishedCard';
@@ -213,7 +212,13 @@ export default async function AdminDashboardPage() {
   return (
     <div className="px-5 md:px-8 lg:px-10 py-6 md:py-8">
         <div className="w-full max-w-[1500px] mx-auto">
-          <AdminHeader user={user} />
+          {/* The greeting/search/account row used to render here as
+              <AdminHeader />, but that meant it scrolled away with the
+              rest of the page content -- every other admin page's
+              equivalent top bar lives in AdminShell, above the scrollable
+              area, and stays put. AdminHeader is now mounted there instead
+              (see AdminShell's isDashboard branch) so this page is exactly
+              the stat cards down. */}
 
           <div className="flex flex-wrap gap-4 mb-8">
             {STAT_CARDS.map((card) => (

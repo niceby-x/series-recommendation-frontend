@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Search } from 'lucide-react';
-import type { User } from '@supabase/supabase-js';
 import FlowerIcon from '../shared/FlowerIcon';
 import AdminAccountMenu from './AdminAccountMenu';
 
@@ -40,7 +39,15 @@ const MIN_QUERY_LENGTH = 2;
 const SEARCH_DEBOUNCE_MS = 300;
 const MAX_RESULTS = 6;
 
-export default function AdminHeader({ user }: { user: User | null }) {
+// Mounted by AdminShell inside its top-bar strip (see the isDashboard
+// branch there), not by the dashboard page itself -- that strip sits
+// above the scrollable <main>, so this row gets the same sticky-at-top
+// behavior every other admin page's top bar already has for free, rather
+// than scrolling away with the stat cards/queue table beneath it. Takes
+// `email` (not the full Supabase `User`) since that's what AdminShell's
+// own session fetch already has on hand, the same value AdminAccountMenu
+// receives elsewhere.
+export default function AdminHeader({ email }: { email: string | null }) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SeriesSearchResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -123,21 +130,21 @@ export default function AdminHeader({ user }: { user: User | null }) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  const displayName = user?.email ? user.email.split('@')[0] : 'Admin';
+  const displayName = email ? email.split('@')[0] : 'Admin';
   const capitalizedName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
   const trimmedQuery = query.trim();
   const showDropdown = open && trimmedQuery.length >= MIN_QUERY_LENGTH;
 
   return (
-    <div className="flex flex-wrap sm:flex-nowrap sm:items-center sm:justify-between gap-x-5 gap-y-4 mb-8">
+    <div className="flex flex-wrap sm:flex-nowrap sm:items-center sm:justify-between gap-x-5 gap-y-4 w-full">
       <div className="min-w-0 shrink-0 max-w-full">
-        <h1 className="font-heading text-[26px] md:text-[30px] leading-tight font-normal text-foreground flex items-center gap-2 min-w-0">
+        <h1 className="font-heading text-[18px] md:text-[20px] leading-tight font-normal text-foreground flex items-center gap-1.5 min-w-0">
           <span className="min-w-0 truncate">
             {getGreeting()}, {capitalizedName}
           </span>
-          <FlowerIcon className="size-5 text-primary shrink-0" />
+          <FlowerIcon className="size-3.5 text-primary shrink-0" />
         </h1>
-        <p className="text-muted-foreground text-[14px] mt-1">Here&apos;s what&apos;s happening with BLumi today.</p>
+        <p className="text-muted-foreground text-[12px] mt-0.5">Here&apos;s what&apos;s happening with BLumi today.</p>
       </div>
 
       <div className="flex items-center gap-3 min-w-0 ml-auto sm:ml-0">
@@ -203,7 +210,7 @@ export default function AdminHeader({ user }: { user: User | null }) {
             greeting, search, and account pill all sit on one line -- same
             avatar+chevron pill style as the public site's DashboardHeader,
             with the real Signed-in-as/Log-out dropdown behind it. */}
-        <AdminAccountMenu email={user?.email ?? null} />
+        <AdminAccountMenu email={email} />
       </div>
     </div>
   );
