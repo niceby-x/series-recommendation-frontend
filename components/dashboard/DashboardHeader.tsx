@@ -283,7 +283,6 @@ export default function DashboardHeader({ title, subtitle }: { title?: string; s
           </h1>
         ) : (
           <h1 className="font-heading text-[18px] md:text-[20px] leading-tight font-normal text-foreground flex items-center gap-1.5 min-w-0">
-            <FlowerIcon className="size-3.5 text-primary shrink-0" />
             <span className="min-w-0 truncate">
               {getGreeting()}, {capitalizedName}
             </span>

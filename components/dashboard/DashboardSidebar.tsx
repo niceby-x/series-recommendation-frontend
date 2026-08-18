@@ -19,14 +19,18 @@ import {
   Menu,
   X,
   ChevronDown,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from 'lucide-react';
 import Logo from '../shared/Logo';
 
 // Every link here honestly points at what's real today. Moods, Tropes,
 // Collections, and New Releases are all real pages now (app/moods/page.tsx,
 // app/tropes/page.tsx, app/collections/page.tsx, app/new-releases/page.tsx).
-// Settings (pinned to the bottom, see below) is real too, if minimal --
-// see H4-04 / app/settings/page.tsx.
+// Settings (see H4-04 / app/settings/page.tsx) lives in My Library below,
+// alongside the other regular nav rows -- it briefly moved into
+// DashboardHeader's account dropdown instead, but that made it feel
+// buried compared to sitting with the rest of the icon list here.
 const HOME_ITEM = { href: '/', label: 'Home', icon: Home };
 
 const NAV_SECTIONS: { label: string; items: { href: string; label: string; icon: typeof Home }[] }[] = [
@@ -48,11 +52,10 @@ const NAV_SECTIONS: { label: string; items: { href: string; label: string; icon:
       { href: '/my-list', label: 'Favorites', icon: Heart },
       { href: '/my-list', label: 'History', icon: History },
       { href: '/my-list', label: 'Notes', icon: NotebookPen },
+      { href: '/settings', label: 'Settings', icon: Settings },
     ],
   },
 ];
-
-const SETTINGS_ITEM = { href: '/settings', label: 'Settings', icon: Settings };
 
 // Mirrors components/admin/AdminSidebar.tsx's redesign: click-to-toggle
 // collapse to a 76px icon rail (replacing the old hover-to-expand rail --
@@ -143,10 +146,12 @@ function NavContent({
   isActive,
   collapsed,
   onNavigate,
+  onToggleCollapse,
 }: {
   isActive: (href: string) => boolean;
   collapsed?: boolean;
   onNavigate?: () => void;
+  onToggleCollapse?: () => void;
 }) {
   return (
     <>
@@ -166,14 +171,46 @@ function NavContent({
         ))}
       </nav>
 
-      <div className="pt-3 mt-auto border-t border-border/60">
-        <NavRow item={SETTINGS_ITEM} active={isActive(SETTINGS_ITEM.href)} collapsed={collapsed} onNavigate={onNavigate} />
-      </div>
+      {/* Collapse toggle, pinned to the bottom below the nav list.
+          Settings used to sit in this exact spot, then moved briefly to
+          the account dropdown, and now lives back in My Library above --
+          this slot stayed the toggle's home through both of those moves.
+          Only passed by the desktop <aside> below (the mobile drawer
+          omits onToggleCollapse entirely -- it's a full overlay
+          opened/closed by its own X button, collapsing it isn't a
+          meaningful state). */}
+      {onToggleCollapse && (
+        <div className="pt-3 mt-auto border-t border-border/60">
+          <button
+            type="button"
+            onClick={onToggleCollapse}
+            title={collapsed ? 'Expand navigation' : 'Collapse navigation'}
+            aria-label={collapsed ? 'Expand navigation' : 'Collapse navigation'}
+            className={
+              'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13.5px] font-semibold transition-colors text-foreground/70 hover:bg-muted hover:text-foreground ' +
+              (collapsed ? 'justify-center' : '')
+            }
+          >
+            {collapsed ? (
+              <PanelLeftOpen className="size-4.5 shrink-0" />
+            ) : (
+              <PanelLeftClose className="size-4.5 shrink-0" />
+            )}
+            {!collapsed && <span className="flex-1 text-left">Collapse</span>}
+          </button>
+        </div>
+      )}
     </>
   );
 }
 
-export default function DashboardSidebar({ collapsed }: { collapsed: boolean }) {
+export default function DashboardSidebar({
+  collapsed,
+  onToggleCollapse,
+}: {
+  collapsed: boolean;
+  onToggleCollapse: () => void;
+}) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -239,7 +276,7 @@ export default function DashboardSidebar({ collapsed }: { collapsed: boolean }) 
           </Link>
         </div>
 
-        <NavContent isActive={isActive} collapsed={collapsed} />
+        <NavContent isActive={isActive} collapsed={collapsed} onToggleCollapse={onToggleCollapse} />
       </aside>
 
       {mobileOpen && (

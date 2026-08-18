@@ -9,26 +9,25 @@ vi.mock('next/navigation', () => ({
 
 const COLLAPSE_STORAGE_KEY = 'dashboard-sidebar-collapsed';
 
+beforeEach(() => {
+  window.localStorage.clear();
+});
+
+afterEach(() => {
+  window.localStorage.clear();
+});
+
 // Regression test for a hydration mismatch: the sidebar's collapsed width
 // used to be read straight out of localStorage via DashboardSidebar's own
 // useState lazy initializer, which returns different values on the server
 // (no window, always false) vs. a client with a saved '1' preference
-// (true). That state (and the toggle button driving it) has since moved
-// up into DashboardShell -- see DashboardShell.tsx -- since the button now
-// lives beside `header` in the top bar, not inside DashboardSidebar's own
-// header row, so this is the right place for these tests now (moved from
-// DashboardSidebar.test.tsx). The fix always starts at the server's
-// default (expanded) and syncs the real preference in an effect after
-// mount.
+// (true). That state lives up in DashboardShell -- see DashboardShell.tsx
+// -- and is passed down as the `collapsed` prop, with the toggle button
+// itself now rendered inside DashboardSidebar's own pinned bottom slot
+// (the one Settings used to occupy). The fix always starts at the
+// server's default (expanded) and syncs the real preference in an effect
+// after mount.
 describe('DashboardShell collapse preference (hydration-safe read)', () => {
-  beforeEach(() => {
-    window.localStorage.clear();
-  });
-
-  afterEach(() => {
-    window.localStorage.clear();
-  });
-
   it('applies a saved collapsed preference shortly after mount', async () => {
     window.localStorage.setItem(COLLAPSE_STORAGE_KEY, '1');
 
@@ -48,8 +47,8 @@ describe('DashboardShell collapse preference (hydration-safe read)', () => {
   });
 });
 
-describe('DashboardShell collapse toggle (beside the header in the top bar)', () => {
-  it('collapses and expands the sidebar when the top-bar toggle button is clicked', async () => {
+describe('DashboardShell collapse toggle (pinned bottom slot in DashboardSidebar)', () => {
+  it('collapses and expands the sidebar when the pinned toggle button is clicked', async () => {
     render(<DashboardShell header={<div>Header</div>}>content</DashboardShell>);
 
     const toggle = screen.getByRole('button', { name: /collapse navigation/i });
@@ -72,9 +71,9 @@ describe('DashboardShell collapse toggle (beside the header in the top bar)', ()
     expect(window.localStorage.getItem(COLLAPSE_STORAGE_KEY)).toBe('1');
   });
 
-  it('does not render the toggle button when no header is passed', () => {
+  it('still renders the toggle button when no header is passed -- it lives in the sidebar, not the top bar', () => {
     render(<DashboardShell>content</DashboardShell>);
 
-    expect(screen.queryByRole('button', { name: /collapse navigation/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /collapse navigation/i })).toBeInTheDocument();
   });
 });

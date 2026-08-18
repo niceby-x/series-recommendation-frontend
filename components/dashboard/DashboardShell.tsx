@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import DashboardSidebar from './DashboardSidebar';
 
 const COLLAPSE_STORAGE_KEY = 'dashboard-sidebar-collapsed';
@@ -55,11 +54,11 @@ function loadCollapsedPref(): boolean {
 // sized down to match AdminHeader's (18px/20px title, 12px subtitle) for
 // the same reason -- see DashboardHeader.tsx.
 //
-// The desktop collapse state (and the toggle button that flips it) also
-// moved here from DashboardSidebar's own header row, mirroring the same
-// move on AdminShell/AdminSidebar -- it's owned here since it now drives
-// both the sidebar's width AND the button rendered beside `header` below,
-// rather than living only inside the sidebar itself.
+// The desktop collapse state lives here (drives the sidebar's width), but
+// the toggle button itself now renders inside DashboardSidebar's own
+// pinned bottom slot -- the one Settings used to occupy before Settings
+// moved into DashboardHeader's account dropdown. It used to sit in this
+// top bar instead, to the left of `header`.
 export default function DashboardShell({
   header,
   children,
@@ -91,18 +90,10 @@ export default function DashboardShell({
   return (
     <div className="min-h-screen bg-[#FED9E8] p-2.5 md:p-4">
       <div className="mx-auto flex h-[calc(100vh-1.25rem)] md:h-[calc(100vh-2rem)] max-w-[1800px] overflow-hidden rounded-[20px] md:rounded-[26px] border border-border/60 bg-background shadow-[0_1px_2px_rgba(0,0,0,0.04),0_16px_40px_-16px_rgba(0,0,0,0.16)]">
-        <DashboardSidebar collapsed={collapsed} />
+        <DashboardSidebar collapsed={collapsed} onToggleCollapse={toggleCollapsed} />
         <div className="flex-1 min-w-0 h-full flex flex-col">
           {header && (
             <div className="relative z-30 flex items-center gap-3 px-5 md:px-8 lg:px-10 py-2.5 border-b border-border/40 shrink-0 bg-background/70 backdrop-blur-md shadow-[0_4px_12px_-6px_rgba(0,0,0,0.12)]">
-              <button
-                type="button"
-                onClick={toggleCollapsed}
-                aria-label={collapsed ? 'Expand navigation' : 'Collapse navigation'}
-                className="hidden lg:flex items-center justify-center size-8 rounded-full text-foreground/50 hover:text-primary hover:bg-muted transition-colors shrink-0"
-              >
-                {collapsed ? <PanelLeftOpen className="size-4" /> : <PanelLeftClose className="size-4" />}
-              </button>
               {header}
             </div>
           )}
