@@ -268,7 +268,7 @@ export default function DashboardHeader({ title, subtitle }: { title?: string; s
   const initial = displayName.charAt(0).toUpperCase();
 
   return (
-    <div className="flex flex-wrap sm:flex-nowrap sm:items-center sm:justify-between gap-x-5 gap-y-4 w-full">
+    <div className="flex flex-wrap sm:flex-nowrap sm:items-center sm:justify-between gap-x-5 gap-y-4 flex-1 min-w-0">
       {/* shrink-0: the greeting keeps its natural width instead of being
           squeezed by the search bar -- a name should never get crushed
           down to 1-2 letters. If the row is too tight for both, the

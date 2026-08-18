@@ -21,7 +21,7 @@ describe('AdminSidebar mobile navigation (D1-01)', () => {
   });
 
   it('renders a mobile menu trigger that opens a drawer with the same nav items as the desktop sidebar', async () => {
-    render(<AdminSidebar pendingCount={3} />);
+    render(<AdminSidebar pendingCount={3} collapsed={false} />);
 
     // Not open yet -- only the desktop aside's nav items exist, and the
     // drawer's close button shouldn't be in the document.
@@ -38,7 +38,7 @@ describe('AdminSidebar mobile navigation (D1-01)', () => {
   });
 
   it('locks body scroll while open and restores it on close', async () => {
-    render(<AdminSidebar pendingCount={0} />);
+    render(<AdminSidebar pendingCount={0} collapsed={false} />);
 
     expect(document.body.style.overflow).toBe('');
 
@@ -54,7 +54,7 @@ describe('AdminSidebar mobile navigation (D1-01)', () => {
   });
 
   it('closes when a nav link inside the drawer is clicked', async () => {
-    render(<AdminSidebar pendingCount={0} />);
+    render(<AdminSidebar pendingCount={0} collapsed={false} />);
 
     await userEvent.click(screen.getByRole('button', { name: /open admin navigation/i }));
     const drawerCloseButton = await screen.findByRole('button', { name: /close admin navigation/i });
@@ -71,7 +71,7 @@ describe('AdminSidebar mobile navigation (D1-01)', () => {
   });
 
   it('closes on Escape', async () => {
-    render(<AdminSidebar pendingCount={0} />);
+    render(<AdminSidebar pendingCount={0} collapsed={false} />);
 
     await userEvent.click(screen.getByRole('button', { name: /open admin navigation/i }));
     expect(await screen.findByRole('button', { name: /close admin navigation/i })).toBeInTheDocument();
@@ -84,7 +84,7 @@ describe('AdminSidebar mobile navigation (D1-01)', () => {
   });
 
   it('closes when the backdrop is clicked', async () => {
-    const { container } = render(<AdminSidebar pendingCount={0} />);
+    const { container } = render(<AdminSidebar pendingCount={0} collapsed={false} />);
 
     await userEvent.click(screen.getByRole('button', { name: /open admin navigation/i }));
     expect(await screen.findByRole('button', { name: /close admin navigation/i })).toBeInTheDocument();
@@ -99,7 +99,7 @@ describe('AdminSidebar mobile navigation (D1-01)', () => {
   });
 
   it('shows the pending-count badge on the same nav item in both the desktop aside and the drawer', async () => {
-    render(<AdminSidebar pendingCount={7} />);
+    render(<AdminSidebar pendingCount={7} collapsed={false} />);
 
     expect(screen.getAllByText('7').length).toBeGreaterThanOrEqual(1);
 
@@ -109,42 +109,16 @@ describe('AdminSidebar mobile navigation (D1-01)', () => {
       expect(screen.getAllByText('7').length).toBeGreaterThanOrEqual(2);
     });
   });
-});
 
-const COLLAPSE_STORAGE_KEY = 'admin-sidebar-collapsed';
+  it('renders at the collapsed width when passed collapsed', () => {
+    render(<AdminSidebar pendingCount={0} collapsed={true} />);
 
-// Regression test for a hydration mismatch: the sidebar's collapsed width
-// used to be read straight out of localStorage via useState's lazy
-// initializer, which returns different values on the server (no window,
-// always false) vs. a client with a saved '1' preference (true) -- same
-// class of bug already fixed once for the public DashboardSidebar's
-// identical pattern (see components/dashboard/__tests__/DashboardSidebar.
-// test.tsx). The fix always starts at the server's default (expanded)
-// and syncs the real preference in an effect after mount.
-describe('AdminSidebar collapse preference (hydration-safe read)', () => {
-  beforeEach(() => {
-    window.localStorage.clear();
+    expect(screen.getByRole('link', { name: /dashboard/i }).closest('aside')).toHaveClass('w-[76px]');
   });
 
-  afterEach(() => {
-    window.localStorage.clear();
-  });
+  it('renders at the expanded width when passed collapsed=false', () => {
+    render(<AdminSidebar pendingCount={0} collapsed={false} />);
 
-  it('applies a saved collapsed preference shortly after mount', async () => {
-    window.localStorage.setItem(COLLAPSE_STORAGE_KEY, '1');
-
-    render(<AdminSidebar pendingCount={0} />);
-
-    await waitFor(() => {
-      expect(screen.getByRole('link', { name: /dashboard/i }).closest('aside')).toHaveClass('w-[76px]');
-    });
-  });
-
-  it('stays expanded when nothing is saved', async () => {
-    render(<AdminSidebar pendingCount={0} />);
-
-    await waitFor(() => {
-      expect(screen.getByRole('link', { name: /dashboard/i }).closest('aside')).toHaveClass('w-[260px]');
-    });
+    expect(screen.getByRole('link', { name: /dashboard/i }).closest('aside')).toHaveClass('w-[260px]');
   });
 });

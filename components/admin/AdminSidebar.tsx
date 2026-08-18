@@ -3,20 +3,9 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, X, PanelLeftClose, PanelLeftOpen, ChevronDown } from 'lucide-react';
+import { Menu, X, ChevronDown } from 'lucide-react';
 import Logo from '../shared/Logo';
 import { ADMIN_NAV_SECTIONS, ADMIN_DASHBOARD_ITEM, type AdminNavItem } from '../../lib/adminContent';
-
-const COLLAPSE_STORAGE_KEY = 'admin-sidebar-collapsed';
-
-function loadCollapsedPref(): boolean {
-  if (typeof window === 'undefined') return false;
-  try {
-    return window.localStorage.getItem(COLLAPSE_STORAGE_KEY) === '1';
-  } catch {
-    return false;
-  }
-}
 
 // Desktop rail can now be toggled between the full 260px layout (labels,
 // section headers, badge counts) and a 76px icon-only rail -- same
@@ -208,40 +197,19 @@ function NavContent({
 
 export default function AdminSidebar({
   pendingCount,
+  collapsed,
 }: {
   pendingCount: number;
+  // Now owned by AdminShell (single source of truth, since the toggle
+  // button that flips it lives in the top bar, not here anymore -- see
+  // AdminShell.tsx). This component is purely presentational about the
+  // value: it renders at the matching width and passes it down to
+  // NavContent for the icon-only layout, but no longer reads localStorage
+  // or persists a preference itself.
+  collapsed: boolean;
 }) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
-
-  // Desktop-only collapse state. Starts false (matching the server's
-  // render, since there's no window there) and is only updated to the
-  // saved preference in an effect after mount -- reading localStorage
-  // during the lazy useState initializer looks appealing (skips an extra
-  // render) but runs on the client's first render too, which can return
-  // true there while the server rendered false, producing a hydration
-  // mismatch on the sidebar's own width/className. Same fix already
-  // applied to the public DashboardSidebar's identical pattern.
-  const [collapsed, setCollapsed] = useState(false);
-  useEffect(() => {
-    if (loadCollapsedPref()) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setCollapsed(true);
-    }
-  }, []);
-
-  function toggleCollapsed() {
-    setCollapsed((prev) => {
-      const next = !prev;
-      try {
-        window.localStorage.setItem(COLLAPSE_STORAGE_KEY, next ? '1' : '0');
-      } catch {
-        // Private browsing / storage quota -- the toggle still works for
-        // this session, it just won't persist across visits.
-      }
-      return next;
-    });
-  }
 
   // Closing on route change, same "adjust state during render" pattern
   // Navbar.tsx uses for its own mobileMenuOpen reset -- otherwise the
@@ -314,27 +282,16 @@ export default function AdminSidebar({
             competing with the real nav items for space up top. The
             account menu is always visible (it's in AdminShell's top bar,
             not gated behind lg:flex like this rail), so it's still
-            reachable at every viewport width. */}
-        <div className={'px-1 mb-1 flex items-start ' + (collapsed ? 'flex-col gap-2' : 'justify-between')}>
-          <div className={collapsed ? 'w-full flex justify-center' : ''}>
-            <Logo variant={collapsed ? 'icon' : 'full'} theme="brand" size={30} />
-            {!collapsed && (
-              <span className="inline-block mt-2 text-[10px] font-bold uppercase tracking-wide bg-brand-blush/40 text-[#8A4A66] px-2 py-1 rounded-full">
-                Admin
-              </span>
-            )}
-          </div>
-          <button
-            type="button"
-            onClick={toggleCollapsed}
-            aria-label={collapsed ? 'Expand admin navigation' : 'Collapse admin navigation'}
-            className={
-              'flex items-center justify-center size-7 rounded-full text-foreground/50 hover:text-primary hover:bg-muted transition-colors shrink-0 ' +
-              (collapsed ? '' : 'mt-1')
-            }
-          >
-            {collapsed ? <PanelLeftOpen className="size-4" /> : <PanelLeftClose className="size-4" />}
-          </button>
+            reachable at every viewport width. The collapse toggle that
+            used to live in this row too has moved to AdminShell's top
+            bar, beside the page heading -- see AdminShell.tsx. */}
+        <div className={collapsed ? 'px-1 mb-1 w-full flex justify-center' : 'px-1 mb-1'}>
+          <Logo variant={collapsed ? 'icon' : 'full'} theme="brand" size={30} />
+          {!collapsed && (
+            <span className="inline-block mt-2 text-[10px] font-bold uppercase tracking-wide bg-brand-blush/40 text-[#8A4A66] px-2 py-1 rounded-full">
+              Admin
+            </span>
+          )}
         </div>
 
         <NavContent pathname={pathname} pendingCount={pendingCount} collapsed={collapsed} />

@@ -18,8 +18,6 @@ import {
   Settings,
   Menu,
   X,
-  PanelLeftClose,
-  PanelLeftOpen,
   ChevronDown,
 } from 'lucide-react';
 import Logo from '../shared/Logo';
@@ -55,20 +53,6 @@ const NAV_SECTIONS: { label: string; items: { href: string; label: string; icon:
 ];
 
 const SETTINGS_ITEM = { href: '/settings', label: 'Settings', icon: Settings };
-
-const COLLAPSE_STORAGE_KEY = 'dashboard-sidebar-collapsed';
-
-// Deliberately always returns false on the server (no window there) --
-// see the comment on DashboardSidebar's own useState/useEffect pairing
-// below for why this can't be read synchronously via a lazy useState
-// initializer instead.
-function loadCollapsedPref(): boolean {
-  try {
-    return window.localStorage.getItem(COLLAPSE_STORAGE_KEY) === '1';
-  } catch {
-    return false;
-  }
-}
 
 // Mirrors components/admin/AdminSidebar.tsx's redesign: click-to-toggle
 // collapse to a 76px icon rail (replacing the old hover-to-expand rail --
@@ -189,52 +173,13 @@ function NavContent({
   );
 }
 
-export default function DashboardSidebar() {
+export default function DashboardSidebar({ collapsed }: { collapsed: boolean }) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
-  // Always starts false (collapsed=false) so the very first client render
-  // matches the server's -- SSR has no window/localStorage and would
-  // otherwise disagree with a client that has a saved '1' preference,
-  // producing a hydration mismatch on the <aside>'s width/className
-  // (exactly the "Client"/"Server" className diff Next.js's hydration
-  // error surfaces). The real preference, once known, is applied in the
-  // effect below, right after mount -- same server/client tradeoff G2-02
-  // already accepts for auth state elsewhere in this app: a possible
-  // one-frame flash from expanded to collapsed for returning users who'd
-  // previously collapsed it, in exchange for a hydration-safe first paint
-  // for everyone.
-  const [collapsed, setCollapsed] = useState(false);
-
-  // Deliberately reads localStorage in an effect rather than during
-  // render: this is the one case react-hooks/set-state-in-effect exists
-  // to catch a mistake for, but doesn't apply to -- there's no way to
-  // know the saved preference during the server render (no window there)
-  // or during the client's first render (has to match the server's to
-  // avoid a hydration mismatch), so syncing it in afterward is the
-  // correct, not the accidental, place for this setState call.
-  useEffect(() => {
-    if (loadCollapsedPref()) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setCollapsed(true);
-    }
-  }, []);
 
   function isActive(href: string) {
     const path = href.split('?')[0];
     return path === '/' ? pathname === '/' : pathname.startsWith(path) && path !== '/series';
-  }
-
-  function toggleCollapsed() {
-    setCollapsed((prev) => {
-      const next = !prev;
-      try {
-        window.localStorage.setItem(COLLAPSE_STORAGE_KEY, next ? '1' : '0');
-      } catch {
-        // Private browsing / storage quota -- the toggle still works for
-        // this session, it just won't persist across visits.
-      }
-      return next;
-    });
   }
 
   // Closing on route change, same "adjust state during render" pattern
@@ -288,21 +233,10 @@ export default function DashboardSidebar() {
           (collapsed ? 'w-[76px]' : 'w-[260px]')
         }
       >
-        <div className={'px-1 mb-1 flex items-start ' + (collapsed ? 'flex-col gap-2' : 'justify-between')}>
+        <div className={collapsed ? 'px-1 mb-1 w-full flex justify-center' : 'px-1 mb-1'}>
           <Link href="/" className={collapsed ? 'w-full flex justify-center' : ''}>
             <Logo variant={collapsed ? 'icon' : 'full'} theme="brand" size={30} />
           </Link>
-          <button
-            type="button"
-            onClick={toggleCollapsed}
-            aria-label={collapsed ? 'Expand navigation' : 'Collapse navigation'}
-            className={
-              'flex items-center justify-center size-7 rounded-full text-foreground/50 hover:text-primary hover:bg-muted transition-colors shrink-0 ' +
-              (collapsed ? '' : 'mt-1')
-            }
-          >
-            {collapsed ? <PanelLeftOpen className="size-4" /> : <PanelLeftClose className="size-4" />}
-          </button>
         </div>
 
         <NavContent isActive={isActive} collapsed={collapsed} />

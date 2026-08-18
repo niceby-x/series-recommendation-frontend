@@ -1,53 +1,27 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import { render, screen } from '@testing-library/react';
 import DashboardSidebar from '../DashboardSidebar';
 
 vi.mock('next/navigation', () => ({
   usePathname: () => '/',
 }));
 
-const COLLAPSE_STORAGE_KEY = 'dashboard-sidebar-collapsed';
+// DashboardSidebar no longer owns collapse state or reads localStorage
+// itself -- that moved up into DashboardShell (see DashboardShell.tsx and
+// its own test file), since the toggle button that flips it now lives in
+// the top bar rather than inside this sidebar's own header row. This
+// component is purely presentational about the value now: it just renders
+// at the width matching whatever `collapsed` prop it's given.
+describe('DashboardSidebar (presentational collapse width)', () => {
+  it('renders at the collapsed width when passed collapsed', () => {
+    render(<DashboardSidebar collapsed={true} />);
 
-// Regression test for a hydration mismatch: the sidebar's collapsed width
-// used to be read straight out of localStorage via useState's lazy
-// initializer, which returns different values on the server (no window,
-// always false) vs. a client with a saved '1' preference (true) -- same
-// class of bug the Next.js hydration error screen flags for any
-// server/client branch. The fix always starts at the server's default
-// (expanded) and syncs the real preference in an effect after mount.
-//
-// Note: React Testing Library's render() flushes effects synchronously
-// (it wraps mount in act()), so there's no way to observe the pre-effect
-// "first paint" state here the way a real hydration would show it for a
-// split second -- these two assert the effect actually applies the saved
-// preference (rather than never reading it at all), which is what the fix
-// changes; the "server and client agree on the very first render" half of
-// the fix is a static property of the code (both start from the same
-// literal `false`), not something this test harness can observe directly.
-describe('DashboardSidebar collapse preference (hydration-safe read)', () => {
-  beforeEach(() => {
-    window.localStorage.clear();
+    expect(screen.getByRole('link', { name: /home/i }).closest('aside')).toHaveClass('w-[76px]');
   });
 
-  afterEach(() => {
-    window.localStorage.clear();
-  });
+  it('renders at the expanded width when passed collapsed=false', () => {
+    render(<DashboardSidebar collapsed={false} />);
 
-  it('applies a saved collapsed preference shortly after mount', async () => {
-    window.localStorage.setItem(COLLAPSE_STORAGE_KEY, '1');
-
-    render(<DashboardSidebar />);
-
-    await waitFor(() => {
-      expect(screen.getByRole('link', { name: /home/i }).closest('aside')).toHaveClass('w-[76px]');
-    });
-  });
-
-  it('stays expanded when nothing is saved', async () => {
-    render(<DashboardSidebar />);
-
-    await waitFor(() => {
-      expect(screen.getByRole('link', { name: /home/i }).closest('aside')).toHaveClass('w-[260px]');
-    });
+    expect(screen.getByRole('link', { name: /home/i }).closest('aside')).toHaveClass('w-[260px]');
   });
 });

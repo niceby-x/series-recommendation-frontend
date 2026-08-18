@@ -2,10 +2,22 @@
 
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
+import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import AdminSidebar from './AdminSidebar';
 import AdminAccountMenu from './AdminAccountMenu';
 import AdminHeader from './AdminHeader';
+
+const COLLAPSE_STORAGE_KEY = 'admin-sidebar-collapsed';
+
+function loadCollapsedPref(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    return window.localStorage.getItem(COLLAPSE_STORAGE_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
 
 // Rendered once by app/admin/layout.tsx, wrapping every /admin/* route --
 // previously each of the ~12 admin page files duplicated its own
@@ -63,6 +75,38 @@ function useAdminSession(): { pendingCount: number; email: string | null } {
 
 export default function AdminShell({ children }: { children: React.ReactNode }) {
   const { pendingCount, email } = useAdminSession();
+  // Desktop-only collapse state, now owned here instead of AdminSidebar --
+  // it drives both the sidebar's own width AND the toggle button below,
+  // which moved into this top bar (beside the heading) instead of living
+  // inside the sidebar's own header row. Starts false (matching the
+  // server's render, since there's no window there) and is only updated
+  // to the saved preference in an effect after mount, for the same
+  // hydration-safety reason this pattern always has: reading localStorage
+  // during the lazy useState initializer would return different values on
+  // the server (always false) vs. a client with a saved '1' preference
+  // (true), producing a hydration mismatch on the sidebar's width/
+  // className.
+  const [collapsed, setCollapsed] = useState(false);
+  useEffect(() => {
+    if (loadCollapsedPref()) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setCollapsed(true);
+    }
+  }, []);
+
+  function toggleCollapsed() {
+    setCollapsed((prev) => {
+      const next = !prev;
+      try {
+        window.localStorage.setItem(COLLAPSE_STORAGE_KEY, next ? '1' : '0');
+      } catch {
+        // Private browsing / storage quota -- the toggle still works for
+        // this session, it just won't persist across visits.
+      }
+      return next;
+    });
+  }
+
   // The dashboard (/admin) gets its full greeting/search/account row here
   // instead of just the account menu every other admin page gets --
   // AdminHeader already renders AdminAccountMenu itself at the end of its
@@ -79,7 +123,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   return (
     <div className="min-h-screen bg-[#FED9E8] p-2.5 md:p-4">
       <div className="mx-auto flex h-[calc(100vh-1.25rem)] md:h-[calc(100vh-2rem)] max-w-[1800px] overflow-hidden rounded-[20px] md:rounded-[26px] border border-border/60 bg-background shadow-[0_1px_2px_rgba(0,0,0,0.04),0_16px_40px_-16px_rgba(0,0,0,0.16)]">
-        <AdminSidebar pendingCount={pendingCount} />
+        <AdminSidebar pendingCount={pendingCount} collapsed={collapsed} />
         <div className="flex-1 min-w-0 h-full flex flex-col">
           {/* Glassy treatment: translucent bg-background/70 + backdrop-blur-md
               instead of a flat bg-background, softened border-border/40
@@ -96,10 +140,28 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
               than this pass, flag it if that's actually what's wanted. */}
           <div
             className={
-              'flex items-center px-5 md:px-8 lg:px-10 border-b border-border/40 shrink-0 bg-background/70 backdrop-blur-md shadow-[0_4px_12px_-6px_rgba(0,0,0,0.12)] ' +
-              (isDashboard ? 'justify-between py-2.5' : 'justify-end py-3')
+              'flex items-center gap-3 px-5 md:px-8 lg:px-10 justify-between border-b border-border/40 shrink-0 bg-background/70 backdrop-blur-md shadow-[0_4px_12px_-6px_rgba(0,0,0,0.12)] ' +
+              (isDashboard ? 'py-2.5' : 'py-3')
             }
           >
+            {/* The desktop collapse toggle, moved here from inside
+                AdminSidebar's own header row -- always the leftmost
+                element in this bar, on every admin page, not just the
+                dashboard. On the dashboard it sits right beside
+                AdminHeader's title (which fills the remaining width as a
+                flex-1 sibling); on every other admin page there's no
+                heading in this bar at all (each page renders its own
+                further down, inside the scrollable area), so it just
+                keeps the same left-edge spot rather than jumping to a
+                different corner depending on the route. */}
+            <button
+              type="button"
+              onClick={toggleCollapsed}
+              aria-label={collapsed ? 'Expand admin navigation' : 'Collapse admin navigation'}
+              className="hidden lg:flex items-center justify-center size-8 rounded-full text-foreground/50 hover:text-primary hover:bg-muted transition-colors shrink-0"
+            >
+              {collapsed ? <PanelLeftOpen className="size-4" /> : <PanelLeftClose className="size-4" />}
+            </button>
             {isDashboard ? <AdminHeader email={email} /> : <AdminAccountMenu email={email} />}
           </div>
           <main className="flex-1 min-w-0 overflow-y-auto">{children}</main>

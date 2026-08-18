@@ -136,7 +136,7 @@ export default function AdminHeader({ email }: { email: string | null }) {
   const showDropdown = open && trimmedQuery.length >= MIN_QUERY_LENGTH;
 
   return (
-    <div className="flex flex-wrap sm:flex-nowrap sm:items-center sm:justify-between gap-x-5 gap-y-4 w-full">
+    <div className="flex flex-wrap sm:flex-nowrap sm:items-center sm:justify-between gap-x-5 gap-y-4 flex-1 min-w-0">
       <div className="min-w-0 shrink-0 max-w-full">
         <h1 className="font-heading text-[18px] md:text-[20px] leading-tight font-normal text-foreground flex items-center gap-1.5 min-w-0">
           <span className="min-w-0 truncate">
