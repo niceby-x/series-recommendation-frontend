@@ -6,6 +6,7 @@ import { supabase } from '../../../lib/supabase';
 import { useAuthModal } from '../../../lib/AuthModalContext';
 import TagDimensionSection, { type AdminTag } from '../../../components/admin/TagDimensionSection';
 import type { TagDimension } from '../../../lib/taxonomy';
+import { useAdminPageHeader } from '../../../components/admin/AdminPageHeaderContext';
 
 type AccessState = 'checking' | 'signed_out' | 'forbidden' | 'ok' | 'error';
 
@@ -27,6 +28,12 @@ export default function AdminTagsPage() {
   const [access, setAccess] = useState<AccessState>('checking');
   const [tagsByDimension, setTagsByDimension] = useState<Record<string, AdminTag[]>>({});
   const [busyIds, setBusyIds] = useState<Set<number>>(new Set());
+
+  useAdminPageHeader({
+    title: 'Tags',
+    subtitle:
+      "Manage Taxonomy v1's governed vocabulary. Click a tag to deactivate it -- it stays out of the tagging UI but nothing that already used it breaks.",
+  });
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -266,14 +273,6 @@ export default function AdminTagsPage() {
   return (
     <div className="px-5 md:px-8 lg:px-10 py-6 md:py-8">
         <div className="w-full max-w-[820px] mx-auto">
-          <div className="mb-6">
-            <h1 className="font-heading text-[26px] md:text-[30px] leading-tight font-normal text-foreground">Tags</h1>
-            <p className="text-muted-foreground text-[14px] mt-1">
-              Manage Taxonomy v1&apos;s governed vocabulary. Click a tag to deactivate it -- it stays out of the tagging UI
-              but nothing that already used it breaks.
-            </p>
-          </div>
-
           {DIMENSION_SECTIONS.map(({ dimension, label, helperText }) => (
             <TagDimensionSection
               key={dimension}

@@ -6,6 +6,7 @@ import type { User } from '@supabase/supabase-js';
 import { supabase } from '../../../lib/supabase';
 import { useAuthModal } from '../../../lib/AuthModalContext';
 import ReviewsList, { type ReviewRow } from '../../../components/admin/ReviewsList';
+import { useAdminPageHeader } from '../../../components/admin/AdminPageHeaderContext';
 
 type AccessState = 'checking' | 'signed_out' | 'forbidden' | 'ok' | 'error';
 type FilterKey = 'all' | 'with_text';
@@ -23,6 +24,52 @@ export default function AdminReviewsPage() {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<FilterKey>('all');
   const [removingIds, setRemovingIds] = useState<Set<number>>(new Set());
+
+  // Search and the filter <select> move up together -- they're one
+  // functional unit (the select scopes what the search box searches
+  // within), so splitting them between the top bar and the page body
+  // would separate controls an admin expects to find side by side.
+  // Hidden below md same as the dashboard's own search (AdminHeader) --
+  // the compact top bar doesn't have room for it alongside the sidebar's
+  // mobile trigger and the account pill at narrow widths.
+  useAdminPageHeader({
+    title: 'Reviews',
+    subtitle:
+      reviews.length +
+      ' ' +
+      (reviews.length === 1 ? 'rating' : 'ratings') +
+      " submitted. Not shown publicly yet -- this is visibility & moderation only.",
+    search: (
+      <div className="hidden md:flex items-center gap-2.5">
+        <div className="relative">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search user, series, or text"
+            className="bg-card text-foreground placeholder:text-muted-foreground rounded-full pl-9 pr-4 py-2.5 text-sm border border-border shadow-sm focus:outline-none focus:border-ring transition-colors w-[220px]"
+          />
+        </div>
+
+        <div className="relative">
+          <select
+            aria-label="Filter reviews"
+            value={filter}
+            onChange={(e) => setFilter(e.target.value as FilterKey)}
+            className="appearance-none bg-card border border-border rounded-full pl-4 pr-9 py-2.5 text-sm font-medium text-foreground shadow-sm hover:border-ring focus:outline-none focus:border-ring transition-colors cursor-pointer"
+          >
+            {(Object.keys(FILTER_LABELS) as FilterKey[]).map((key) => (
+              <option key={key} value={key}>
+                {FILTER_LABELS[key]}
+              </option>
+            ))}
+          </select>
+          <ChevronDown className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
+        </div>
+      </div>
+    ),
+  });
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -147,45 +194,6 @@ export default function AdminReviewsPage() {
   return (
     <div className="px-5 md:px-8 lg:px-10 py-6 md:py-8">
         <div className="w-full max-w-[900px] mx-auto">
-          <div className="flex flex-wrap items-end justify-between gap-3 mb-6">
-            <div>
-              <h1 className="font-heading text-[26px] md:text-[30px] leading-tight font-normal text-foreground">Reviews</h1>
-              <p className="text-muted-foreground text-[14px] mt-1">
-                {reviews.length} {reviews.length === 1 ? 'rating' : 'ratings'} submitted. Not shown publicly yet -- this is
-                visibility &amp; moderation only.
-              </p>
-            </div>
-
-            <div className="flex items-center gap-2.5">
-              <div className="relative">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                <input
-                  type="text"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search user, series, or text"
-                  className="bg-card text-foreground placeholder:text-muted-foreground rounded-full pl-9 pr-4 py-2.5 text-sm border border-border shadow-sm focus:outline-none focus:border-ring transition-colors w-[220px]"
-                />
-              </div>
-
-              <div className="relative">
-                <select
-                  aria-label="Filter reviews"
-                  value={filter}
-                  onChange={(e) => setFilter(e.target.value as FilterKey)}
-                  className="appearance-none bg-card border border-border rounded-full pl-4 pr-9 py-2.5 text-sm font-medium text-foreground shadow-sm hover:border-ring focus:outline-none focus:border-ring transition-colors cursor-pointer"
-                >
-                  {(Object.keys(FILTER_LABELS) as FilterKey[]).map((key) => (
-                    <option key={key} value={key}>
-                      {FILTER_LABELS[key]}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
-              </div>
-            </div>
-          </div>
-
           <ReviewsList reviews={visibleReviews} removingIds={removingIds} onRemove={handleRemove} />
         </div>
       </div>

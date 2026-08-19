@@ -6,6 +6,7 @@ import { supabase } from '../../../lib/supabase';
 import { useAuthModal } from '../../../lib/AuthModalContext';
 import TagBrowser from '../../../components/admin/TagBrowser';
 import type { SeriesCardData } from '../../../components/shared/SeriesCard';
+import { useAdminPageHeader } from '../../../components/admin/AdminPageHeaderContext';
 
 type AccessState = 'checking' | 'signed_out' | 'forbidden' | 'ok' | 'error';
 
@@ -14,6 +15,12 @@ export default function AdminTropesPage() {
   const [user, setUser] = useState<User | null>(null);
   const [access, setAccess] = useState<AccessState>('checking');
   const [allSeries, setAllSeries] = useState<SeriesCardData[]>([]);
+
+  useAdminPageHeader({
+    title: 'Tropes',
+    subtitle:
+      'Pick a trope, then add or remove which series carry it. To create, rename, or deactivate a trope tag itself, use the Tags page.',
+  });
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -96,14 +103,6 @@ export default function AdminTropesPage() {
   return (
     <div className="px-5 md:px-8 lg:px-10 py-6 md:py-8">
         <div className="w-full max-w-[1000px] mx-auto">
-          <div className="mb-6">
-            <h1 className="font-heading text-[26px] md:text-[30px] leading-tight font-normal text-foreground">Tropes</h1>
-            <p className="text-muted-foreground text-[14px] mt-1">
-              Pick a trope, then add or remove which series carry it. To create, rename, or deactivate a trope tag
-              itself, use the Tags page.
-            </p>
-          </div>
-
           <TagBrowser dimension="trope" allSeries={allSeries} onSignedOut={() => setAccess('signed_out')} />
         </div>
       </div>

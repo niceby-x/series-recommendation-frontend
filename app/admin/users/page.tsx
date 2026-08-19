@@ -6,6 +6,7 @@ import type { User } from '@supabase/supabase-js';
 import { supabase } from '../../../lib/supabase';
 import { useAuthModal } from '../../../lib/AuthModalContext';
 import UsersTable, { type UserRow } from '../../../components/admin/UsersTable';
+import { useAdminPageHeader } from '../../../components/admin/AdminPageHeaderContext';
 
 type AccessState = 'checking' | 'signed_out' | 'forbidden' | 'ok' | 'error';
 type SortKey = 'newest' | 'oldest' | 'most_ratings' | 'alpha';
@@ -25,6 +26,41 @@ export default function AdminUsersPage() {
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState<SortKey>('newest');
   const [busyIds, setBusyIds] = useState<Set<number>>(new Set());
+
+  useAdminPageHeader({
+    title: 'Users',
+    subtitle: users.length + ' registered ' + (users.length === 1 ? 'user' : 'users') + '.',
+    search: (
+      <div className="hidden md:flex items-center gap-2.5">
+        <div className="relative">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by name or email"
+            className="bg-card text-foreground placeholder:text-muted-foreground rounded-full pl-9 pr-4 py-2.5 text-sm border border-border shadow-sm focus:outline-none focus:border-ring transition-colors w-[220px]"
+          />
+        </div>
+
+        <div className="relative">
+          <select
+            aria-label="Sort users"
+            value={sort}
+            onChange={(e) => setSort(e.target.value as SortKey)}
+            className="appearance-none bg-card border border-border rounded-full pl-4 pr-9 py-2.5 text-sm font-medium text-foreground shadow-sm hover:border-ring focus:outline-none focus:border-ring transition-colors cursor-pointer"
+          >
+            {(Object.keys(SORT_LABELS) as SortKey[]).map((key) => (
+              <option key={key} value={key}>
+                Sort: {SORT_LABELS[key]}
+              </option>
+            ))}
+          </select>
+          <ChevronDown className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
+        </div>
+      </div>
+    ),
+  });
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -208,44 +244,6 @@ export default function AdminUsersPage() {
   return (
     <div className="px-5 md:px-8 lg:px-10 py-6 md:py-8">
         <div className="w-full max-w-[1100px] mx-auto">
-          <div className="flex flex-wrap items-end justify-between gap-3 mb-6">
-            <div>
-              <h1 className="font-heading text-[26px] md:text-[30px] leading-tight font-normal text-foreground">Users</h1>
-              <p className="text-muted-foreground text-[14px] mt-1">
-                {users.length} registered {users.length === 1 ? 'user' : 'users'}.
-              </p>
-            </div>
-
-            <div className="flex items-center gap-2.5">
-              <div className="relative">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                <input
-                  type="text"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search by name or email"
-                  className="bg-card text-foreground placeholder:text-muted-foreground rounded-full pl-9 pr-4 py-2.5 text-sm border border-border shadow-sm focus:outline-none focus:border-ring transition-colors w-[220px]"
-                />
-              </div>
-
-              <div className="relative">
-                <select
-                  aria-label="Sort users"
-                  value={sort}
-                  onChange={(e) => setSort(e.target.value as SortKey)}
-                  className="appearance-none bg-card border border-border rounded-full pl-4 pr-9 py-2.5 text-sm font-medium text-foreground shadow-sm hover:border-ring focus:outline-none focus:border-ring transition-colors cursor-pointer"
-                >
-                  {(Object.keys(SORT_LABELS) as SortKey[]).map((key) => (
-                    <option key={key} value={key}>
-                      Sort: {SORT_LABELS[key]}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
-              </div>
-            </div>
-          </div>
-
           <UsersTable
             rows={visibleUsers}
             busyIds={busyIds}

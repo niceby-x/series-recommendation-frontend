@@ -6,6 +6,7 @@ import type { User } from '@supabase/supabase-js';
 import { supabase } from '../../../lib/supabase';
 import { useAuthModal } from '../../../lib/AuthModalContext';
 import type { SeriesCardData } from '../../../components/shared/SeriesCard';
+import { useAdminPageHeader } from '../../../components/admin/AdminPageHeaderContext';
 
 type AccessState = 'checking' | 'signed_out' | 'forbidden' | 'ok' | 'error';
 
@@ -39,6 +40,15 @@ export default function AdminCuratorPicksPage() {
   const [search, setSearch] = useState('');
   const [busyIds, setBusyIds] = useState<Set<number>>(new Set());
   const [drafts, setDrafts] = useState<Record<number, string>>({});
+
+  // No search in the top bar here either -- same reason as Collections:
+  // `search` filters the catalog-lookup dropdown for adding a new pick,
+  // not the list of existing picks below it.
+  useAdminPageHeader({
+    title: 'Curator Picks',
+    subtitle:
+      "What shows on the homepage's Curator's Picks section. One pick can be the featured card (with a quote); the rest fill the supporting list.",
+  });
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -251,14 +261,6 @@ export default function AdminCuratorPicksPage() {
   return (
     <div className="px-5 md:px-8 lg:px-10 py-6 md:py-8">
         <div className="w-full max-w-[820px] mx-auto">
-          <div className="mb-6">
-            <h1 className="font-heading text-[26px] md:text-[30px] leading-tight font-normal text-foreground">Curator Picks</h1>
-            <p className="text-muted-foreground text-[14px] mt-1">
-              What shows on the homepage&apos;s Curator&apos;s Picks section. One pick can be the featured card (with a
-              quote); the rest fill the supporting list.
-            </p>
-          </div>
-
           <div className="relative mb-6">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <input

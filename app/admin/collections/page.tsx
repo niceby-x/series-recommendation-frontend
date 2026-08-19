@@ -6,6 +6,7 @@ import type { User } from '@supabase/supabase-js';
 import { supabase } from '../../../lib/supabase';
 import { useAuthModal } from '../../../lib/AuthModalContext';
 import type { SeriesCardData } from '../../../components/shared/SeriesCard';
+import { useAdminPageHeader } from '../../../components/admin/AdminPageHeaderContext';
 
 type AccessState = 'checking' | 'signed_out' | 'forbidden' | 'ok' | 'error';
 
@@ -53,6 +54,17 @@ export default function AdminCollectionsPage() {
   const [editingHeader, setEditingHeader] = useState(false);
   const [draftTitle, setDraftTitle] = useState('');
   const [draftDescription, setDraftDescription] = useState('');
+
+  // No search in the top bar here: `search`/setSearch above filters the
+  // catalog-lookup dropdown for adding a series to whichever collection
+  // is currently open (see the "Search the catalog to add a series..."
+  // input further down), not the list of collections itself -- moving it
+  // up would disconnect it from the detail panel it actually populates.
+  useAdminPageHeader({
+    title: 'Collections',
+    subtitle:
+      'Curated collections shown site-wide (e.g. "Staff Picks: Slow Burns"). Separate from users\' own personal collections, which they manage themselves.',
+  });
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -284,14 +296,6 @@ export default function AdminCollectionsPage() {
   return (
     <div className="px-5 md:px-8 lg:px-10 py-6 md:py-8">
         <div className="w-full max-w-[1100px] mx-auto">
-          <div className="mb-6">
-            <h1 className="font-heading text-[26px] md:text-[30px] leading-tight font-normal text-foreground">Collections</h1>
-            <p className="text-muted-foreground text-[14px] mt-1">
-              Curated collections shown site-wide (e.g. &quot;Staff Picks: Slow Burns&quot;). Separate from users&apos; own
-              personal collections, which they manage themselves.
-            </p>
-          </div>
-
           <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-6 items-start">
             <div className="flex flex-col gap-3">
               {creating ? (

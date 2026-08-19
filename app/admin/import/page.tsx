@@ -5,6 +5,7 @@ import { Play, Loader2, CheckCircle2, XCircle, UploadCloud } from 'lucide-react'
 import type { User } from '@supabase/supabase-js';
 import { supabase } from '../../../lib/supabase';
 import { useAuthModal } from '../../../lib/AuthModalContext';
+import { useAdminPageHeader } from '../../../components/admin/AdminPageHeaderContext';
 
 type AccessState = 'checking' | 'signed_out' | 'forbidden' | 'ok' | 'error';
 
@@ -42,6 +43,11 @@ export default function AdminImportPage() {
   const [starting, setStarting] = useState(false);
   const [startError, setStartError] = useState<string | null>(null);
   const logRef = useRef<HTMLDivElement>(null);
+
+  useAdminPageHeader({
+    title: 'Import & Sync',
+    subtitle: 'Run the TMDB discovery script to queue new titles into the Editorial Queue for review.',
+  });
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -168,12 +174,6 @@ export default function AdminImportPage() {
   return (
     <div className="px-5 md:px-8 lg:px-10 py-6 md:py-8">
         <div className="w-full max-w-[900px] mx-auto">
-          <div className="mb-6">
-            <h1 className="font-heading text-[26px] md:text-[30px] leading-tight font-normal text-foreground">Import &amp; Sync</h1>
-            <p className="text-muted-foreground text-[14px] mt-1">
-              Run the TMDB discovery script to queue new titles into the Editorial Queue for review.
-            </p>
-          </div>
 
           <div className="rounded-[20px] bg-card border border-border/60 shadow-sm p-5 mb-6">
             <div className="flex flex-wrap items-end justify-between gap-4">

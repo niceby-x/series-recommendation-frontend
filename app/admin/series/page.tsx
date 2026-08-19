@@ -8,6 +8,7 @@ import { useAuthModal } from '../../../lib/AuthModalContext';
 import SeriesList, { type AdminSeries } from '../../../components/admin/SeriesList';
 import SeriesEditModal, { type SeriesEditForm, type CollectionOption, type GenreOption } from '../../../components/admin/SeriesEditModal';
 import type { Tag, TagDimension } from '../../../lib/taxonomy';
+import { useAdminPageHeader } from '../../../components/admin/AdminPageHeaderContext';
 
 type AccessState = 'checking' | 'signed_out' | 'forbidden' | 'ok' | 'error';
 
@@ -31,6 +32,23 @@ export default function AdminSeriesPage() {
   const [busyIds, setBusyIds] = useState<Set<number>>(new Set());
   const [editingSeries, setEditingSeries] = useState<AdminSeries | null>(null);
   const [loadingEditId, setLoadingEditId] = useState<number | null>(null);
+
+  useAdminPageHeader({
+    title: 'Series & Movies',
+    subtitle: series.length + ' published. Edit details or remove a title entirely.',
+    search: (
+      <div className="hidden md:block relative">
+        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search title or country"
+          className="bg-card text-foreground placeholder:text-muted-foreground rounded-full pl-9 pr-4 py-2.5 text-sm border border-border shadow-sm focus:outline-none focus:border-ring transition-colors w-[240px]"
+        />
+      </div>
+    ),
+  });
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -272,26 +290,6 @@ export default function AdminSeriesPage() {
     <>
       <div className="px-5 md:px-8 lg:px-10 py-6 md:py-8">
         <div className="w-full max-w-[900px] mx-auto">
-          <div className="flex flex-wrap items-end justify-between gap-3 mb-6">
-            <div>
-              <h1 className="font-heading text-[26px] md:text-[30px] leading-tight font-normal text-foreground">Series & Movies</h1>
-              <p className="text-muted-foreground text-[14px] mt-1">
-                {series.length} published. Edit details or remove a title entirely.
-              </p>
-            </div>
-
-            <div className="relative">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search title or country"
-                className="bg-card text-foreground placeholder:text-muted-foreground rounded-full pl-9 pr-4 py-2.5 text-sm border border-border shadow-sm focus:outline-none focus:border-ring transition-colors w-[240px]"
-              />
-            </div>
-          </div>
-
           <SeriesList
             series={visibleSeries}
             busyIds={loadingEditId != null ? new Set(busyIds).add(loadingEditId) : busyIds}

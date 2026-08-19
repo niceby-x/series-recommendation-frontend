@@ -5,6 +5,7 @@ import type { User } from '@supabase/supabase-js';
 import { supabase } from '../../../lib/supabase';
 import { useAuthModal } from '../../../lib/AuthModalContext';
 import GenreManager, { type AdminGenre } from '../../../components/admin/GenreManager';
+import { useAdminPageHeader } from '../../../components/admin/AdminPageHeaderContext';
 
 type AccessState = 'checking' | 'signed_out' | 'forbidden' | 'ok' | 'error';
 
@@ -14,6 +15,16 @@ export default function AdminGenresPage() {
   const [access, setAccess] = useState<AccessState>('checking');
   const [genres, setGenres] = useState<AdminGenre[]>([]);
   const [busyIds, setBusyIds] = useState<Set<number>>(new Set());
+
+  // Called unconditionally, before the access-state early returns below
+  // (checking/signed_out/forbidden/error all `return` before reaching the
+  // real page) -- same Rules of Hooks reason any hook has to run in every
+  // render, not just the "happy path" one.
+  useAdminPageHeader({
+    title: 'Genres',
+    subtitle:
+      'Genres are created automatically when a candidate with genre data is approved. Rename, merge, or delete them here.',
+  });
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -184,14 +195,6 @@ export default function AdminGenresPage() {
   return (
     <div className="px-5 md:px-8 lg:px-10 py-6 md:py-8">
         <div className="w-full max-w-[820px] mx-auto">
-          <div className="mb-6">
-            <h1 className="font-heading text-[26px] md:text-[30px] leading-tight font-normal text-foreground">Genres</h1>
-            <p className="text-muted-foreground text-[14px] mt-1">
-              Genres are created automatically when a candidate with genre data is approved. Rename, merge, or delete
-              them here.
-            </p>
-          </div>
-
           <GenreManager genres={genres} busyIds={busyIds} onRename={handleRename} onDelete={handleDelete} onMerge={handleMerge} />
         </div>
       </div>

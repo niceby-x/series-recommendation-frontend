@@ -13,6 +13,7 @@ import {
   CONTENT_LEVEL_DISPLAY,
 } from '../../../lib/taxonomy';
 import { computeCurationLevel } from '../../../lib/curationLevel';
+import { useAdminPageHeader } from '../../../components/admin/AdminPageHeaderContext';
 
 interface CastEntry {
   name: string;
@@ -646,6 +647,14 @@ export default function AdminCandidatesPage() {
   const [hideAnimated, setHideAnimated] = useState(false);
   const [sortBy, setSortBy] = useState<'default' | 'episodes_asc' | 'episodes_desc' | 'year_desc' | 'year_asc'>('default');
 
+  // No subtitle: unlike every other admin page, Editorial Queue's search
+  // isn't a standalone filter box -- it's one field in a multi-control
+  // toolbar (search + country + media-type + animated + sort), with its
+  // own sticky positioning scoped to this page's own scroll region. That
+  // toolbar stays where it is rather than being squeezed into the top
+  // bar's compact search slot alongside four other controls.
+  useAdminPageHeader({ title: 'Editorial Queue' });
+
   const filteredCandidates = candidates
     .filter((c) => countryFilter === 'All' || c.country === countryFilter)
     .filter((c) => mediaTypeFilter === 'All' || c.media_type === mediaTypeFilter)
@@ -884,9 +893,6 @@ export default function AdminCandidatesPage() {
 
   return (
     <div className="max-w-[1400px] mx-auto p-6 md:p-8">
-        <div className="mb-1 text-xs font-medium text-primary/80 uppercase tracking-wider">Admin</div>
-        <h1 className="font-heading text-2xl font-normal text-foreground tracking-tight mb-5">Editorial Queue</h1>
-
         <div className="flex flex-wrap gap-3 mb-6">
           <StatCard label="Pending" value={counts.pending} tone="blue" />
           <StatCard label="Approved" value={counts.approved} tone="emerald" />

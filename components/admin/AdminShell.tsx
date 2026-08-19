@@ -4,8 +4,9 @@ import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { supabase } from '../../lib/supabase';
 import AdminSidebar from './AdminSidebar';
-import AdminAccountMenu from './AdminAccountMenu';
 import AdminHeader from './AdminHeader';
+import AdminPageTopBar from './AdminPageTopBar';
+import { AdminPageHeaderProvider } from './AdminPageHeaderContext';
 
 const COLLAPSE_STORAGE_KEY = 'admin-sidebar-collapsed';
 
@@ -119,58 +120,57 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   const isDashboard = pathname === '/admin';
 
   return (
-    <div className="min-h-screen bg-[#FED9E8] p-2.5 md:p-4">
-      <div className="mx-auto flex h-[calc(100vh-1.25rem)] md:h-[calc(100vh-2rem)] max-w-[1800px] overflow-hidden rounded-[20px] md:rounded-[26px] border border-border/60 bg-background shadow-[0_1px_2px_rgba(0,0,0,0.04),0_16px_40px_-16px_rgba(0,0,0,0.16)]">
-        <AdminSidebar pendingCount={pendingCount} collapsed={collapsed} onToggleCollapse={toggleCollapsed} />
-        <div className="flex-1 min-w-0 h-full flex flex-col">
-          {/* Glassy treatment: translucent bg-background/70 + backdrop-blur-md
-              instead of a flat bg-background, softened border-border/40
-              instead of /60, plus a soft downward shadow so the bar reads
-              as floating above the content rather than flush with it. This
-              bar is a flex sibling above <main>, not an overlay on top of
-              it, so there's no scrolling content directly behind it to
-              blur -- the blur/opacity/shadow combo still reads as a
-              frosted, elevated panel against the card's own background
-              either way. True "content blurs as it scrolls under the bar"
-              would need the bar repositioned as a sticky/absolute overlay
-              inside the same scroll container as <main>, which touches how
-              every admin page beneath it is laid out -- a bigger change
-              than this pass, flag it if that's actually what's wanted.
+    <AdminPageHeaderProvider>
+      <div className="min-h-screen bg-[#FED9E8] p-2.5 md:p-4">
+        <div className="mx-auto flex h-[calc(100vh-1.25rem)] md:h-[calc(100vh-2rem)] max-w-[1800px] overflow-hidden rounded-[20px] md:rounded-[26px] border border-border/60 bg-background shadow-[0_1px_2px_rgba(0,0,0,0.04),0_16px_40px_-16px_rgba(0,0,0,0.16)]">
+          <AdminSidebar pendingCount={pendingCount} collapsed={collapsed} onToggleCollapse={toggleCollapsed} />
+          <div className="flex-1 min-w-0 h-full flex flex-col">
+            {/* Glassy treatment: translucent bg-background/70 + backdrop-blur-md
+                instead of a flat bg-background, softened border-border/40
+                instead of /60, plus a soft downward shadow so the bar reads
+                as floating above the content rather than flush with it. This
+                bar is a flex sibling above <main>, not an overlay on top of
+                it, so there's no scrolling content directly behind it to
+                blur -- the blur/opacity/shadow combo still reads as a
+                frosted, elevated panel against the card's own background
+                either way. True "content blurs as it scrolls under the bar"
+                would need the bar repositioned as a sticky/absolute overlay
+                inside the same scroll container as <main>, which touches how
+                every admin page beneath it is laid out -- a bigger change
+                than this pass, flag it if that's actually what's wanted.
 
-              `relative z-30`: backdrop-blur-md forces this bar into its
-              own stacking context regardless of z-index, but left at
-              auto that context was still only z:0 -- level with any
-              `position: sticky` descendant elsewhere in <main> (sticky
-              always gets its own stacking context too), which could then
-              win the paint order over this bar's own dropdowns purely by
-              coming later in the DOM. No admin page has sticky content
-              today, but DashboardShell hit exactly this with
-              BloomJourneyCard's sticky aside, so the same explicit z-30
-              is applied here to not carry the same latent bug.
+                `relative z-30`: backdrop-blur-md forces this bar into its
+                own stacking context regardless of z-index, but left at
+                auto that context was still only z:0 -- level with any
+                `position: sticky` descendant elsewhere in <main> (sticky
+                always gets its own stacking context too), which could then
+                win the paint order over this bar's own dropdowns purely by
+                coming later in the DOM. No admin page has sticky content
+                today, but DashboardShell hit exactly this with
+                BloomJourneyCard's sticky aside, so the same explicit z-30
+                is applied here to not carry the same latent bug.
 
-              `justify-end`: this bar used to also hold the collapse
-              toggle on its left edge, which made `justify-between` do
-              real work spacing it against AdminHeader/AdminAccountMenu on
-              the right. Now that the toggle has moved into AdminSidebar
-              itself (bottom of the nav list, matching the public
-              sidebar), AdminHeader/AdminAccountMenu are the only child
-              here -- AdminHeader is flex-1 so it fills the row either
-              way, but AdminAccountMenu alone (the non-dashboard case)
-              isn't self-right-aligning, so `justify-between` with nothing
-              left to space against would leave it sitting at the left
-              edge instead of the right. `justify-end` keeps both cases
-              looking the same as before the toggle moved out. */}
-          <div
-            className={
-              'relative z-30 flex items-center gap-3 px-5 md:px-8 lg:px-10 justify-end border-b border-border/40 shrink-0 bg-background/70 backdrop-blur-md shadow-[0_4px_12px_-6px_rgba(0,0,0,0.12)] ' +
-              (isDashboard ? 'py-2.5' : 'py-3')
-            }
-          >
-            {isDashboard ? <AdminHeader email={email} /> : <AdminAccountMenu email={email} />}
+                Every non-dashboard admin page used to render its own
+                heading/subtitle/search inline in the scrollable content
+                below, duplicating this exact row shape 11 times and
+                scrolling away with the rest of the page instead of
+                staying put. AdminPageTopBar now renders whatever the
+                current page publishes via useAdminPageHeader (see
+                AdminPageHeaderContext.tsx) in this same sticky strip, so
+                every admin page's heading/search behaves like the
+                dashboard's always has. */}
+            <div
+              className={
+                'relative z-30 flex items-center gap-3 px-5 md:px-8 lg:px-10 border-b border-border/40 shrink-0 bg-background/70 backdrop-blur-md shadow-[0_4px_12px_-6px_rgba(0,0,0,0.12)] ' +
+                (isDashboard ? 'py-2.5' : 'py-3')
+              }
+            >
+              {isDashboard ? <AdminHeader email={email} /> : <AdminPageTopBar email={email} />}
+            </div>
+            <main className="flex-1 min-w-0 overflow-y-auto">{children}</main>
           </div>
-          <main className="flex-1 min-w-0 overflow-y-auto">{children}</main>
         </div>
       </div>
-    </div>
+    </AdminPageHeaderProvider>
   );
 }
