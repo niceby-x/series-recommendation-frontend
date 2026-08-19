@@ -7,7 +7,7 @@ export default function RecentlyPublishedCard({ series }: { series: SeriesCardDa
   return (
     <section>
       <div className="flex justify-between items-end mb-4">
-        <h2 className="font-sans font-semibold text-[20px] font-normal text-foreground">Recently Published</h2>
+        <h2 className="font-heading font-bold text-[20px] font-normal text-foreground">Recently Published</h2>
         <Link href="/series" className="text-primary text-sm font-semibold hover:opacity-80 transition-opacity shrink-0">
           View all
         </Link>
