@@ -37,7 +37,11 @@ const QUEUE_PREVIEW_SIZE = 6;
 // below used to pull the entire catalog to get there. Separate constant
 // from QUEUE_PREVIEW_SIZE (both happen to be 6 today) since they're
 // unrelated previews that could diverge later.
-const RECENT_SERIES_PREVIEW_SIZE = 6;
+//
+// D3-04: dropped from 6 to 5 -- RecentlyPublishedCard's poster grid is a
+// fixed 5-column single row now, so 6 would leave one card dangling
+// with nothing to its right on the next row.
+const RECENT_SERIES_PREVIEW_SIZE = 5;
 
 function relativeTime(iso: string): string {
   const diffMs = Date.now() - new Date(iso).getTime();
