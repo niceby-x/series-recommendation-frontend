@@ -3,17 +3,19 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, X, ChevronDown } from 'lucide-react';
+import { Menu, X, ChevronDown, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import Logo from '../shared/Logo';
 import { ADMIN_NAV_SECTIONS, ADMIN_DASHBOARD_ITEM, type AdminNavItem } from '../../lib/adminContent';
 
-// Desktop rail can now be toggled between the full 260px layout (labels,
+// Desktop rail can be toggled between the full 260px layout (labels,
 // section headers, badge counts) and a 76px icon-only rail -- same
 // collapsed width as the public DashboardSidebar's rail, for visual
 // consistency between the two, though the interaction itself is
 // click-to-toggle rather than hover: an admin working through a long
 // session benefits more from a state they set once than a rail that
-// snaps back open the instant the mouse leaves it.
+// snaps back open the instant the mouse leaves it. The toggle itself
+// lives at the bottom of the nav list, same spot as the public sidebar's
+// own toggle -- see NavContent below.
 function NavRow({
   item,
   active,
@@ -162,11 +164,13 @@ function NavContent({
   pendingCount,
   collapsed,
   onNavigate,
+  onToggleCollapse,
 }: {
   pathname: string;
   pendingCount: number;
   collapsed?: boolean;
   onNavigate?: () => void;
+  onToggleCollapse?: () => void;
 }) {
   return (
     <>
@@ -191,6 +195,35 @@ function NavContent({
           />
         ))}
       </nav>
+
+      {/* Collapse toggle, pinned to the bottom below the nav list -- same
+          spot and styling as the public DashboardSidebar's own toggle
+          (moved here from AdminShell's top bar, where it briefly lived
+          instead). Only passed by the desktop <aside> below; the mobile
+          drawer omits onToggleCollapse entirely, same as the public
+          sidebar's drawer -- it's a full overlay opened/closed by its own
+          X button, collapsing it isn't a meaningful state there. */}
+      {onToggleCollapse && (
+        <div className="pt-3 mt-auto border-t border-border/60">
+          <button
+            type="button"
+            onClick={onToggleCollapse}
+            title={collapsed ? 'Expand admin navigation' : 'Collapse admin navigation'}
+            aria-label={collapsed ? 'Expand admin navigation' : 'Collapse admin navigation'}
+            className={
+              'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13.5px] font-semibold transition-colors text-foreground/70 hover:bg-muted hover:text-foreground ' +
+              (collapsed ? 'justify-center' : '')
+            }
+          >
+            {collapsed ? (
+              <PanelLeftOpen className="size-4.5 shrink-0" />
+            ) : (
+              <PanelLeftClose className="size-4.5 shrink-0" />
+            )}
+            {!collapsed && <span className="flex-1 text-left">Collapse</span>}
+          </button>
+        </div>
+      )}
     </>
   );
 }
@@ -198,15 +231,20 @@ function NavContent({
 export default function AdminSidebar({
   pendingCount,
   collapsed,
+  onToggleCollapse,
 }: {
   pendingCount: number;
-  // Now owned by AdminShell (single source of truth, since the toggle
-  // button that flips it lives in the top bar, not here anymore -- see
-  // AdminShell.tsx). This component is purely presentational about the
-  // value: it renders at the matching width and passes it down to
-  // NavContent for the icon-only layout, but no longer reads localStorage
-  // or persists a preference itself.
+  // The boolean itself is still owned by AdminShell (single source of
+  // truth for both this width and the toggle button that flips it, which
+  // now lives inside this component again -- see onToggleCollapse below).
+  // This component just renders at the matching width and passes it down
+  // to NavContent for the icon-only layout; it doesn't read localStorage
+  // or persist a preference itself.
   collapsed: boolean;
+  // Desktop-only: the mobile drawer's own NavContent call below doesn't
+  // receive this, since collapsing a full-screen overlay isn't a
+  // meaningful state.
+  onToggleCollapse?: () => void;
 }) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -282,9 +320,7 @@ export default function AdminSidebar({
             competing with the real nav items for space up top. The
             account menu is always visible (it's in AdminShell's top bar,
             not gated behind lg:flex like this rail), so it's still
-            reachable at every viewport width. The collapse toggle that
-            used to live in this row too has moved to AdminShell's top
-            bar, beside the page heading -- see AdminShell.tsx. */}
+            reachable at every viewport width. */}
         <div className={collapsed ? 'px-1 mb-1 w-full flex justify-center' : 'px-1 mb-1'}>
           <Logo variant={collapsed ? 'icon' : 'full'} theme="brand" size={30} />
           {!collapsed && (
@@ -294,7 +330,12 @@ export default function AdminSidebar({
           )}
         </div>
 
-        <NavContent pathname={pathname} pendingCount={pendingCount} collapsed={collapsed} />
+        <NavContent
+          pathname={pathname}
+          pendingCount={pendingCount}
+          collapsed={collapsed}
+          onToggleCollapse={onToggleCollapse}
+        />
       </aside>
 
       {mobileOpen && (

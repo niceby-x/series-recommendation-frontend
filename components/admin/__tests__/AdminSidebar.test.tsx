@@ -9,7 +9,10 @@ vi.mock('next/navigation', () => ({
 
 // AdminSidebar no longer owns the account menu / Log out control -- that
 // moved to AdminAccountMenu (mounted once in AdminShell for every admin
-// page), so there's no supabase dependency here to mock anymore.
+// page), so there's no supabase dependency here to mock anymore. It does
+// still own the collapse toggle button (pinned to the bottom of the nav
+// list, matching the public DashboardSidebar), even though the boolean
+// value itself is passed down as a prop from AdminShell.
 
 describe('AdminSidebar mobile navigation (D1-01)', () => {
   beforeEach(() => {
@@ -120,5 +123,28 @@ describe('AdminSidebar mobile navigation (D1-01)', () => {
     render(<AdminSidebar pendingCount={0} collapsed={false} />);
 
     expect(screen.getByRole('link', { name: /dashboard/i }).closest('aside')).toHaveClass('w-[260px]');
+  });
+
+  it('calls onToggleCollapse when the pinned bottom toggle button is clicked', async () => {
+    const onToggleCollapse = vi.fn();
+    render(<AdminSidebar pendingCount={0} collapsed={false} onToggleCollapse={onToggleCollapse} />);
+
+    await userEvent.click(screen.getByRole('button', { name: /collapse admin navigation/i }));
+
+    expect(onToggleCollapse).toHaveBeenCalledTimes(1);
+  });
+
+  it('omits the collapse toggle from the mobile drawer, where collapsing is not a meaningful state', async () => {
+    render(<AdminSidebar pendingCount={0} collapsed={false} onToggleCollapse={vi.fn()} />);
+
+    // The desktop aside's own toggle is present.
+    expect(screen.getByRole('button', { name: /collapse admin navigation/i })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: /open admin navigation/i }));
+    await screen.findByRole('button', { name: /close admin navigation/i });
+
+    // Still only one toggle button in the document -- the drawer didn't
+    // render a second copy.
+    expect(screen.getAllByRole('button', { name: /collapse admin navigation/i }).length).toBe(1);
   });
 });
