@@ -7,6 +7,8 @@ import { Search, Bell, ChevronDown, LogOut, ShieldCheck, Moon, Sparkles, Clock }
 import type { User } from '@supabase/supabase-js';
 import { supabase } from '../../lib/supabase';
 import FlowerIcon from '../shared/FlowerIcon';
+import SeriesSearchResults from '../shared/SeriesSearchResults';
+import { useSeriesSearch, SEARCH_MIN_QUERY_LENGTH } from '../../lib/useSeriesSearch';
 import { MOCK_BLOOM_JOURNEY } from '../../lib/dashboardContent';
 
 function getGreeting() {
@@ -28,6 +30,14 @@ interface NotificationEntry {
 // Recent searches (see H3-02) -- client-only v1, stored in localStorage.
 // Cross-device persistence would need a backend table, which is a bigger
 // piece of work than this quick win calls for.
+//
+// Live results (matching the admin panel's search -- see
+// lib/useSeriesSearch.ts) now take over this same dropdown slot once
+// there's enough of a query to search on; Recent Searches only shows when
+// the field is empty and focused, same as before. Previously this form
+// only ever submitted to /series?q=... on Enter, with no feedback while
+// typing -- a noticeably different, less responsive experience than the
+// admin panel's search for what's meant to be the same feature.
 const RECENT_SEARCHES_KEY = 'blumi:recentSearches';
 const MAX_RECENT_SEARCHES = 5;
 
@@ -59,7 +69,7 @@ function saveRecentSearches(searches: string[]) {
 export default function DashboardHeader({ title, subtitle }: { title?: string; subtitle?: string }) {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
-  const [search, setSearch] = useState('');
+  const { query, setQuery, results: liveResults, loading: liveLoading, reset: resetSearch } = useSeriesSearch();
   const [notifOpen, setNotifOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
@@ -196,28 +206,45 @@ export default function DashboardHeader({ title, subtitle }: { title?: string; s
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  function runSearch(term: string) {
+  function recordSearchTerm(term: string) {
     const trimmed = term.trim();
-    if (trimmed) {
-      const deduped = [trimmed, ...recentSearches.filter((s) => s.toLowerCase() !== trimmed.toLowerCase())];
-      const next = deduped.slice(0, MAX_RECENT_SEARCHES);
-      setRecentSearches(next);
-      saveRecentSearches(next);
-    }
+    if (!trimmed) return;
+    const deduped = [trimmed, ...recentSearches.filter((s) => s.toLowerCase() !== trimmed.toLowerCase())];
+    const next = deduped.slice(0, MAX_RECENT_SEARCHES);
+    setRecentSearches(next);
+    saveRecentSearches(next);
+  }
+
+  function closeSearchUI() {
     setSearchFocused(false);
     setMobileSearchOpen(false);
     searchInputRef.current?.blur();
-    router.push(trimmed ? '/series?q=' + encodeURIComponent(trimmed) : '/series');
+  }
+
+  function runSearch(term: string) {
+    recordSearchTerm(term);
+    closeSearchUI();
+    router.push(term.trim() ? '/series?q=' + encodeURIComponent(term.trim()) : '/series');
   }
 
   function handleSearchSubmit(e: React.FormEvent) {
     e.preventDefault();
-    runSearch(search);
+    runSearch(query);
   }
 
   function handleRecentSearchSelect(term: string) {
-    setSearch(term);
+    setQuery(term);
     runSearch(term);
+  }
+
+  // Picking a live result navigates via the Link itself (straight to that
+  // series, same as the admin panel) -- this just records the term and
+  // tidies up the search UI the way runSearch does for the full-results-
+  // page path, without also pushing a route on top of the Link's own.
+  function handleLiveResultSelect() {
+    recordSearchTerm(query);
+    closeSearchUI();
+    resetSearch();
   }
 
   function clearRecentSearches(e: React.MouseEvent) {
@@ -266,6 +293,7 @@ export default function DashboardHeader({ title, subtitle }: { title?: string; s
   const displayName = profileUsername || (user?.email ? user.email.split('@')[0] : 'Guest');
   const capitalizedName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
   const initial = displayName.charAt(0).toUpperCase();
+  const trimmedQuery = query.trim();
 
   return (
     <div className="flex flex-wrap sm:flex-nowrap sm:items-center sm:justify-between gap-x-5 gap-y-4 flex-1 min-w-0">
@@ -316,20 +344,18 @@ export default function DashboardHeader({ title, subtitle }: { title?: string; s
             <input
               ref={searchInputRef}
               type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
               onFocus={() => setSearchFocused(true)}
               onKeyDown={(e) => {
                 if (e.key === 'Escape') {
-                  setSearchFocused(false);
-                  setMobileSearchOpen(false);
-                  searchInputRef.current?.blur();
+                  closeSearchUI();
                 }
               }}
               placeholder="Search series, movies, moods..."
               className="w-full bg-card text-foreground placeholder:text-muted-foreground rounded-full pl-5 pr-16 py-2.5 text-sm border border-border shadow-sm focus:outline-none focus:border-ring transition-colors"
             />
-            {!searchFocused && !search && (
+            {!searchFocused && !query && (
               <kbd className="hidden lg:flex absolute right-9 top-1/2 -translate-y-1/2 items-center gap-0.5 text-[10px] font-medium text-muted-foreground/70 bg-muted px-1.5 py-0.5 rounded border border-border pointer-events-none">
                 <span className="text-[11px] leading-none">⌘</span>K
               </kbd>
@@ -343,7 +369,16 @@ export default function DashboardHeader({ title, subtitle }: { title?: string; s
             </button>
           </div>
 
-          {searchFocused && recentSearches.length > 0 && (
+          {searchFocused && trimmedQuery.length >= SEARCH_MIN_QUERY_LENGTH && (
+            <SeriesSearchResults
+              query={trimmedQuery}
+              loading={liveLoading}
+              results={liveResults}
+              onSelect={handleLiveResultSelect}
+            />
+          )}
+
+          {searchFocused && trimmedQuery.length < SEARCH_MIN_QUERY_LENGTH && recentSearches.length > 0 && (
             <div className="absolute left-0 right-0 mt-2 bg-popover border border-border rounded-2xl shadow-xl overflow-hidden z-20">
               <div className="flex items-center justify-between px-4 pt-3 pb-1">
                 <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">

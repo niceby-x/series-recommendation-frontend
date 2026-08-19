@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { Search, Bookmark, Bell, ChevronDown, LogOut, ShieldCheck, Menu, X } from 'lucide-react';
 import FlowerIcon from './FlowerIcon';
+import SeriesSearchResults from './SeriesSearchResults';
+import { useSeriesSearch, SEARCH_MIN_QUERY_LENGTH } from '../../lib/useSeriesSearch';
 import { supabase } from '../../lib/supabase';
 import type { User } from '@supabase/supabase-js';
 import Logo from './Logo';
@@ -51,8 +53,17 @@ export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [discoverOpen, setDiscoverOpen] = useState(false);
-  const [search, setSearch] = useState('');
+  // Live search results, matching the admin panel's search (see
+  // lib/useSeriesSearch.ts) -- this used to only submit to /series?q=...
+  // on Enter, with nothing shown while typing. searchOpen still controls
+  // the icon-vs-expanded-form toggle; searchFocused separately gates the
+  // live-results dropdown so it only shows while the field is actually
+  // focused, not just expanded.
+  const { query: search, setQuery: setSearch, results: liveResults, loading: liveLoading, reset: resetSearch } =
+    useSeriesSearch();
   const [searchOpen, setSearchOpen] = useState(false);
+  const [searchFocused, setSearchFocused] = useState(false);
+  const searchFormRef = useRef<HTMLFormElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
   const discoverRef = useRef<HTMLDivElement>(null);
@@ -136,6 +147,9 @@ export default function Navbar() {
       if (discoverRef.current && !discoverRef.current.contains(event.target as Node)) {
         setDiscoverOpen(false);
       }
+      if (searchFormRef.current && !searchFormRef.current.contains(event.target as Node)) {
+        setSearchFocused(false);
+      }
       if (
         mobileMenuRef.current &&
         !mobileMenuRef.current.contains(event.target as Node) &&
@@ -157,7 +171,18 @@ export default function Navbar() {
   function handleSearchSubmit(e: React.FormEvent) {
     e.preventDefault();
     const trimmed = search.trim();
+    setSearchFocused(false);
     router.push(trimmed ? '/series?q=' + encodeURIComponent(trimmed) : '/series');
+  }
+
+  // Picking a live result navigates via the Link itself, straight to that
+  // series -- same as the admin panel and DashboardHeader. Just tidies the
+  // search UI back up afterward rather than leaving the box expanded with
+  // a stale query in it.
+  function handleLiveResultSelect() {
+    setSearchFocused(false);
+    setSearchOpen(false);
+    resetSearch();
   }
 
   function isActive(href: string) {
@@ -254,13 +279,14 @@ export default function Navbar() {
 
       <div className="flex-1 flex justify-end ml-auto">
         {searchOpen ? (
-          <form onSubmit={handleSearchSubmit} className="w-full max-w-md">
+          <form ref={searchFormRef} onSubmit={handleSearchSubmit} className="relative w-full max-w-md">
             <div className="relative">
               <input
                 autoFocus
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
+                onFocus={() => setSearchFocused(true)}
                 onBlur={() => {
                   if (!search.trim()) setSearchOpen(false);
                 }}
@@ -275,6 +301,15 @@ export default function Navbar() {
                 <Search className="size-4" />
               </button>
             </div>
+
+            {searchFocused && search.trim().length >= SEARCH_MIN_QUERY_LENGTH && (
+              <SeriesSearchResults
+                query={search.trim()}
+                loading={liveLoading}
+                results={liveResults}
+                onSelect={handleLiveResultSelect}
+              />
+            )}
           </form>
         ) : (
           <button

@@ -1,10 +1,11 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import Link from 'next/link';
 import { Search } from 'lucide-react';
 import FlowerIcon from '../shared/FlowerIcon';
 import AdminAccountMenu from './AdminAccountMenu';
+import SeriesSearchResults from '../shared/SeriesSearchResults';
+import { useSeriesSearch, SEARCH_MIN_QUERY_LENGTH } from '../../lib/useSeriesSearch';
 
 function getGreeting() {
   const hour = new Date().getHours();
@@ -13,19 +14,15 @@ function getGreeting() {
   return 'Good evening';
 }
 
-interface SeriesSearchResult {
-  id: number;
-  title: string;
-  year: number | null;
-  poster_url: string | null;
-}
-
 // D1-02: was visual-only -- looked and behaved exactly like working
 // search (focus states, a ⌘K hint, an editable input) but its own code
 // comment admitted it didn't submit anywhere. Now a real debounced search
 // against GET /series?q=, which already does a case-insensitive title
 // match server-side (see series.ts) and is public, so no auth token is
-// needed here.
+// needed here. The debounce/fetch itself now lives in the shared
+// useSeriesSearch hook (see lib/useSeriesSearch.ts) so the public site's
+// search bars (Navbar, DashboardHeader) can behave identically instead of
+// each carrying their own near-copy of this effect.
 //
 // Deliberately series-only, not "series, users, moods" like the old
 // placeholder implied: GET /admin/users has no q filter yet and needs an
@@ -35,9 +32,6 @@ interface SeriesSearchResult {
 // render this header. Rather than re-create the exact "looks like it does
 // more than it does" problem this task exists to fix, the label and
 // results only cover what's actually wired.
-const MIN_QUERY_LENGTH = 2;
-const SEARCH_DEBOUNCE_MS = 300;
-const MAX_RESULTS = 6;
 
 // Mounted by AdminShell inside its top-bar strip (see the isDashboard
 // branch there), not by the dashboard page itself -- that strip sits
@@ -48,62 +42,10 @@ const MAX_RESULTS = 6;
 // own session fetch already has on hand, the same value AdminAccountMenu
 // receives elsewhere.
 export default function AdminHeader({ email }: { email: string | null }) {
-  const [query, setQuery] = useState('');
-  const [results, setResults] = useState<SeriesSearchResult[]>([]);
-  const [loading, setLoading] = useState(false);
+  const { query, setQuery, results, loading, reset } = useSeriesSearch();
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  // Lint fix: react-hooks/set-state-in-effect flagged setResults/setLoading
-  // being called directly (unconditionally, outside any timer/promise) in
-  // the effect body below -- calling setState synchronously within an
-  // effect can trigger cascading renders. Both calls belonged to reacting
-  // to the *keystroke itself* (clear stale results below the minimum
-  // length, or show a loading state while the debounce timer is pending),
-  // not to anything the effect's own async fetch produced -- so they
-  // belong in the change handler (a normal event handler, not an effect)
-  // instead. The effect now only ever calls setState from inside the
-  // timeout's async callback, which is exactly what the rule allows.
-  function handleQueryChange(value: string) {
-    setQuery(value);
-    setOpen(true);
-
-    if (value.trim().length < MIN_QUERY_LENGTH) {
-      setResults([]);
-      setLoading(false);
-    } else {
-      setLoading(true);
-    }
-  }
-
-  useEffect(() => {
-    const trimmed = query.trim();
-    if (trimmed.length < MIN_QUERY_LENGTH) {
-      // Nothing to fetch -- handleQueryChange already reset results/loading
-      // for this case, so the effect itself has no state to set here.
-      return;
-    }
-
-    const timeout = setTimeout(async () => {
-      try {
-        const res = await fetch(
-          process.env.NEXT_PUBLIC_API_URL + '/series?q=' + encodeURIComponent(trimmed) + '&limit=' + MAX_RESULTS
-        );
-        if (res.ok) {
-          const json = await res.json();
-          setResults(json.data || []);
-        }
-      } catch {
-        // Network hiccup mid-type -- leave whatever results are already
-        // showing rather than clearing them out from under the admin.
-      } finally {
-        setLoading(false);
-      }
-    }, SEARCH_DEBOUNCE_MS);
-
-    return () => clearTimeout(timeout);
-  }, [query]);
 
   // Click-outside to close the results dropdown, same pattern used
   // elsewhere in the app for dismissible panels.
@@ -133,7 +75,7 @@ export default function AdminHeader({ email }: { email: string | null }) {
   const displayName = email ? email.split('@')[0] : 'Admin';
   const capitalizedName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
   const trimmedQuery = query.trim();
-  const showDropdown = open && trimmedQuery.length >= MIN_QUERY_LENGTH;
+  const showDropdown = open && trimmedQuery.length >= SEARCH_MIN_QUERY_LENGTH;
 
   return (
     <div className="flex flex-wrap sm:flex-nowrap sm:items-center sm:justify-between gap-x-5 gap-y-4 flex-1 min-w-0">
@@ -154,7 +96,10 @@ export default function AdminHeader({ email }: { email: string | null }) {
             ref={inputRef}
             type="text"
             value={query}
-            onChange={(e) => handleQueryChange(e.target.value)}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setOpen(true);
+            }}
             onFocus={() => setOpen(true)}
             placeholder="Search series..."
             className="w-full bg-card text-foreground placeholder:text-muted-foreground rounded-full pl-10 pr-14 py-2.5 text-sm border border-border shadow-sm focus:outline-none focus:border-ring transition-colors"
@@ -164,33 +109,15 @@ export default function AdminHeader({ email }: { email: string | null }) {
           </span>
 
           {showDropdown && (
-            <div className="absolute left-0 right-0 top-[calc(100%+8px)] bg-card border border-border rounded-2xl shadow-lg overflow-hidden z-20 max-h-80 overflow-y-auto">
-              {loading && results.length === 0 && (
-                <p className="px-4 py-3 text-sm text-muted-foreground">Searching…</p>
-              )}
-              {!loading && results.length === 0 && (
-                <p className="px-4 py-3 text-sm text-muted-foreground">No series match &ldquo;{trimmedQuery}&rdquo;.</p>
-              )}
-              {results.map((series) => (
-                <Link
-                  key={series.id}
-                  href={'/series/' + series.id}
-                  onClick={() => setOpen(false)}
-                  className="flex items-center gap-3 px-4 py-2.5 hover:bg-muted transition-colors"
-                >
-                  {series.poster_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={series.poster_url} alt="" className="size-8 rounded-md object-cover shrink-0" />
-                  ) : (
-                    <span className="size-8 rounded-md bg-muted shrink-0" />
-                  )}
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-[13.5px] font-medium text-foreground truncate">{series.title}</span>
-                    {series.year && <span className="block text-[11.5px] text-muted-foreground">{series.year}</span>}
-                  </span>
-                </Link>
-              ))}
-            </div>
+            <SeriesSearchResults
+              query={trimmedQuery}
+              loading={loading}
+              results={results}
+              onSelect={() => {
+                setOpen(false);
+                reset();
+              }}
+            />
           )}
         </div>
 

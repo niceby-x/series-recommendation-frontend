@@ -49,6 +49,42 @@ function mockFetchResponses(notifications: unknown[]) {
   );
 }
 
+describe('DashboardHeader live search (matching the admin panel search)', () => {
+  beforeEach(() => {
+    getSession.mockReset();
+    signOut.mockReset();
+    getSession.mockResolvedValue({ data: { session: null } });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('shows live results from GET /series?q= once the query reaches the minimum length', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockImplementation((url: string) => {
+        if (url.includes('/series?q=')) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ data: [{ id: 7, title: 'Semantic Error', year: 2022, poster_url: null }] }),
+          });
+        }
+        return Promise.resolve({ ok: true, json: async () => ({}) });
+      })
+    );
+
+    render(<DashboardHeader />);
+
+    const input = screen.getByPlaceholderText('Search series, movies, moods...');
+    await userEvent.type(input, 'se');
+
+    expect(await screen.findByText('Semantic Error')).toBeInTheDocument();
+    const link = screen.getByRole('link', { name: /semantic error/i });
+    expect(link).toHaveAttribute('href', '/series/7');
+  });
+});
+
 describe('DashboardHeader notifications bell (G3-01)', () => {
   beforeEach(() => {
     getSession.mockReset();
