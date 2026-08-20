@@ -9,9 +9,11 @@ import {
   List as ListIcon,
   LayoutGrid,
   Check,
+  BadgeCheck,
+  Clock,
+  Archive,
 } from 'lucide-react';
 import type { AdminSeries } from './adminSeriesTypes';
-import { countryFlagUrl } from '../../lib/countryFlags';
 
 export type SeriesSortKey = 'updated_desc' | 'updated_asc' | 'title_asc' | 'title_desc' | 'year_desc' | 'year_asc';
 export type PublishStatus = 'draft' | 'published' | 'archived';
@@ -46,48 +48,26 @@ const STATUS_LABEL: Record<PublishStatus, string> = {
   archived: 'Archived',
 };
 
-// Deterministic name -> palette-slot hash, so a given genre name always
-// renders the same chip color across rows/pages without needing a real
-// genre->color mapping maintained anywhere (genres are admin-defined free
-// text, see admin/genres.ts -- there's no fixed enum to map colors onto).
-const GENRE_PALETTE = [
-  'bg-violet-100 text-violet-700',
-  'bg-emerald-100 text-emerald-700',
-  'bg-rose-100 text-rose-700',
-  'bg-amber-100 text-amber-700',
-  'bg-sky-100 text-sky-700',
-  'bg-fuchsia-100 text-fuchsia-700',
-];
+// Glass-chip variant of the status badge for the grid card (matches
+// RecentlyPublishedCard's "Published" chip) -- draft/archived need their
+// own tone since that card only ever shows one state (published, by
+// definition of what "recently published" means), but the grid shows all
+// three.
+const STATUS_GLASS_TONE: Record<PublishStatus, string> = {
+  draft: 'bg-amber-500/30 ring-amber-200/40',
+  published: 'bg-emerald-500/30 ring-emerald-200/40',
+  archived: 'bg-rose-500/30 ring-rose-200/40',
+};
 
-function genreTone(name: string): string {
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
-  return GENRE_PALETTE[hash % GENRE_PALETTE.length];
-}
+const STATUS_GLASS_ICON: Record<PublishStatus, typeof BadgeCheck> = {
+  draft: Clock,
+  published: BadgeCheck,
+  archived: Archive,
+};
 
 function formatUpdated(iso: string | null | undefined): string {
   if (!iso) return '—';
   return new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
-}
-
-function GenreChips({ names }: { names?: string[] }) {
-  if (!names || names.length === 0) return <span className="text-muted-foreground text-[12.5px]">—</span>;
-  const shown = names.slice(0, 2);
-  const rest = names.length - shown.length;
-  return (
-    <div className="flex items-center gap-1 flex-wrap">
-      {shown.map((n) => (
-        <span key={n} className={'text-[11.5px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap ' + genreTone(n)}>
-          {n}
-        </span>
-      ))}
-      {rest > 0 && (
-        <span className="text-[11.5px] font-semibold px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
-          +{rest}
-        </span>
-      )}
-    </div>
-  );
 }
 
 function useOutsideClick(onOutside: () => void) {
@@ -156,11 +136,16 @@ function RowActionsMenu({
   busy,
   onEdit,
   onDelete,
+  variant = 'light',
 }: {
   row: AdminSeries;
   busy: boolean;
   onEdit: () => void;
   onDelete: () => void;
+  // 'dark' is for placement over the poster art (grid card's bottom
+  // scrim) -- same trigger button, just light-on-dark icon color instead
+  // of the default dark-on-light used everywhere else (list view rows).
+  variant?: 'light' | 'dark';
 }) {
   const [open, setOpen] = useState(false);
   const ref = useOutsideClick(() => setOpen(false));
@@ -172,7 +157,12 @@ function RowActionsMenu({
         disabled={busy}
         onClick={() => setOpen((o) => !o)}
         aria-label={'More actions for ' + row.title}
-        className="flex items-center justify-center size-8 rounded-full text-foreground/60 hover:text-primary hover:bg-muted transition-colors disabled:opacity-40"
+        className={
+          'flex items-center justify-center size-8 rounded-full transition-colors disabled:opacity-40 ' +
+          (variant === 'dark'
+            ? 'text-white/85 hover:text-white hover:bg-white/15'
+            : 'text-foreground/60 hover:text-primary hover:bg-muted')
+        }
       >
         <MoreVertical className="size-4" />
       </button>
@@ -258,16 +248,6 @@ function Poster({ url, title }: { url: string | null; title: string }) {
         <div className="w-full h-full bg-gradient-to-br from-brand-blush/30 to-brand-lilac/30" />
       )}
     </div>
-  );
-}
-
-function CountryCell({ country }: { country: string }) {
-  const flagUrl = countryFlagUrl(country);
-  return (
-    <span className="flex items-center gap-1.5">
-      {flagUrl && <Image src={flagUrl} alt="" width={16} height={16} className="size-4 rounded-[3px] object-cover shrink-0" />}
-      {country}
-    </span>
   );
 }
 
@@ -366,51 +346,85 @@ export default function AdminSeriesTable({
       </div>
 
       {rows.length === 0 ? (
-        <div className="rounded-[20px] bg-card border border-border/60 p-8 text-center">
+        <div className="rounded-[10px] bg-card border border-border/60 p-8 text-center">
           <p className="text-foreground font-semibold mb-1">No titles match these filters</p>
           <p className="text-muted-foreground text-sm">Try a different search, tab, or filter combination.</p>
         </div>
       ) : view === 'grid' ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+        // D3-XX: matches RecentlyPublishedCard's visual language on the
+        // admin dashboard -- full-bleed poster, diagonal shine sweep on
+        // hover, a glassy status chip that expands to its label on hover,
+        // and title/meta living on a bottom scrim instead of a separate
+        // white panel below the art (no spare height for one at a fixed
+        // 180x270 tile). Unlike that card this one isn't a whole-tile
+        // <Link> -- it needs a real checkbox plus edit/actions controls,
+        // and nesting those inside an anchor isn't valid HTML -- so
+        // selection/edit/actions are layered on as their own controls
+        // instead. Status chip is a static display here (not the list
+        // view's editable dropdown) -- unchanged behavior from before this
+        // pass, just restyled; changing it to published/draft/archived
+        // still happens via the Edit modal or the list view's StatusMenu.
+        <div className="grid grid-cols-5 gap-3">
           {rows.map((row) => {
             const status = row.publish_status ?? 'published';
             const busy = busyIds.has(row.id);
+            const isMovie = row.media_type === 'movie';
+            const StatusIcon = STATUS_GLASS_ICON[status];
             return (
-              <div key={row.id} className="rounded-2xl bg-card border border-border/60 shadow-sm overflow-hidden flex flex-col">
-                <div className="relative w-full aspect-[2/3] bg-muted">
-                  {row.poster_url ? (
-                    <Image src={row.poster_url} alt={row.title} fill sizes="220px" className="object-cover" />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-brand-blush/30 to-brand-lilac/30" />
-                  )}
+              <div
+                key={row.id}
+                className="group relative w-full max-w-[180px] aspect-[2/3] mx-auto rounded-[10px] bg-muted shadow-md overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+              >
+                {row.poster_url ? (
+                  <Image src={row.poster_url} alt={row.title} fill sizes="(max-width: 640px) 18vw, 180px" className="object-cover transition-transform duration-500 group-hover:scale-105" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-brand-blush/25 to-brand-lilac/25 px-2 text-center">
+                    <span className="text-muted-foreground text-[11px] font-medium">{row.title}</span>
+                  </div>
+                )}
+
+                {/* Diagonal shine sweep on hover, same treatment as
+                    RecentlyPublishedCard -- pointer-events-none so it
+                    never blocks the checkbox/badge/scrim controls above it. */}
+                <div className="pointer-events-none absolute inset-0 -translate-x-full skew-x-12 bg-gradient-to-r from-transparent via-white/40 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full" />
+
+                <span className="absolute top-2 left-2 flex items-center justify-center size-6 rounded-full bg-black/40 backdrop-blur-sm">
                   <input
                     type="checkbox"
                     checked={selectedIds.has(row.id)}
                     onChange={() => onToggleRow(row.id)}
                     aria-label={'Select ' + row.title}
-                    className="absolute top-2 left-2 size-4 rounded border-border text-primary focus:ring-ring cursor-pointer"
+                    className="size-3.5 rounded border-white/70 text-primary focus:ring-ring cursor-pointer"
                   />
-                  <span className={'absolute top-2 right-2 text-[10.5px] font-semibold px-2 py-0.5 rounded-full ' + STATUS_TONE[status]}>
-                    {STATUS_LABEL[status]}
+                </span>
+
+                <div className={'absolute top-2 right-2 flex items-center h-6 max-w-6 hover:max-w-24 overflow-hidden rounded-full backdrop-blur-md ring-1 ring-inset text-white shadow-sm transition-[max-width] duration-300 ease-out ' + STATUS_GLASS_TONE[status]}>
+                  <span className="flex items-center justify-center size-6 shrink-0">
+                    <StatusIcon className="size-3.5" />
                   </span>
+                  <span className="pr-2.5 text-[11px] font-semibold whitespace-nowrap">{STATUS_LABEL[status]}</span>
                 </div>
-                <div className="p-3 flex flex-col gap-1.5 flex-1">
-                  <p className="text-foreground text-[13.5px] font-semibold truncate">{row.title}</p>
-                  <p className="text-muted-foreground text-[12px] flex items-center gap-1">
-                    <CountryCell country={row.country} /> · {row.year ?? '—'}
-                  </p>
-                  <GenreChips names={row.genre_names} />
-                  <div className="mt-auto flex items-center justify-end gap-1 pt-1">
-                    <button
-                      type="button"
-                      disabled={busy}
-                      onClick={() => onEdit(row)}
-                      aria-label={'Edit ' + row.title}
-                      className="flex items-center justify-center size-8 rounded-full text-foreground/60 hover:text-primary hover:bg-muted transition-colors disabled:opacity-40"
-                    >
-                      <Pencil className="size-4" />
-                    </button>
-                    <RowActionsMenu row={row} busy={busy} onEdit={() => onEdit(row)} onDelete={() => onDelete(row)} />
+
+                <div className="absolute inset-x-0 bottom-0 pt-8 px-2.5 pb-2 bg-gradient-to-t from-black/85 via-black/45 to-transparent">
+                  <h3 className="text-white text-[12.5px] font-semibold leading-snug line-clamp-1 [text-shadow:0_1px_3px_rgba(0,0,0,0.85)]">
+                    {row.title}
+                  </h3>
+                  <div className="flex items-center justify-between mt-0.5">
+                    <p className="text-white/75 text-[10.5px] leading-snug line-clamp-1">
+                      {isMovie ? 'Movie' : 'Series'} · {row.year ?? '—'}
+                    </p>
+                    <div className="flex items-center -mr-1 shrink-0">
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => onEdit(row)}
+                        aria-label={'Edit ' + row.title}
+                        className="flex items-center justify-center size-7 rounded-full text-white/85 hover:text-white hover:bg-white/15 transition-colors disabled:opacity-40"
+                      >
+                        <Pencil className="size-3.5" />
+                      </button>
+                      <RowActionsMenu row={row} busy={busy} onEdit={() => onEdit(row)} onDelete={() => onDelete(row)} variant="dark" />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -418,12 +432,12 @@ export default function AdminSeriesTable({
           })}
         </div>
       ) : (
-        <div className="rounded-[20px] bg-card border border-border/60 shadow-sm overflow-hidden">
+        <div className="rounded-[10px] bg-card border border-border/60 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse min-w-[920px]">
+            <table className="w-full text-left border-collapse min-w-[760px]">
               <thead>
                 <tr className="text-[11.5px] font-bold uppercase tracking-wide text-muted-foreground border-b border-border/60">
-                  <th className="px-5 py-3 font-bold w-10">
+                  <th className="px-5 py-3 font-bold w-10 text-center">
                     <input
                       type="checkbox"
                       checked={allOnPageSelected}
@@ -434,10 +448,8 @@ export default function AdminSeriesTable({
                   </th>
                   <th className="px-3 py-3 font-bold">Title</th>
                   <th className="px-3 py-3 font-bold">Type</th>
-                  <th className="px-3 py-3 font-bold">Country</th>
                   <th className="px-3 py-3 font-bold">Year</th>
                   <th className="px-3 py-3 font-bold">Episodes</th>
-                  <th className="px-3 py-3 font-bold">Genre</th>
                   <th className="px-3 py-3 font-bold">Status</th>
                   <th className="px-3 py-3 font-bold">Updated</th>
                   <th className="px-5 py-3 font-bold text-right">Actions</th>
@@ -450,7 +462,7 @@ export default function AdminSeriesTable({
                   const isMovie = row.media_type === 'movie';
                   return (
                     <tr key={row.id} className="hover:bg-muted/40 transition-colors">
-                      <td className="px-5 py-3 align-top">
+                      <td className="px-5 py-3 text-center align-middle">
                         <input
                           type="checkbox"
                           checked={selectedIds.has(row.id)}
@@ -467,22 +479,13 @@ export default function AdminSeriesTable({
                             {row.genre_names && row.genre_names.length > 0 && (
                               <p className="text-muted-foreground text-[12px] truncate">{row.genre_names.join(', ')}</p>
                             )}
-                            <span className="inline-block mt-1 text-[10.5px] font-semibold px-2 py-0.5 rounded-full bg-brand-lilac/25 text-[#5E4B6B]">
-                              {isMovie ? 'Movie' : 'Series'}
-                            </span>
                           </div>
                         </div>
                       </td>
                       <td className="px-3 py-3 text-[13px] text-foreground whitespace-nowrap">{isMovie ? 'Movie' : 'Series'}</td>
-                      <td className="px-3 py-3 text-[13px] text-foreground whitespace-nowrap">
-                        <CountryCell country={row.country} />
-                      </td>
                       <td className="px-3 py-3 text-[13px] text-foreground whitespace-nowrap">{row.year ?? '—'}</td>
                       <td className="px-3 py-3 text-[13px] text-foreground whitespace-nowrap">
                         {isMovie ? '—' : row.episode_count ?? '—'}
-                      </td>
-                      <td className="px-3 py-3">
-                        <GenreChips names={row.genre_names} />
                       </td>
                       <td className="px-3 py-3">
                         <StatusMenu status={status} busy={busy} onChange={(next) => onStatusChange(row, next)} />
