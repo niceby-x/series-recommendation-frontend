@@ -15,7 +15,7 @@ import {
   ENDING_TYPE_DISPLAY,
   CONTENT_LEVEL_DISPLAY,
 } from '../../lib/taxonomy';
-import type { AdminSeries } from './SeriesList';
+import type { AdminSeries } from './adminSeriesTypes';
 
 const COUNTRY_OPTIONS = ['Thailand', 'Korea', 'Japan', 'Taiwan', 'China', 'Hong Kong', 'Other'];
 const STATUS_OPTIONS = ['airing', 'completed', 'upcoming'];
@@ -69,7 +69,7 @@ function toForm(series: AdminSeries): SeriesEditForm {
     synopsis: series.synopsis ?? '',
     country: series.country,
     year: series.year,
-    episode_count: series.episode_count,
+    episode_count: series.episode_count ?? 0,
     status: series.status,
     poster_url: series.poster_url ?? '',
     backdrop_url: series.backdrop_url ?? '',

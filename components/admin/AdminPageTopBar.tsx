@@ -12,7 +12,7 @@ import { useAdminPageHeaderValue } from './AdminPageHeaderContext';
 // e.g. app/admin/users/page.tsx's `search`/`setSearch`), not a shared
 // concept, so it stays owned by the page and only rendered up here.
 export default function AdminPageTopBar({ email }: { email: string | null }) {
-  const { title, subtitle, search } = useAdminPageHeaderValue();
+  const { title, subtitle, search, actions } = useAdminPageHeaderValue();
 
   return (
     <div className="flex flex-wrap sm:flex-nowrap sm:items-center sm:justify-between gap-x-5 gap-y-3 flex-1 min-w-0">
@@ -27,6 +27,7 @@ export default function AdminPageTopBar({ email }: { email: string | null }) {
 
       <div className="flex items-center gap-3 min-w-0 ml-auto sm:ml-0">
         {search}
+        {actions}
         <AdminAccountMenu email={email} />
       </div>
     </div>

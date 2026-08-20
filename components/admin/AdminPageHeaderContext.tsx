@@ -6,9 +6,14 @@ interface AdminPageHeaderValue {
   title: ReactNode;
   subtitle: ReactNode;
   search: ReactNode;
+  // S1-03: page-specific header buttons (e.g. Series & Movies' "Filters"
+  // and "+ Add title") -- rendered between `search` and the account pill.
+  // Optional/defaults to null so every page that predates this (none of
+  // which pass it) keeps rendering exactly as before.
+  actions: ReactNode;
 }
 
-const EMPTY: AdminPageHeaderValue = { title: null, subtitle: null, search: null };
+const EMPTY: AdminPageHeaderValue = { title: null, subtitle: null, search: null, actions: null };
 
 // Two contexts rather than one: pages only ever need the setter (they
 // never read the current value, they just publish their own), and
@@ -51,14 +56,16 @@ export function useAdminPageHeader({
   title,
   subtitle,
   search,
+  actions,
 }: {
   title: ReactNode;
   subtitle?: ReactNode;
   search?: ReactNode;
+  actions?: ReactNode;
 }) {
   const setValue = useContext(SetterContext);
   useEffect(() => {
-    setValue?.({ title, subtitle: subtitle ?? null, search: search ?? null });
+    setValue?.({ title, subtitle: subtitle ?? null, search: search ?? null, actions: actions ?? null });
     // Clear on unmount so a lingering title/search doesn't flash for a
     // moment while navigating to a page that doesn't call this hook (none
     // currently exist among the admin routes, but nothing stops a future
