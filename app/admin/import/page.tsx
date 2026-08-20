@@ -25,6 +25,10 @@ interface ImportStatus {
 }
 
 const POLL_INTERVAL_MS = 3000;
+// Keep in sync with the backend's server-side clamp in POST /admin/import/run
+// (see IMP1-03 handoff) -- the backend is the source of truth, this just
+// keeps the input from looking like it accepts more than it does.
+const MAX_IMPORT_LIMIT = 500;
 
 async function authHeader() {
   const {
@@ -115,7 +119,10 @@ export default function AdminImportPage() {
     }
 
     const parsedLimit = parseInt(limitInput);
-    const limit = Number.isFinite(parsedLimit) && parsedLimit > 0 ? parsedLimit : 150;
+    const limit =
+      Number.isFinite(parsedLimit) && parsedLimit > 0
+        ? Math.min(parsedLimit, MAX_IMPORT_LIMIT)
+        : 150;
 
     setStarting(true);
     const res = await fetch(process.env.NEXT_PUBLIC_API_URL + '/admin/import/run', {
@@ -186,6 +193,7 @@ export default function AdminImportPage() {
                     id="import-limit"
                     type="number"
                     min={1}
+                    max={MAX_IMPORT_LIMIT}
                     value={limitInput}
                     onChange={(e) => setLimitInput(e.target.value)}
                     disabled={running}
