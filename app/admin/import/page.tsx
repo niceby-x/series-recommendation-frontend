@@ -22,6 +22,12 @@ interface ImportStatus {
   // means the backend restarted mid-run and reconciled a stale 'running'
   // row rather than this run actually finishing on its own.
   interrupted?: boolean;
+  // IMP1-04: false only when this run's initial import_runs insert
+  // failed on the backend. The run itself still proceeds untracked in
+  // that case, but with no DB row for it, a crash mid-run would leave no
+  // trace for the backend's boot-time reconciliation to find -- worth
+  // flagging live rather than letting it fail silently.
+  persisted?: boolean;
 }
 
 const POLL_INTERVAL_MS = 3000;
@@ -217,6 +223,12 @@ export default function AdminImportPage() {
 
             {startError && <p className="text-rose-500 text-[13px] mt-3">{startError}</p>}
             {status?.error && <p className="text-rose-500 text-[13px] mt-3">Process error: {status.error}</p>}
+            {status?.persisted === false && (
+              <p className="text-amber-600 text-[13px] mt-3">
+                This run&apos;s state couldn&apos;t be saved to the database, so it isn&apos;t being tracked. It will
+                still complete normally, but a server restart mid-run wouldn&apos;t be recoverable or show up in history.
+              </p>
+            )}
 
             {status?.startedAt && (
               <p className="text-muted-foreground text-[12.5px] mt-3">
