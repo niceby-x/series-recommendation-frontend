@@ -7,8 +7,14 @@ import type { User } from '@supabase/supabase-js';
 import { supabase } from '../../../lib/supabase';
 import { useAuthModal } from '../../../lib/AuthModalContext';
 import { useAdminPageHeader } from '../../../components/admin/AdminPageHeaderContext';
+import ImportHistoryTable from '../../../components/admin/ImportHistoryTable';
 
 type AccessState = 'checking' | 'signed_out' | 'forbidden' | 'ok' | 'error';
+// IMP3-03: a separate tab rather than appending the history list below
+// the existing log panel -- keeps "start/monitor a run" and "audit past
+// runs" as two distinct, uncluttered views instead of one long scrolling
+// page once history grows past a handful of rows.
+type PageTab = 'run' | 'history';
 
 interface ImportStatus {
   running: boolean;
@@ -85,6 +91,7 @@ export default function AdminImportPage() {
   const [user, setUser] = useState<User | null>(null);
   const [access, setAccess] = useState<AccessState>('checking');
   const [status, setStatus] = useState<ImportStatus | null>(null);
+  const [activeTab, setActiveTab] = useState<PageTab>('run');
   const [limitInput, setLimitInput] = useState('150');
   const [dryRunInput, setDryRunInput] = useState(false);
   const [keywordInput, setKeywordInput] = useState('');
@@ -262,6 +269,46 @@ export default function AdminImportPage() {
     <div className="px-5 md:px-8 lg:px-10 py-6 md:py-8">
         <div className="w-full max-w-[900px] mx-auto">
 
+          {/* IMP3-03: same tab visual language as SeriesTabs
+              (components/admin/SeriesTabs.tsx) -- underline + color on the
+              active tab -- just without per-tab counts, since there's
+              nothing meaningful to count for "Run Import". */}
+          <div className="flex items-center gap-1 mb-5" role="tablist" aria-label="Import page sections">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === 'run'}
+              onClick={() => setActiveTab('run')}
+              className={
+                'px-3.5 py-2 text-[13.5px] font-semibold whitespace-nowrap border-b-2 transition-colors ' +
+                (activeTab === 'run'
+                  ? 'text-primary border-primary'
+                  : 'text-muted-foreground border-transparent hover:text-foreground')
+              }
+            >
+              Run Import
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === 'history'}
+              onClick={() => setActiveTab('history')}
+              className={
+                'px-3.5 py-2 text-[13.5px] font-semibold whitespace-nowrap border-b-2 transition-colors ' +
+                (activeTab === 'history'
+                  ? 'text-primary border-primary'
+                  : 'text-muted-foreground border-transparent hover:text-foreground')
+              }
+            >
+              History
+            </button>
+          </div>
+
+          {activeTab === 'history' ? (
+            <ImportHistoryTable />
+          ) : (
+          <>
+
           <div className="rounded-[20px] bg-card border border-border/60 shadow-sm p-5 mb-6">
             <div className="flex flex-wrap items-end justify-between gap-4">
               <div className="flex items-end gap-3">
@@ -410,6 +457,8 @@ export default function AdminImportPage() {
               )}
             </div>
           </div>
+          </>
+          )}
         </div>
       </div>
   );
