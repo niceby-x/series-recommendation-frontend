@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Play, Loader2, CheckCircle2, XCircle, UploadCloud } from 'lucide-react';
+import { Play, Loader2, CheckCircle2, XCircle, UploadCloud, Square, Ban } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
 import { supabase } from '../../../lib/supabase';
 import { useAuthModal } from '../../../lib/AuthModalContext';
@@ -28,6 +28,13 @@ interface ImportStatus {
   // trace for the backend's boot-time reconciliation to find -- worth
   // flagging live rather than letting it fail silently.
   persisted?: boolean;
+  // IMP2-01: true once a run was ended via POST /admin/import/stop
+  // (an admin action) rather than finishing or erroring on its own.
+  // Only meaningful once running has flipped back to false -- while
+  // running is still true this may already be true too (the backend
+  // sets it before the signal actually lands), so StatusBadge checks
+  // running first.
+  cancelled?: boolean;
 }
 
 const POLL_INTERVAL_MS = 3000;
@@ -52,6 +59,8 @@ export default function AdminImportPage() {
   const [limitInput, setLimitInput] = useState('150');
   const [starting, setStarting] = useState(false);
   const [startError, setStartError] = useState<string | null>(null);
+  const [stopping, setStopping] = useState(false);
+  const [stopError, setStopError] = useState<string | null>(null);
   const logRef = useRef<HTMLDivElement>(null);
 
   useAdminPageHeader({
@@ -151,6 +160,40 @@ export default function AdminImportPage() {
     fetchStatus();
   }
 
+  // IMP2-01: fire-and-forget on the backend too -- POST /admin/import/stop
+  // just confirms the SIGTERM was sent, not that the process has actually
+  // exited. The existing poll loop (still running while status.running is
+  // true) picks up running: false and cancelled: true the same way it
+  // already detects any other run ending, no separate handling needed.
+  async function handleStop() {
+    setStopError(null);
+    const header = await authHeader();
+    if (!header) {
+      setAccess('signed_out');
+      return;
+    }
+
+    setStopping(true);
+    const res = await fetch(process.env.NEXT_PUBLIC_API_URL + '/admin/import/stop', {
+      method: 'POST',
+      headers: header,
+    });
+    setStopping(false);
+
+    if (res.status === 409) {
+      // Nothing running anymore -- e.g. it finished right as this was
+      // clicked. Just resync instead of showing a stale error.
+      fetchStatus();
+      return;
+    }
+    if (!res.ok) {
+      setStopError('Could not stop the import. Try again.');
+      return;
+    }
+
+    fetchStatus();
+  }
+
   if (access === 'checking') return null;
 
   if (access === 'signed_out') {
@@ -216,12 +259,25 @@ export default function AdminImportPage() {
                   {running ? <Loader2 className="size-4 animate-spin" /> : <Play className="size-4" />}
                   {running ? 'Running…' : 'Start Import'}
                 </button>
+
+                {running && (
+                  <button
+                    type="button"
+                    onClick={handleStop}
+                    disabled={stopping}
+                    className="flex items-center gap-2 bg-rose-600 text-white px-4 py-2.5 rounded-full text-sm font-semibold shadow-sm hover:opacity-90 transition-opacity disabled:opacity-50 disabled:pointer-events-none"
+                  >
+                    {stopping ? <Loader2 className="size-4 animate-spin" /> : <Square className="size-4" />}
+                    {stopping ? 'Stopping…' : 'Stop'}
+                  </button>
+                )}
               </div>
 
               <StatusBadge status={status} />
             </div>
 
             {startError && <p className="text-rose-500 text-[13px] mt-3">{startError}</p>}
+            {stopError && <p className="text-rose-500 text-[13px] mt-3">{stopError}</p>}
             {status?.error && <p className="text-rose-500 text-[13px] mt-3">Process error: {status.error}</p>}
             {status?.persisted === false && (
               <p className="text-amber-600 text-[13px] mt-3">
@@ -284,6 +340,15 @@ function StatusBadge({ status }: { status: ImportStatus | null }) {
       <span className="flex items-center gap-1.5 text-amber-600 text-[13px] font-semibold">
         <XCircle className="size-4" />
         Interrupted by a server restart
+      </span>
+    );
+  }
+
+  if (status.cancelled) {
+    return (
+      <span className="flex items-center gap-1.5 text-amber-600 text-[13px] font-semibold">
+        <Ban className="size-4" />
+        Stopped
       </span>
     );
   }
