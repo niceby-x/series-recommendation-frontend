@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Play, Loader2, CheckCircle2, XCircle, UploadCloud, Square, Ban } from 'lucide-react';
+import Link from 'next/link';
+import { Play, Loader2, CheckCircle2, XCircle, UploadCloud, Square, Ban, ArrowRight } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
 import { supabase } from '../../../lib/supabase';
 import { useAuthModal } from '../../../lib/AuthModalContext';
@@ -292,6 +293,25 @@ export default function AdminImportPage() {
                 {status.limit != null ? ' · limit ' + status.limit + ' per media type' : ''}
                 {status.finishedAt ? ' · finished ' + new Date(status.finishedAt).toLocaleString() : ''}
               </p>
+            )}
+
+            {/* IMP2-02: previously the only path from a finished run to
+                what it queued was manual -- navigate to the Editorial
+                Queue and re-filter to pending yourself. The candidates
+                page already defaults its tab to 'pending' on load, so a
+                plain link there is enough; no query param or change to
+                that page is needed. Shown only once a run has actually
+                finished successfully -- not while running, and not for
+                an interrupted/cancelled/errored run, since none of
+                those reliably queued anything worth jumping to. */}
+            {!running && status?.exitCode === 0 && !status?.cancelled && (
+              <Link
+                href="/admin/candidates"
+                className="flex items-center gap-1.5 text-primary text-[13px] font-semibold mt-3 hover:opacity-80 transition-opacity w-fit"
+              >
+                View pending candidates in the Editorial Queue
+                <ArrowRight className="size-3.5" />
+              </Link>
             )}
           </div>
 
