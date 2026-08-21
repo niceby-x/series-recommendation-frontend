@@ -40,6 +40,18 @@ interface ImportStatus {
   // the dry-run flag set. Present in both the live and DB-fallback
   // branches of GET /admin/import/status.
   dryRun?: boolean;
+  // IMP3-01: set once the script's discovery loop finishes and emits its
+  // final summary line -- null while running, or if a run errored, was
+  // stopped, or got interrupted before reaching that point. Present in
+  // both the live and DB-fallback branches of GET /admin/import/status,
+  // same shape either way.
+  summary?: ImportRunSummary | null;
+}
+
+interface ImportRunSummary {
+  added: number;
+  mediaTypeTally: Record<string, number>;
+  countryTally: Record<string, number>;
 }
 
 const POLL_INTERVAL_MS = 3000;
@@ -319,9 +331,18 @@ export default function AdminImportPage() {
                 Started {new Date(status.startedAt).toLocaleString()}
                 {status.limit != null ? ' · limit ' + status.limit + ' per media type' : ''}
                 {status.finishedAt ? ' · finished ' + new Date(status.finishedAt).toLocaleString() : ''}
-                {status.dryRun ? ' · dry run (nothing queued)' : ''}
+                {status.dryRun ? ' · dry run' : ''}
               </p>
             )}
+
+            {/* IMP3-01: the script already computed these tallies for its
+                own human-readable log, but there was previously no
+                structured way to show them without scrolling raw log
+                output. Only rendered once status.summary is actually set
+                -- null while running, or for a run that errored, was
+                stopped, or got interrupted before the script reached its
+                final summary line, same as a run with no output yet. */}
+            {status?.summary && <StatBreakdown summary={status.summary} dryRun={status.dryRun} />}
 
             {/* IMP2-02: previously the only path from a finished run to
                 what it queued was manual -- navigate to the Editorial
@@ -415,5 +436,40 @@ function StatusBadge({ status }: { status: ImportStatus | null }) {
       <XCircle className="size-4" />
       Finished with errors (exit {status.exitCode})
     </span>
+  );
+}
+
+// IMP3-01: renders the same countryTally/mediaTypeTally numbers the
+// script already logs as plain text (e.g. "12 TV, 8 Movies · Thailand: 9,
+// Korea: 11"), as a small stat breakdown instead of something you'd have
+// to find by scrolling the log panel. Country order follows whatever
+// order the backend's countryTally object has -- the script only ever
+// builds it by encountering countries as it goes, so this isn't sorted
+// by count, just left as the backend reports it.
+function StatBreakdown({ summary, dryRun }: { summary: ImportRunSummary; dryRun?: boolean }) {
+  const tv = summary.mediaTypeTally.tv ?? 0;
+  const movie = summary.mediaTypeTally.movie ?? 0;
+  const countries = Object.entries(summary.countryTally);
+
+  return (
+    <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1 mt-3 text-[12.5px]">
+      <span className="font-semibold text-foreground">
+        {summary.added} {dryRun ? 'would be queued' : 'queued'}:
+      </span>
+      <span className="text-muted-foreground">
+        {tv} TV, {movie} Movies
+        {countries.length > 0 && (
+          <>
+            {' · '}
+            {countries.map(([country, count], i) => (
+              <span key={country}>
+                {country}: {count}
+                {i < countries.length - 1 ? ', ' : ''}
+              </span>
+            ))}
+          </>
+        )}
+      </span>
+    </div>
   );
 }
