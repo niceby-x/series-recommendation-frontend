@@ -36,6 +36,10 @@ interface ImportStatus {
   // sets it before the signal actually lands), so StatusBadge checks
   // running first.
   cancelled?: boolean;
+  // IMP2-03: true for the duration of, and after, a run started with
+  // the dry-run flag set. Present in both the live and DB-fallback
+  // branches of GET /admin/import/status.
+  dryRun?: boolean;
 }
 
 const POLL_INTERVAL_MS = 3000;
@@ -58,6 +62,7 @@ export default function AdminImportPage() {
   const [access, setAccess] = useState<AccessState>('checking');
   const [status, setStatus] = useState<ImportStatus | null>(null);
   const [limitInput, setLimitInput] = useState('150');
+  const [dryRunInput, setDryRunInput] = useState(false);
   const [starting, setStarting] = useState(false);
   const [startError, setStartError] = useState<string | null>(null);
   const [stopping, setStopping] = useState(false);
@@ -144,7 +149,7 @@ export default function AdminImportPage() {
     const res = await fetch(process.env.NEXT_PUBLIC_API_URL + '/admin/import/run', {
       method: 'POST',
       headers: { ...header, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ limit }),
+      body: JSON.stringify({ limit, dryRun: dryRunInput }),
     });
     setStarting(false);
 
@@ -251,6 +256,21 @@ export default function AdminImportPage() {
                   />
                 </div>
 
+                <label
+                  htmlFor="import-dry-run"
+                  className="flex items-center gap-2 pb-2.5 text-[13px] font-medium text-foreground select-none cursor-pointer disabled:cursor-default"
+                >
+                  <input
+                    id="import-dry-run"
+                    type="checkbox"
+                    checked={dryRunInput}
+                    onChange={(e) => setDryRunInput(e.target.checked)}
+                    disabled={running}
+                    className="size-4 rounded border-border accent-current disabled:opacity-50"
+                  />
+                  Dry run
+                </label>
+
                 <button
                   type="button"
                   onClick={handleStart}
@@ -274,7 +294,14 @@ export default function AdminImportPage() {
                 )}
               </div>
 
-              <StatusBadge status={status} />
+              <div className="flex items-center gap-2">
+                {status?.dryRun && (
+                  <span className="text-[11px] font-semibold uppercase tracking-wide text-violet-600 bg-violet-100 rounded-full px-2 py-1">
+                    Dry run
+                  </span>
+                )}
+                <StatusBadge status={status} />
+              </div>
             </div>
 
             {startError && <p className="text-rose-500 text-[13px] mt-3">{startError}</p>}
@@ -292,6 +319,7 @@ export default function AdminImportPage() {
                 Started {new Date(status.startedAt).toLocaleString()}
                 {status.limit != null ? ' · limit ' + status.limit + ' per media type' : ''}
                 {status.finishedAt ? ' · finished ' + new Date(status.finishedAt).toLocaleString() : ''}
+                {status.dryRun ? ' · dry run (nothing queued)' : ''}
               </p>
             )}
 
@@ -304,7 +332,7 @@ export default function AdminImportPage() {
                 finished successfully -- not while running, and not for
                 an interrupted/cancelled/errored run, since none of
                 those reliably queued anything worth jumping to. */}
-            {!running && status?.exitCode === 0 && !status?.cancelled && (
+            {!running && status?.exitCode === 0 && !status?.cancelled && !status?.dryRun && (
               <Link
                 href="/admin/candidates"
                 className="flex items-center gap-1.5 text-primary text-[13px] font-semibold mt-3 hover:opacity-80 transition-opacity w-fit"
