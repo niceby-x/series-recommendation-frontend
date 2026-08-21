@@ -1,10 +1,16 @@
 import Image from 'next/image';
 import { Star, ChevronRight, Quote } from 'lucide-react';
 import type { CuratorPick } from '../../lib/landingContent';
+import TiltCard from '../shared/TiltCard';
+import Spotlight from '../shared/Spotlight';
 
 function FeatureCard({ pick, quote }: { pick: CuratorPick; quote: string }) {
   return (
-    <div className="relative rounded-[18px] overflow-hidden bg-gradient-to-br from-brand-blush/20 via-card to-brand-lilac/15 border border-border/60 shadow-sm h-full min-h-[280px]">
+    <TiltCard maxTilt={3} className="h-full">
+      <Spotlight
+        className="group relative rounded-[18px] overflow-hidden bg-gradient-to-br from-brand-blush/20 via-card to-brand-lilac/15 border border-border/60 shadow-sm h-full min-h-[280px]"
+        color="rgba(200, 182, 249, 0.25)"
+      >
       <div className="grid grid-cols-[3fr_2fr] h-full">
         {/* Photo fills the whole left half; title/meta/tags are overlaid
             directly on it (dark gradient underneath for legibility) rather
@@ -50,7 +56,8 @@ function FeatureCard({ pick, quote }: { pick: CuratorPick; quote: string }) {
           <p className="text-muted-foreground text-[13px]">— BLumi Curator</p>
         </div>
       </div>
-    </div>
+      </Spotlight>
+    </TiltCard>
   );
 }
 

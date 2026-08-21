@@ -31,22 +31,29 @@ const TROPE_ICONS: Record<string, typeof Star> = {
 // Same honest-link note as BrowseByMoodGrid — trope filtering isn't a real
 // Explore filter yet, so these point at the plain catalog rather than a
 // query param nothing reads.
+//
+// Wrapped in a soft framed panel (rather than a bare pill wrap) so this
+// section carries the same visual weight as Browse by Mood and Popular on
+// BLumi above/below it, instead of reading as a flat footnote between two
+// image-heavy sections.
 export default function PopularTropesRow({ tropes }: { tropes: TropeChip[] }) {
   return (
-    <div className="flex flex-wrap gap-3">
-      {tropes.map((trope) => {
-        const Icon = TROPE_ICONS[trope.name] ?? Star;
-        return (
-          <Link
-            key={trope.name}
-            href="/series"
-            className="inline-flex items-center gap-2 border border-border bg-card text-foreground text-[13px] font-medium px-4 py-2.5 rounded-full hover:bg-muted hover:border-ring transition-colors"
-          >
-            <Icon className="size-[15px] text-primary" strokeWidth={1.75} />
-            {trope.name}
-          </Link>
-        );
-      })}
+    <div className="rounded-tl-[28px] rounded-tr-[12px] rounded-br-[28px] rounded-bl-[12px] border border-border bg-gradient-to-br from-accent/50 to-transparent p-5 md:p-6">
+      <div className="flex flex-wrap gap-3">
+        {tropes.map((trope) => {
+          const Icon = TROPE_ICONS[trope.name] ?? Star;
+          return (
+            <Link
+              key={trope.name}
+              href="/series"
+              className="inline-flex items-center gap-2 border border-border bg-card text-foreground text-[13px] font-medium px-4 py-2.5 rounded-full hover:bg-muted hover:border-ring transition-colors"
+            >
+              <Icon className="size-[15px] text-primary" strokeWidth={1.75} />
+              {trope.name}
+            </Link>
+          );
+        })}
+      </div>
     </div>
   );
 }

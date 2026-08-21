@@ -120,6 +120,9 @@
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-heading: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  /* Landing-page-only display accent -- see app/layout.tsx. Not used by the
+     base h1-h6 rule below, so every other page keeps Poppins untouched. */
+  --font-display: var(--font-fraunces), Georgia, serif;
 }
 
 .dark {
@@ -181,6 +184,12 @@
   background-clip: text;
   -webkit-background-clip: text;
   color: transparent;
+}
+
+/* Landing-page-only display type (Fraunces) -- opt-in via className, not
+   part of the base h1-h6 rule, so it never leaks into other pages. */
+@utility font-display {
+  font-family: var(--font-display);
 }
 
 /* Animated hero petals — see components/PetalDecoration.tsx. Each petal drifts
@@ -381,6 +390,26 @@
 
 @utility animate-marquee {
   animation: marquee-x 22s linear infinite;
+}
+
+/* Rotating conic-gradient layer for the "moving border" button treatment
+   (Aceternity-style) -- see components/home/LandingCTA.tsx. The layer is
+   oversized (inset-[-50%]) and sits behind the button's solid fill, so only
+   a thin ring peeks out and appears to travel around the edge as it spins. */
+@keyframes moving-border-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.moving-border-spin {
+  animation: moving-border-spin 3s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .moving-border-spin {
+    animation: none;
+  }
 }
 
 /* Hides scrollbars on horizontally-scrollable rows (Explore page's

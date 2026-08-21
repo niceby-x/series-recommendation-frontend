@@ -3,350 +3,226 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import {
-  ArrowRight,
-  ListFilter,
-  Star,
-  ChevronRight,
-  ChevronLeft,
-  Plus,
-  Heart,
-  Sparkles,
-  ShieldCheck,
-  Leaf,
-  Flame,
-  GraduationCap,
-  CalendarClock,
-} from 'lucide-react';
+import { motion, useReducedMotion } from 'framer-motion';
+import { ArrowRight, ListFilter, ShieldCheck, Leaf, CalendarClock } from 'lucide-react';
 import FlowerIcon from '../shared/FlowerIcon';
 import type { HeroFeature } from '../../lib/landingContent';
-import PetalDecoration from '../home/PetalDecoration';
+import Spotlight from '../shared/Spotlight';
 
-const AUTO_ADVANCE_MS = 7000;
-const WORD_ROTATE_MS = 2400;
-
-// The rotating final word of the headline. Colors pair a brand base tone
-// with brand-gold for the text-shine sweep (see globals.css).
 const ROTATING_WORDS = [
-  { text: 'B L O O M', c1: 'var(--color-brand-purple-vivid)' },
-  { text: 'U N F O L D', c1: 'var(--color-brand-pink-vivid)' },
-  { text: 'C O N N E C T', c1: 'var(--color-brand-mauve)' },
-  { text: 'S H I N E', c1: 'var(--color-brand-pink-vivid)' },
-] as const;
-
-// Fixed positions/delays for the sparkle points beside the rotating word —
-// deterministic (not Math.random on render) to avoid SSR/hydration mismatch.
-// More points, smaller and irregular, with quick staggered timing — reads
-// like sunlight glinting off water rather than slow fairy-dust flicker.
-const SPARKLES = [
-  { left: '2%', top: '15%', size: 3, delay: 0, duration: 1.1 },
-  { left: '14%', top: '55%', size: 2, delay: 0.35, duration: 0.9 },
-  { left: '24%', top: '25%', size: 4, delay: 0.15, duration: 1.3 },
-  { left: '30%', top: '75%', size: 2, delay: 0.7, duration: 1 },
-  { left: '42%', top: '10%', size: 3, delay: 0.5, duration: 1.05 },
-  { left: '50%', top: '60%', size: 5, delay: 0.9, duration: 1.2 },
-  { left: '62%', top: '30%', size: 2, delay: 0.2, duration: 0.85 },
-  { left: '70%', top: '65%', size: 3, delay: 1.1, duration: 1.15 },
-  { left: '78%', top: '20%', size: 4, delay: 0.45, duration: 1 },
-  { left: '88%', top: '50%', size: 2, delay: 0.8, duration: 0.95 },
-  { left: '92%', top: '15%', size: 3, delay: 1.3, duration: 1.1 },
-] as const;
-
-const TRUST_BADGES = [
-  { icon: CalendarClock, label: 'New picks weekly' },
-  { icon: Sparkles, label: 'Stories that stay with you' },
-  { icon: ShieldCheck, label: 'Safe space for everyone' },
-] as const;
-
-// Same honest-link note as BrowseByMoodGrid.tsx -- mood filtering isn't a
-// real Explore filter yet, so these point at the plain catalog for now.
-const TRENDING_MOODS = [
-  { icon: Leaf, label: 'Healing' },
-  { icon: Flame, label: 'Slow Burn' },
-  { icon: GraduationCap, label: 'School Life' },
-  { icon: Heart, label: 'Friends to Lovers' },
-] as const;
-// visible card; 1 and 2 sit behind it, peeking out to the sides.
-const STACK_STYLES = [
-  { transform: 'translate(0px, 0px) rotate(0deg) scale(1)', zIndex: 30, opacity: 1 },
-  { transform: 'translate(10px, -8px) rotate(6deg) scale(0.96)', zIndex: 20, opacity: 0.92 },
-  { transform: 'translate(-8px, -12px) rotate(-4deg) scale(0.92)', zIndex: 10, opacity: 0.85 },
+  { text: 'BLOOM', c1: '#F58AB5' },
+  { text: 'UNFOLD', c1: '#F58AB5' },
+  { text: 'CONNECT', c1: '#C8B6F9' },
+  { text: 'SHINE', c1: '#F5C563' },
 ];
 
+const SPARKLES = [
+  { left: '4%', top: '10%', size: 6, delay: 0, duration: 2.2 },
+  { left: '92%', top: '20%', size: 5, delay: 0.4, duration: 2.6 },
+  { left: '50%', top: '-8%', size: 4, delay: 0.9, duration: 2.1 },
+  { left: '80%', top: '70%', size: 5, delay: 1.3, duration: 2.4 },
+];
+
+const TRENDING_MOODS = ['Friends to Lovers', 'Healing', 'Slow Burn', 'School Life', 'Fated Mates', 'Bittersweet'];
+
+// Reflective fan card -- inspired by the "Mirror Hall" collection-gallery
+// reference: a wide arc of tilted cards, each with a soft mirrored
+// reflection fading into the dark floor beneath it. Rebuilt in BLumi's own
+// palette (deep plum/gold, not literal black/navy) so it still reads as
+// this brand rather than a generic dark-UI showcase.
+function FanCard({
+  card,
+  index,
+  center,
+  prefersReducedMotion,
+}: {
+  card: HeroFeature;
+  index: number;
+  center: number;
+  prefersReducedMotion: boolean;
+}) {
+  const offset = index - center;
+  const angle = offset * 11;
+  const lift = Math.abs(offset) * 10;
+  const scale = 1 - Math.abs(offset) * 0.055;
+  const z = 20 - Math.abs(offset);
+
+  return (
+    <motion.div
+      className="relative shrink-0 -mx-3 md:-mx-4 first:ml-0 last:mr-0"
+      style={{ transformOrigin: 'bottom center', zIndex: z }}
+      initial={prefersReducedMotion ? false : { opacity: 0, y: 50, rotate: 0 }}
+      animate={{ opacity: 1, y: lift, rotate: angle, scale }}
+      transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.7, delay: 0.15 + Math.abs(offset) * 0.06, ease: [0.22, 1, 0.36, 1] }}
+      whileHover={prefersReducedMotion ? undefined : { y: lift - 16, rotate: angle * 0.35, scale: scale + 0.08, zIndex: 30 }}
+    >
+      <Link href={String(card.id).startsWith('hero-fallback') ? '/series' : `/series/${card.id}`} className="block">
+        <div className="relative w-[92px] sm:w-[110px] md:w-[128px] aspect-[2/3] rounded-xl overflow-hidden shadow-[0_20px_40px_rgba(0,0,0,0.5)] ring-1 ring-white/15 bg-brand-mauve/40">
+          {card.imageUrl ? (
+            <Image src={card.imageUrl} alt={card.title} fill sizes="130px" className="object-cover" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-brand-purple-vivid/50 to-brand-mauve/60 px-2 text-center">
+              <span className="text-white/80 text-[10px] leading-snug">{card.title}</span>
+            </div>
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" aria-hidden />
+        </div>
+      </Link>
+
+      {/* Mirrored reflection -- same image, flipped, faded via mask-image
+          rather than -webkit-box-reflect (Firefox doesn't support that
+          property; mask-image is broadly supported and gives the same
+          fade-to-nothing floor effect). */}
+      {card.imageUrl && (
+        <div
+          className="absolute top-full left-0 w-[92px] sm:w-[110px] md:w-[128px] aspect-[2/3] opacity-25 pointer-events-none"
+          style={{
+            transform: 'scaleY(-1)',
+            maskImage: 'linear-gradient(to bottom, rgba(0,0,0,0.65), transparent 65%)',
+            WebkitMaskImage: 'linear-gradient(to bottom, rgba(0,0,0,0.65), transparent 65%)',
+          }}
+          aria-hidden
+        >
+          <Image src={card.imageUrl} alt="" fill sizes="130px" className="object-cover" />
+        </div>
+      )}
+    </motion.div>
+  );
+}
+
 export default function LandingHero({ deck }: { deck: HeroFeature[] }) {
-  const [activeIndex, setActiveIndex] = useState(0);
   const [wordIndex, setWordIndex] = useState(0);
+  const prefersReducedMotion = useReducedMotion();
 
   useEffect(() => {
-    if (deck.length < 2) return;
-    const timer = setInterval(() => {
-      setActiveIndex((i) => (i + 1) % deck.length);
-    }, AUTO_ADVANCE_MS);
-    return () => clearInterval(timer);
-  }, [deck.length]);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setWordIndex((i) => (i + 1) % ROTATING_WORDS.length);
-    }, WORD_ROTATE_MS);
+    const timer = setInterval(() => setWordIndex((i) => (i + 1) % ROTATING_WORDS.length), 2600);
     return () => clearInterval(timer);
   }, []);
 
-  function advance() {
-    if (deck.length < 2) return;
-    setActiveIndex((i) => (i + 1) % deck.length);
-  }
-
-  function goBack() {
-    if (deck.length < 2) return;
-    setActiveIndex((i) => (i - 1 + deck.length) % deck.length);
-  }
+  const centerIndex = (deck.length - 1) / 2;
 
   return (
-    <div className="relative overflow-hidden h-full">
-      <Image
-        src="/hero-bg-v3.png"
-        alt=""
-        fill
-        priority
-        sizes="100vw"
-        className="object-cover pointer-events-none"
+    <div className="relative overflow-hidden bg-gradient-to-b from-[#241528] via-[#3B2145] to-[#7A4A63] pt-[56px] md:pt-[72px] pb-[64px] md:pb-[84px]">
+      {/* Ambient glow -- deep plum at top settling into a warm rose/gold
+          floor glow at the bottom, where the card reflections live. Kept
+          in BLumi's own hues (mauve/purple/gold) rather than the reference's
+          cool blue-violet, so this still reads as the same brand, just
+          after dark. */}
+      <div
+        className="absolute inset-x-0 bottom-0 h-2/3 pointer-events-none"
+        style={{ background: 'radial-gradient(ellipse at center bottom, rgba(245,138,181,0.28), transparent 70%)' }}
+        aria-hidden
       />
-      {/* Wash on the left so the headline stays legible over the photo
-          regardless of viewport width/crop -- the photo itself is soft
-          enough on the right that the card doesn't need this. */}
-      <div className="absolute inset-0 bg-gradient-to-r from-background/85 via-background/35 to-transparent pointer-events-none" />
-      {/* Fades the photo's bottom edge into whatever sits below the hero,
-          so there's no hard cut line where the image ends. */}
-      <div className="absolute inset-x-0 bottom-0 h-32 md:h-40 bg-gradient-to-t from-background to-transparent pointer-events-none" />
+      <div
+        className="absolute inset-0 pointer-events-none opacity-40"
+        style={{
+          backgroundImage:
+            'radial-gradient(circle at 15% 15%, rgba(200,182,249,0.25), transparent 35%), radial-gradient(circle at 88% 25%, rgba(245,197,99,0.18), transparent 30%)',
+        }}
+        aria-hidden
+      />
+      <div className="absolute inset-0 pointer-events-none" aria-hidden>
+        {SPARKLES.map((s, i) => (
+          <span
+            key={i}
+            className="absolute rounded-full"
+            style={{
+              left: s.left,
+              top: s.top,
+              width: s.size,
+              height: s.size,
+              background: '#fffbea',
+              boxShadow: '0 0 6px 2px rgba(245,197,99,0.7)',
+              animation: 'sparkle-flicker ' + s.duration + 's ease-in-out ' + s.delay + 's infinite',
+            }}
+          />
+        ))}
+      </div>
 
-      <PetalDecoration />
-
-      <div className="relative max-w-6xl mx-auto px-6 md:px-10 lg:px-14 pt-[24px] md:pt-[32px] pb-[88px] md:pb-[100px] grid md:grid-cols-[1fr_1fr] gap-8 md:gap-10 items-start">
-        <div className="pt-2 md:pt-4 min-w-0">
-          <p className="inline-flex items-center gap-1 rounded-full bg-primary/10 border border-primary/20 px-2.5 py-1 text-secondary text-[11px] font-bold tracking-wide mb-2.5">
-            <FlowerIcon className="size-3" aria-hidden /> CURATED WITH LOVE
+      <div className="relative max-w-4xl mx-auto px-6 md:px-10 text-center">
+        <Spotlight className="group" color="rgba(245, 197, 99, 0.14)">
+          <p className="inline-flex items-center gap-1.5 text-white/70 text-[11px] font-bold tracking-[0.18em] mb-3">
+            <FlowerIcon className="size-3 text-brand-blush" aria-hidden /> CURATED WITH LOVE
           </p>
-          <h1 className="font-heading text-[44px] md:text-[60px] leading-[1.05] font-normal mb-3">
-            <span className="text-foreground">Where Stories</span>
-            <br />
-            <span className="relative inline-block text-[52px] md:text-[72px] leading-none mt-1">
-              <span
-                key={wordIndex}
-                className="text-shine animate-word-in inline-block"
-                style={{
-                  ['--shine-c1' as string]: ROTATING_WORDS[wordIndex].c1,
-                  ['--shine-c2' as string]: 'var(--color-brand-gold)',
-                }}
-              >
-                {ROTATING_WORDS[wordIndex].text}
-              </span>
-              <span className="absolute inset-0 pointer-events-none" aria-hidden>
-                {SPARKLES.map((s, i) => (
-                  <span
-                    key={i}
-                    className="absolute rounded-full"
-                    style={{
-                      left: s.left,
-                      top: s.top,
-                      width: s.size,
-                      height: s.size,
-                      background: '#fffbea',
-                      boxShadow: '0 0 5px 1.5px var(--color-brand-gold)',
-                      animation:
-                        'sparkle-flicker ' + s.duration + 's ease-in-out ' + s.delay + 's infinite',
-                    }}
-                  />
-                ))}
-              </span>
-            </span>
+          <h1 className="font-display text-[38px] sm:text-[48px] md:text-[62px] leading-[1.05] font-normal mb-1">
+            <span className="text-white italic">Where Stories</span>
           </h1>
-          <p className="text-muted-foreground text-[17px] leading-relaxed mb-5 max-w-md">
+          <div className="relative inline-block mb-4">
+            <span
+              key={wordIndex}
+              className="text-shine animate-word-in inline-block text-[46px] sm:text-[58px] md:text-[74px] leading-none font-display font-medium tracking-tight"
+              style={{
+                ['--shine-c1' as string]: ROTATING_WORDS[wordIndex].c1,
+                ['--shine-c2' as string]: 'var(--color-brand-gold)',
+              }}
+            >
+              {ROTATING_WORDS[wordIndex].text}
+            </span>
+            <span className="block h-[3px] w-16 mx-auto mt-3 rounded-full bg-gradient-to-r from-brand-blush via-brand-gold to-brand-lilac" aria-hidden />
+          </div>
+          <p className="text-white/70 text-[15px] md:text-[17px] leading-relaxed max-w-xl mx-auto mb-6">
             Discover thoughtfully curated BL series, movies, and anime through moods, tropes,
             emotional journeys, and trusted recommendations.
           </p>
 
-          <div className="flex flex-wrap items-center gap-x-5 gap-y-2 mb-5">
-            {TRUST_BADGES.map(({ icon: Icon, label }) => (
-              <div key={label} className="flex items-center gap-1.5">
-                <span className="flex items-center justify-center size-6 rounded-full bg-white/70 backdrop-blur-sm text-primary shrink-0">
-                  <Icon className="size-3.5" strokeWidth={1.75} />
-                </span>
-                <span className="text-foreground/80 text-[13px] font-medium whitespace-nowrap">
-                  {label}
-                </span>
-              </div>
-            ))}
+          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 mb-7 text-white/65 text-[13px]">
+            <span className="inline-flex items-center gap-1.5"><CalendarClock className="size-3.5 text-brand-blush" /> New picks weekly</span>
+            <span className="inline-flex items-center gap-1.5"><ShieldCheck className="size-3.5 text-brand-blush" /> Safe space for everyone</span>
+            <span className="inline-flex items-center gap-1.5"><Leaf className="size-3.5 text-brand-blush" /> Stories that stay with you</span>
           </div>
 
-          <div className="flex flex-wrap items-center gap-4">
+          <div className="flex flex-wrap items-center justify-center gap-3">
             <Link
               href="/series"
-              className="group relative inline-flex items-center gap-2 overflow-hidden bg-brand-gradient text-white text-[15px] font-semibold px-7 py-2.5 rounded-tl-[20px] rounded-tr-[8px] rounded-br-[20px] rounded-bl-[8px] shadow-[0_8px_20px_rgba(197,84,143,0.35)] hover:opacity-90 hover:shadow-[0_10px_24px_rgba(197,84,143,0.45)] transition-all"
+              className="group/btn relative inline-flex items-center gap-2 overflow-hidden bg-brand-gradient text-white text-[15px] font-semibold px-7 py-3 rounded-tl-[20px] rounded-tr-[8px] rounded-br-[20px] rounded-bl-[8px] shadow-[0_8px_24px_rgba(0,0,0,0.35)] hover:opacity-90 transition-opacity"
             >
-              <svg
-                aria-hidden
-                viewBox="0 0 40 40"
-                className="absolute -top-2 -right-2 size-9 opacity-25 group-hover:opacity-45 group-hover:rotate-[20deg] transition-all duration-500 ease-out pointer-events-none"
-              >
-                <ellipse
-                  cx="20"
-                  cy="20"
-                  rx="7"
-                  ry="12"
-                  fill="#FFFFFF"
-                  transform="rotate(-35 20 20)"
-                />
-              </svg>
               <span className="relative">Discover Stories</span>
-              <ArrowRight className="relative size-4" />
+              <ArrowRight className="relative size-4 group-hover/btn:translate-x-0.5 transition-transform duration-300" strokeWidth={2.5} />
             </Link>
             <Link
               href="/series"
-              className="inline-flex items-center gap-2 border-2 border-border bg-card text-[15px] font-semibold px-7 py-2.5 rounded-2xl text-foreground hover:bg-muted hover:border-ring transition-colors"
+              className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/25 text-white text-[15px] font-semibold px-6 py-3 rounded-tl-[20px] rounded-tr-[8px] rounded-br-[20px] rounded-bl-[8px] hover:bg-white/15 transition-colors"
             >
-              Browse by Mood
-              <ListFilter className="size-4" />
+              Browse by Mood <ListFilter className="size-4" />
             </Link>
           </div>
+        </Spotlight>
+      </div>
 
-          <div className="mt-5">
-            <p className="text-muted-foreground text-[12px] font-bold uppercase tracking-wide mb-2.5">
-              Trending Moods
-            </p>
-            <div className="relative overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_8%,black_92%,transparent)]">
-              {/* Track is rendered twice back-to-back; animate-marquee slides
-                  exactly -50% (one copy's width) so the loop is seamless.
-                  Pauses on hover/focus so the pills stay tappable. */}
-              <div className="flex w-max flex-nowrap gap-1.5 animate-marquee hover:[animation-play-state:paused] focus-within:[animation-play-state:paused]">
-                {[...TRENDING_MOODS, ...TRENDING_MOODS].map(({ icon: Icon, label }, i) => (
-                  <Link
-                    key={`${label}-${i}`}
-                    href="/series"
-                    aria-hidden={i >= TRENDING_MOODS.length}
-                    tabIndex={i >= TRENDING_MOODS.length ? -1 : undefined}
-                    className="inline-flex items-center gap-1 shrink-0 bg-card/80 backdrop-blur-sm border border-border text-foreground text-[12px] font-medium px-2.5 py-1.5 rounded-full hover:bg-card hover:border-ring transition-colors"
-                  >
-                    <Icon className="size-3 text-primary" strokeWidth={1.75} />
-                    {label}
-                  </Link>
-                ))}
-              </div>
-            </div>
-          </div>
+      {/* Fanned card gallery -- see FanCard above. overflow-x-auto lets the
+          fan scroll horizontally on narrow screens rather than clipping.
+          pb-* reserves room for each card's reflection: the reflection is
+          absolutely positioned (top-full) below its card, so it doesn't
+          contribute to this container's own layout height -- without this
+          padding it spills past the gallery and floats, faded, over
+          whatever section comes next in the DOM. */}
+      <div className="relative mt-12 md:mt-16 px-6 pb-20 md:pb-28 overflow-x-auto no-scrollbar">
+        <div className="flex items-end justify-center min-w-max mx-auto w-fit px-8" style={{ perspective: 1200 }}>
+          {deck.map((card, i) => (
+            <FanCard key={card.id} card={card} index={i} center={centerIndex} prefersReducedMotion={!!prefersReducedMotion} />
+          ))}
         </div>
+      </div>
 
-        <div className="relative mx-auto w-full max-w-[300px] lg:max-w-[360px] aspect-[3/4]">
-          {/* purely decorative -- peeks out behind the real card stack, no data/interaction */}
-          <div className="absolute inset-0 rounded-[28px] bg-brand-blush/45 backdrop-blur-md border-2 border-white/60 -rotate-6 -translate-x-4 translate-y-2 z-[2] pointer-events-none" />
-          <div className="absolute inset-0 rounded-[28px] bg-brand-lilac/45 backdrop-blur-md border-2 border-white/50 rotate-9 translate-x-5 translate-y-3 z-[1] pointer-events-none" />
-
-          {deck.map((card, i) => {
-            const offset = (i - activeIndex + deck.length) % deck.length;
-            const style = STACK_STYLES[offset] ?? STACK_STYLES[STACK_STYLES.length - 1];
-            const isFront = offset === 0;
-
-            return (
-              <div
-                key={card.id}
-                className="absolute inset-0 rounded-[28px] overflow-hidden shadow-[0_25px_60px_rgba(88,54,99,0.18)] bg-card border-2 border-white/70 transition-[transform,opacity] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform"
-                style={style}
-                aria-hidden={!isFront}
-              >
-                <div className="relative w-full h-full bg-muted">
-                  {card.imageUrl ? (
-                    <Image
-                      src={card.imageUrl}
-                      alt={card.title}
-                      fill
-                      sizes="370px"
-                      className="object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-brand-blush/30 to-brand-lilac/30 px-6 text-center">
-                      <span className="text-muted-foreground text-sm">{card.title}</span>
-                    </div>
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-tr from-black/85 via-black/20 to-transparent" />
-                  <div className="absolute inset-x-0 bottom-0 h-3/5 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
-                  {isFront && (
-                    <div className="absolute inset-0 card-shine pointer-events-none" aria-hidden />
-                  )}
-
-                  <span className="absolute top-3 left-3 flex items-center gap-1 bg-brand-blush/40 backdrop-blur-md border border-white/50 text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-sm">
-                    <Star className="size-2 text-brand-gold" fill="currentColor" />
-                    CURATOR&apos;S PICK
-                  </span>
-
-                  <div className="absolute inset-x-0 bottom-0 p-5">
-                    <h3 className="text-white text-[21px] font-medium leading-tight mb-1.5">
-                      {card.title}
-                    </h3>
-                    <p className="text-white/75 text-[13px] mb-2.5">
-                      {card.country} · Series · {card.year}{' '}
-                      <span className="inline-flex items-center gap-0.5 text-brand-gold ml-1">
-                        <Star className="size-3" fill="currentColor" /> {card.rating}
-                      </span>
-                    </p>
-                    <div className="flex flex-wrap gap-1.5 mb-3">
-                      {card.tags.map((tag) => (
-                        <span
-                          key={tag}
-                          className="bg-white/15 backdrop-blur-sm text-white text-[11px] font-medium px-2.5 py-1 rounded-full"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Link
-                        href={'/series/' + card.id}
-                        tabIndex={isFront ? 0 : -1}
-                        className="flex-1 flex items-center justify-center h-11 bg-brand-gradient text-white text-[13px] font-semibold rounded-full hover:opacity-90 transition-opacity"
-                      >
-                        View Story
-                      </Link>
-                      <button
-                        type="button"
-                        aria-label="Add to my list"
-                        title="Add to my list"
-                        className="flex items-center justify-center size-11 rounded-full bg-primary/25 backdrop-blur-sm border border-white/30 text-white shrink-0 hover:bg-primary/40 transition-colors"
-                      >
-                        <Plus className="size-4" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-
-          {deck.length > 1 && (
-            <>
-              <button
-                type="button"
-                onClick={goBack}
-                aria-label="Show previous pick"
-                className="group absolute top-1/2 -translate-y-1/2 -left-14 md:-left-16 z-40 flex items-center justify-center size-9 rounded-full bg-primary/15 backdrop-blur-sm border border-primary/25 text-brand-mauve shadow-[0_2px_10px_rgba(0,0,0,0.1)] hover:bg-primary/25 hover:scale-110 hover:text-brand-blush focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blush transition-all"
-              >
-                <ChevronLeft
-                  className="size-4 group-hover:-translate-x-0.5 transition-transform duration-300"
-                  strokeWidth={2.5}
-                />
-              </button>
-              <button
-                type="button"
-                onClick={advance}
-                aria-label="Show next pick"
-                className="group absolute top-1/2 -translate-y-1/2 -right-14 md:-right-16 z-40 flex items-center justify-center size-9 rounded-full bg-primary/15 backdrop-blur-sm border border-primary/25 text-brand-mauve shadow-[0_2px_10px_rgba(0,0,0,0.1)] hover:bg-primary/25 hover:scale-110 hover:text-brand-blush focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blush transition-all"
-              >
-                <ChevronRight
-                  className="size-4 group-hover:translate-x-0.5 transition-transform duration-300"
-                  strokeWidth={2.5}
-                />
-              </button>
-            </>
-          )}
+      {/* Bottom label + trending moods -- the "SILVER STORM" beat from the
+          reference, repurposed to something real: our actual trending
+          moods instead of a made-up collection name. */}
+      <div className="relative mt-10 md:mt-14 text-center px-6">
+        <span className="inline-flex items-center justify-center size-8 rounded-full bg-white/10 border border-white/20 mb-2">
+          <FlowerIcon className="size-4 text-brand-blush" />
+        </span>
+        <p className="text-white/60 text-[11px] font-bold tracking-[0.18em] mb-1">TRENDING MOODS</p>
+        <div className="h-[2px] w-10 mx-auto mb-4 rounded-full bg-gradient-to-r from-brand-blush to-brand-gold" aria-hidden />
+        <div className="flex flex-wrap items-center justify-center gap-2 max-w-2xl mx-auto">
+          {TRENDING_MOODS.map((mood) => (
+            <Link
+              key={mood}
+              href="/series"
+              className="text-white/75 text-[12px] font-medium bg-white/10 border border-white/15 px-3 py-1.5 rounded-full hover:bg-white/20 hover:text-white transition-colors"
+            >
+              {mood}
+            </Link>
+          ))}
         </div>
       </div>
     </div>

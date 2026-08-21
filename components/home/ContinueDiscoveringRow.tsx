@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Star, ChevronRight, ChevronLeft, Flame, Award, Heart, Sparkle, Clapperboard, Tv } from 'lucide-react';
 import type { DiscoverCard } from '../../lib/landingContent';
+import TiltCard from '../shared/TiltCard';
 
 // Badge icon + color per label, matching the mockup's varied pill styles.
 // Falls back to a plain star/dark pill for any label not in this list (e.g.
@@ -24,7 +25,7 @@ function Card({ card }: { card: DiscoverCard }) {
   const BadgeIcon = badgeStyle.icon;
 
   const inner = (
-    <div className="group relative shrink-0 w-[180px] snap-start rounded-[22px] overflow-hidden shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+    <TiltCard maxTilt={10} className="group relative shrink-0 w-[180px] snap-start rounded-[22px] overflow-hidden shadow-md transition-shadow duration-300 hover:shadow-xl">
       <div className="relative aspect-[2/3] w-full bg-muted">
         {card.imageUrl ? (
           <Image
@@ -60,7 +61,7 @@ function Card({ card }: { card: DiscoverCard }) {
           </p>
         </div>
       </div>
-    </div>
+    </TiltCard>
   );
 
   if (!card.isReal) {

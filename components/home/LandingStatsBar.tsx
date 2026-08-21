@@ -1,6 +1,7 @@
 import { Heart, Sparkles, Users } from 'lucide-react';
 import { LANDING_FEATURES } from '../../lib/landingContent';
 import FlowerIcon from '../shared/FlowerIcon';
+import AnimatedCounter from '../shared/AnimatedCounter';
 
 const ICONS = [FlowerIcon, Heart, Sparkles, Users];
 
@@ -18,7 +19,18 @@ const ICON_STYLES = [
 // item's rule line back to its own icon color instead of one flat gray line.
 const DIVIDER_COLORS = ['bg-brand-blush', 'bg-brand-lilac', 'bg-brand-gold', 'bg-brand-lilac'];
 
-export default function LandingStatsBar() {
+// seriesCount/curatorPicksCount are real numbers from the live catalog (see
+// HomeLanding.tsx), not placeholders -- so a tile only gets a live counter
+// when its count is > 0, rather than ever animating up to "0". Same
+// real-first-then-fallback convention as the rest of the page: with no data
+// yet, these tiles just show their original value-prop copy, no counter.
+export default function LandingStatsBar({
+  seriesCount = 0,
+  curatorPicksCount = 0,
+}: {
+  seriesCount?: number;
+  curatorPicksCount?: number;
+}) {
   return (
     <div className="max-w-7xl mx-auto px-6 md:px-10 lg:px-14 mt-4 md:mt-6">
       <div className="rounded-tl-[36px] rounded-tr-[14px] rounded-br-[36px] rounded-bl-[14px] border border-white/50 bg-white/55 backdrop-blur-xl shadow-[0_10px_30px_rgba(88,54,99,0.1)] px-6 py-4 grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -35,7 +47,19 @@ export default function LandingStatsBar() {
               </span>
               <div>
                 <p className="text-foreground text-[13px] font-semibold leading-snug">{feature.label}</p>
-                <p className="text-muted-foreground text-[12px] leading-snug">{feature.sublabel}</p>
+                {i === 0 && curatorPicksCount > 0 ? (
+                  <p className="text-muted-foreground text-[12px] leading-snug">
+                    <AnimatedCounter value={curatorPicksCount} suffix="+" className="text-foreground font-semibold" />{' '}
+                    handpicked favorites, curated by our editors.
+                  </p>
+                ) : i === 1 && seriesCount > 0 ? (
+                  <p className="text-muted-foreground text-[12px] leading-snug">
+                    Explore <AnimatedCounter value={seriesCount} suffix="+" className="text-foreground font-semibold" />{' '}
+                    stories by mood and trope.
+                  </p>
+                ) : (
+                  <p className="text-muted-foreground text-[12px] leading-snug">{feature.sublabel}</p>
+                )}
               </div>
             </div>
           );

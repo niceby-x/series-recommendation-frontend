@@ -36,7 +36,7 @@ export default function BrowseByMoodGrid({ moods }: { moods: MoodTile[] }) {
 
             {/* Text overlaid bottom-left directly on the art, like the mockup */}
             <div className="absolute bottom-0 left-0 px-4 pb-4">
-              <p className="font-heading text-lg font-normal text-[#4A2F3F]">{mood.name}</p>
+              <p className="font-display text-lg font-normal text-[#4A2F3F]">{mood.name}</p>
               <p className="text-[#4A2F3F]/60 text-[12px] mt-0.5">{mood.count} stories</p>
             </div>
           </Link>

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Poppins, Inter, Geist_Mono } from "next/font/google";
+import { Poppins, Inter, Geist_Mono, Fraunces } from "next/font/google";
 import "./globals.css";
 import Navbar from "../components/shared/Navbar";
 import { AuthModalProvider } from "../lib/AuthModalContext";
@@ -22,6 +22,24 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+// Landing-page-only display accent (hero headline, section titles). Scoped
+// via the `font-display` utility in globals.css rather than overriding
+// `--font-heading` -- Poppins stays the sitewide heading font everywhere
+// else (navbar, other pages), per explicit decision to keep this change
+// contained to the landing page redesign.
+const fraunces = Fraunces({
+  variable: "--font-fraunces",
+  subsets: ["latin"],
+  // `axes` requires a variable-weight font -- combining it with an explicit
+  // weight array/string throws "Axes can only be defined for variable fonts
+  // when the weight property is nonexistent...". Per Next.js's own axes
+  // example (Inter + axes: ['slnt']), weight is simply omitted so the full
+  // variable weight range loads; font-weight in CSS still works normally
+  // against it.
+  style: ["normal", "italic"],
+  axes: ["opsz", "SOFT", "WONK"],
+});
+
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
@@ -40,7 +58,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={poppins.variable + ' ' + inter.variable + ' ' + geistMono.variable + ' h-full antialiased'}
+      className={poppins.variable + ' ' + inter.variable + ' ' + geistMono.variable + ' ' + fraunces.variable + ' h-full antialiased'}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <AuthModalProvider>

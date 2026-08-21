@@ -10,6 +10,7 @@ import BrowseByMoodGrid from '../shared/BrowseByMoodGrid';
 import PopularTropesRow from './PopularTropesRow';
 import CuratorsPicks from './LandingCuratorsPicks';
 import HowItWorks from './HowItWorks';
+import LandingCTA from './LandingCTA';
 import LandingFooter from './LandingFooter';
 import ScrollReveal from '../shared/ScrollReveal';
 import BloomLayers from './BloomLayers';
@@ -40,7 +41,7 @@ export default function HomeLanding({
   allSeries: SeriesCardData[];
   curatorPicks: RealCuratorPick[];
 }) {
-  const realHeroCards: HeroFeature[] = allSeries.slice(0, 3).map((series) => ({
+  const realHeroCards: HeroFeature[] = allSeries.slice(0, 7).map((series) => ({
     id: series.id,
     title: series.title,
     country: series.country,
@@ -51,8 +52,8 @@ export default function HomeLanding({
   }));
   const heroDeck: HeroFeature[] = [
     ...realHeroCards,
-    ...HERO_DECK_FALLBACK.slice(0, Math.max(0, 3 - realHeroCards.length)),
-  ].slice(0, 3);
+    ...HERO_DECK_FALLBACK.slice(0, Math.max(0, 7 - realHeroCards.length)),
+  ].slice(0, 7);
 
   // Rotates through the same badge vocabulary the mock cards use, so real
   // catalog cards get visual variety instead of all reading "Editor's
@@ -109,13 +110,13 @@ export default function HomeLanding({
           />
           <div className="absolute inset-0 bg-background/40 -z-10" aria-hidden="true" />
 
-          <LandingStatsBar />
+          <LandingStatsBar seriesCount={allSeries.length} curatorPicksCount={curatorPicks.length} />
 
           <section className="relative max-w-7xl mx-auto px-6 md:px-10 lg:px-14 pt-10 pb-14">
             <ScrollReveal>
               <div className="flex items-start justify-between mb-6">
                 <div>
-                  <h2 className="font-heading text-2xl font-normal text-foreground flex items-center gap-2">
+                  <h2 className="font-display italic text-2xl font-normal text-foreground flex items-center gap-2">
                     <FlowerIcon className="size-5 text-primary" /> Curator&apos;s Picks
                   </h2>
                   <p className="text-muted-foreground text-sm mt-1">Handpicked favorites from our editors.</p>
@@ -136,7 +137,7 @@ export default function HomeLanding({
             <ScrollReveal>
               <div className="flex items-start justify-between mb-6">
                 <div>
-                  <h2 className="font-heading text-2xl font-normal text-foreground flex items-center gap-2">
+                  <h2 className="font-display italic text-2xl font-normal text-foreground flex items-center gap-2">
                     <FlowerIcon className="size-5 text-primary" /> Browse by Mood
                   </h2>
                   <p className="text-muted-foreground text-sm mt-1">Find stories that match how you feel right now.</p>
@@ -155,7 +156,7 @@ export default function HomeLanding({
             <ScrollReveal>
               <div className="flex items-start justify-between mb-6">
                 <div>
-                  <h2 className="font-heading text-2xl font-normal text-foreground flex items-center gap-2">
+                  <h2 className="font-display italic text-2xl font-normal text-foreground flex items-center gap-2">
                     <FlowerIcon className="size-5 text-primary" /> Popular Tropes
                   </h2>
                   <p className="text-muted-foreground text-sm mt-1">Explore beloved story themes and find your next obsession.</p>
@@ -174,7 +175,7 @@ export default function HomeLanding({
             <ScrollReveal>
               <div className="flex items-start justify-between mb-6">
                 <div>
-                  <h2 className="font-heading text-2xl font-normal text-foreground flex items-center gap-2">
+                  <h2 className="font-display italic text-2xl font-normal text-foreground flex items-center gap-2">
                     <FlowerIcon className="size-5 text-primary" /> Popular on BLumi
                   </h2>
                   <p className="text-muted-foreground text-sm mt-1">Trending picks the community can&apos;t stop talking about.</p>
@@ -190,10 +191,12 @@ export default function HomeLanding({
           </section>
 
           <section className="relative">
-            <BloomLayers />
+            <div className="absolute inset-0 -z-10">
+              <BloomLayers />
+            </div>
             <ScrollReveal>
               <div className="relative mb-6">
-                <h2 className="font-heading text-2xl font-normal text-foreground flex items-center gap-2">
+                <h2 className="font-display italic text-2xl font-normal text-foreground flex items-center gap-2">
                   <FlowerIcon className="size-5 text-primary" /> How BLumi Works
                 </h2>
                 <p className="text-muted-foreground text-sm mt-1">A quick look at how to find your next favorite story.</p>
@@ -203,6 +206,10 @@ export default function HomeLanding({
               <HowItWorks />
             </ScrollReveal>
           </section>
+
+          <ScrollReveal>
+            <LandingCTA />
+          </ScrollReveal>
         </div>
       </div>
 
