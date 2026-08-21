@@ -46,6 +46,11 @@ interface ImportStatus {
   // both the live and DB-fallback branches of GET /admin/import/status,
   // same shape either way.
   summary?: ImportRunSummary | null;
+  // IMP3-02: the keyword this run searched TMDB for -- always a non-empty
+  // string (the backend falls back to its own default when none is sent,
+  // or when the request sends an empty/whitespace-only one). Present in
+  // both the live and DB-fallback branches of GET /admin/import/status.
+  keyword?: string;
 }
 
 interface ImportRunSummary {
@@ -59,6 +64,13 @@ const POLL_INTERVAL_MS = 3000;
 // (see IMP1-03 handoff) -- the backend is the source of truth, this just
 // keeps the input from looking like it accepts more than it does.
 const MAX_IMPORT_LIMIT = 500;
+// IMP3-02: mirrors the backend's own MAX_KEYWORD_LENGTH/DEFAULT_KEYWORD
+// (services/importRuns.ts) -- same reasoning as MAX_IMPORT_LIMIT above,
+// just for the keyword input instead of the limit input. The backend
+// falls back to this exact default whenever the field is left blank, so
+// it doubles as the input's placeholder text.
+const MAX_KEYWORD_LENGTH = 100;
+const DEFAULT_KEYWORD_PLACEHOLDER = "boys' love (bl)";
 
 async function authHeader() {
   const {
@@ -75,6 +87,7 @@ export default function AdminImportPage() {
   const [status, setStatus] = useState<ImportStatus | null>(null);
   const [limitInput, setLimitInput] = useState('150');
   const [dryRunInput, setDryRunInput] = useState(false);
+  const [keywordInput, setKeywordInput] = useState('');
   const [starting, setStarting] = useState(false);
   const [startError, setStartError] = useState<string | null>(null);
   const [stopping, setStopping] = useState(false);
@@ -161,7 +174,7 @@ export default function AdminImportPage() {
     const res = await fetch(process.env.NEXT_PUBLIC_API_URL + '/admin/import/run', {
       method: 'POST',
       headers: { ...header, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ limit, dryRun: dryRunInput }),
+      body: JSON.stringify({ limit, dryRun: dryRunInput, keyword: keywordInput.trim() }),
     });
     setStarting(false);
 
@@ -268,6 +281,22 @@ export default function AdminImportPage() {
                   />
                 </div>
 
+                <div>
+                  <label htmlFor="import-keyword" className="block text-[12.5px] font-semibold text-foreground mb-1.5">
+                    Discovery keyword
+                  </label>
+                  <input
+                    id="import-keyword"
+                    type="text"
+                    value={keywordInput}
+                    onChange={(e) => setKeywordInput(e.target.value)}
+                    disabled={running}
+                    maxLength={MAX_KEYWORD_LENGTH}
+                    placeholder={DEFAULT_KEYWORD_PLACEHOLDER}
+                    className="w-56 bg-background text-foreground rounded-xl px-3.5 py-2.5 text-sm border border-border focus:outline-none focus:border-ring transition-colors disabled:opacity-50"
+                  />
+                </div>
+
                 <label
                   htmlFor="import-dry-run"
                   className="flex items-center gap-2 pb-2.5 text-[13px] font-medium text-foreground select-none cursor-pointer disabled:cursor-default"
@@ -330,6 +359,7 @@ export default function AdminImportPage() {
               <p className="text-muted-foreground text-[12.5px] mt-3">
                 Started {new Date(status.startedAt).toLocaleString()}
                 {status.limit != null ? ' · limit ' + status.limit + ' per media type' : ''}
+                {status.keyword ? ' · keyword "' + status.keyword + '"' : ''}
                 {status.finishedAt ? ' · finished ' + new Date(status.finishedAt).toLocaleString() : ''}
                 {status.dryRun ? ' · dry run' : ''}
               </p>
