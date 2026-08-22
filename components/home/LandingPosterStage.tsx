@@ -1,113 +1,146 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { motion, useAnimationFrame, useMotionValue, useTransform, useMotionTemplate, useReducedMotion, MotionValue } from 'framer-motion';
 import type { HeroFeature } from '../../lib/landingContent';
 
-// The very first thing visible when BLumi loads -- a static 3D coverflow
-// of the same 7-card deck LandingHero uses below it, adapted from a
-// reference mock (rotateY + translateZ "stage" cards, deep drop shadow,
-// white floor). Deliberately its own section rather than folded into
-// LandingHero: LandingHero already owns the fanned reflective gallery
-// further down the page, and stacking two different 3D card treatments
-// inside one component would make neither read as intentional.
-//
-// TRANSFORM MATH, so this is easy to retune in npm run dev:
-// Each card's offset is its distance from the center card (0 = center,
-// negative = toward the right edge, positive = toward the left edge --
-// matches the source mock's tilt-right-outer..tilt-left-outer naming).
-// STAGE_DEPTH below is indexed by |offset| (0..3) and holds:
-//   rotate -- how far the card turns to "face" the center (deg)
-//   z      -- how far back the card sits (px, more negative = further away)
-//   x      -- how far the card slides toward the edge (px)
-// The sign of rotate/x flips depending on which side of center a card is
-// on (see getStageTransform) -- that's what makes the two wings mirror
-// each other instead of both leaning the same way.
-const STAGE_DEPTH: { rotate: number; z: number; x: number }[] = [
-  { rotate: 0, z: -300, x: 0 }, // center card -- straight on, furthest back
-  { rotate: 15, z: -260, x: 70 }, // immediate neighbors
-  { rotate: 30, z: -140, x: 110 }, // next ring out -- swings back toward camera
-  { rotate: 40, z: 15, x: 85 }, // outer wing -- nearly edge-on, closest to camera
-];
+// ==========================================
+// CONFIGURATION
+// ==========================================
+const STRIDE = 220;              
+const AUTOPLAY_SPEED = 0.035;    
+const DRAG_SENSITIVITY = 1.0;    
+const SLIPPERINESS = 0.98;       // Closer to 1 = slides longer. Closer to 0 = stops quickly.
 
-function getStageTransform(offset: number): string {
-  const depth = STAGE_DEPTH[Math.min(Math.abs(offset), STAGE_DEPTH.length - 1)];
-  const dir = offset < 0 ? 1 : offset > 0 ? -1 : 0; // right side vs. left side of center
-  return `rotateY(${dir * depth.rotate}deg) translateZ(${depth.z}px) translateX(${dir * depth.x}px)`;
-}
+function StageCard({
+  card,
+  index,
+  totalCards,
+  scrollX,
+  isDragging,
+}: {
+  card: HeroFeature;
+  index: number;
+  totalCards: number;
+  scrollX: MotionValue<number>;
+  isDragging: boolean;
+}) {
+  const TRACK_WIDTH = totalCards * STRIDE;
 
-function StageCard({ card, offset }: { card: HeroFeature; offset: number }) {
+  const wrappedX = useTransform(scrollX, (s) => {
+    const rawX = index * STRIDE - s;
+    return ((((rawX + TRACK_WIDTH / 2) % TRACK_WIDTH) + TRACK_WIDTH) % TRACK_WIDTH) - TRACK_WIDTH / 2;
+  });
+
+  const domain =      [-880, -660, -440, -220,    0,  220,  440,  660,  880];
+  const rotYRange =   [  40,   40,   30,   15,    0,  -15,  -30,  -40,  -40];
+  const zRange =      [  15,   15, -140, -260, -300, -260, -140,   15,   15];
+  const localXRange = [  85,   85,  110,   70,    0,  -70, -110,  -85,  -85];
+  const opacRange =   [   0,  0.3,    1,    1,    1,    1,    1,  0.3,    0];
+
+  const rotateY = useTransform(wrappedX, domain, rotYRange);
+  const z = useTransform(wrappedX, domain, zRange);
+  const localX = useTransform(wrappedX, domain, localXRange);
+  const opacity = useTransform(wrappedX, domain, opacRange);
+
+  const zIndex = useTransform(wrappedX, (x) => Math.round(20 - Math.abs(x) / 50));
+
+  const transform = useMotionTemplate`translateX(${wrappedX}px) rotateY(${rotateY}deg) translateZ(${z}px) translateX(${localX}px)`;
+
   return (
-    <div
-      className="shrink-0 w-[150px] sm:w-[175px] md:w-[200px] aspect-[2/3]"
-      style={{ transform: getStageTransform(offset), zIndex: 10 - Math.abs(offset) }}
+    <motion.div
+      className="absolute top-1/2 left-1/2 w-[150px] sm:w-[175px] md:w-[200px] aspect-[2/3] -mt-[112px] sm:-mt-[131px] md:-mt-[150px] -ml-[75px] sm:-ml-[87px] md:-ml-[100px]"
+      style={{
+        transform,
+        zIndex,
+        opacity,
+      }}
     >
-      <Link
-        href={String(card.id).startsWith('hero-fallback') ? '/series' : `/series/${card.id}`}
-        className="block relative w-full h-full rounded-sm overflow-hidden shadow-[0_12px_28px_rgba(0,0,0,0.35)] transition-transform duration-300 hover:scale-[1.03] hover:shadow-[0_18px_36px_rgba(0,0,0,0.45)]"
+      <div 
+        className="relative w-full h-full rounded-sm overflow-hidden shadow-[0_12px_28px_rgba(0,0,0,0.35)]"
+        style={{ pointerEvents: isDragging ? 'none' : 'auto' }}
       >
-        {card.imageUrl ? (
-          <Image src={card.imageUrl} alt={card.title} fill sizes="200px" className="object-cover" />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-brand-purple-vivid/50 to-brand-mauve/60 px-2 text-center">
-            <span className="text-white/80 text-[11px] leading-snug">{card.title}</span>
-          </div>
-        )}
-      </Link>
-    </div>
+        <Link
+          href={String(card.id).startsWith('hero-fallback') ? '/series' : `/series/${card.id}`}
+          className="block relative w-full h-full"
+          draggable={false} 
+        >
+          {card.imageUrl ? (
+            <Image 
+              src={card.imageUrl} 
+              alt={card.title} 
+              fill 
+              sizes="200px" 
+              className="object-cover" 
+              draggable={false} 
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-brand-purple-vivid/50 to-brand-mauve/60 px-2 text-center">
+              <span className="text-white/80 text-[11px] leading-snug">{card.title}</span>
+            </div>
+          )}
+        </Link>
+      </div>
+    </motion.div>
   );
 }
 
 export default function LandingPosterStage({ deck }: { deck: HeroFeature[] }) {
-  const centerIndex = (deck.length - 1) / 2;
-  const scrollerRef = useRef<HTMLDivElement>(null);
+  const prefersReducedMotion = useReducedMotion();
+  const [isDragging, setIsDragging] = useState(false);
+  
+  const minItemsRequired = 14; 
+  const loopMultiplier = Math.ceil(minItemsRequired / Math.max(1, deck.length));
+  const endlessDeck = Array(loopMultiplier).fill(deck).flat();
+  
+  const scrollX = useMotionValue(0); 
+  
+  // Track the current velocity so we can apply momentum when you let go
+  const velocity = useRef(AUTOPLAY_SPEED); 
 
-  // Why this needs JS: `translateX`/`rotateY` are transforms, so they shift
-  // cards visually without changing the layout box the browser measures.
-  // On top of that, `mx-auto` can't center something wider than a
-  // scrollable container -- when content overflows an `overflow-x-auto`
-  // box, the browser just shows scroll position 0 (the left edge) instead
-  // of centering it, which is why the row was reading as left-anchored
-  // with the right side clipped. Centering the scroll position on mount
-  // fixes both: it puts the true midpoint of the fanned deck in view, and
-  // still lets wide/narrow screens scroll to see the wings that don't fit.
-  useEffect(() => {
-    const el = scrollerRef.current;
-    if (!el) return;
-    el.scrollLeft = (el.scrollWidth - el.clientWidth) / 2;
-  }, []);
+  useAnimationFrame((t, delta) => {
+    if (prefersReducedMotion || isDragging) return;
+    
+    // Apply the current velocity
+    scrollX.set(scrollX.get() + delta * velocity.current);
+    
+    // Smoothly decay the velocity back down to the normal AUTOPLAY_SPEED
+    // This creates the frictionless, slippery glide!
+    velocity.current = velocity.current * SLIPPERINESS + AUTOPLAY_SPEED * (1 - SLIPPERINESS);
+  });
 
   return (
-    // min-h-[calc(100vh-57px)] fills the screen down to exactly where the
-    // navbar leaves off -- 57px matches the navbar's own rendered height
-    // (see the mobile menu's `top-[57px]` in Navbar.tsx, the existing
-    // source of truth for that number in this codebase) -- so the last
-    // thing visible before scrolling is this stage, and the violet
-    // LandingHero gradient only appears once the visitor scrolls past it.
-    //
-    // Background eases white -> a soft brand-blush glow -> #241528, which
-    // is the exact color LandingHero's own gradient starts at (see its
-    // `from-[#241528]`) -- ending on that value rather than a plain white
-    // means the two sections meet with no visible seam between them.
-    <div
-      ref={scrollerRef}
-      className="relative overflow-x-auto no-scrollbar min-h-[calc(100vh-57px)] flex items-center"
-      style={{ background: 'linear-gradient(to bottom, #FFFFFF 0%, #FBDCE6 62%, #241528 100%)' }}
+    <motion.div
+      className="relative overflow-hidden min-h-[calc(100vh-57px)] flex items-center justify-center w-full select-none !cursor-grab active:!cursor-grabbing"
+      style={{
+        background: 'linear-gradient(to bottom, #FFFFFF 0%, #FBDCE6 62%, #241528 100%)',
+        perspective: 1000, 
+      }}
+      onPanStart={() => {
+        setIsDragging(true);
+      }}
+      onPanEnd={(e, info) => {
+        setIsDragging(false);
+        // Capture how fast the user was swiping (info.velocity.x is in pixels per second)
+        // Divide by 1000 to convert to pixels per millisecond, and invert it because dragging left moves the track right.
+        velocity.current = -info.velocity.x / 1000; 
+      }}
+      onPan={(e, info) => {
+        scrollX.set(scrollX.get() - info.delta.x * DRAG_SENSITIVITY);
+      }}
     >
-      <div
-        className="flex items-center justify-center gap-3 md:gap-4 w-max mx-auto px-[130px] py-16"
-        style={{ perspective: 1000 }}
-      >
-        {/* px-[130px] above reserves room for the widest translateX offset
-            (110px, at |offset|=2) plus a little slack for the hover scale --
-            without it the outer wing cards' transformed position falls
-            outside the row's measured (untransformed) width and gets cut
-            off by the scroll container instead of being scrollable into view. */}
-        {deck.map((card, i) => (
-          <StageCard key={card.id} card={card} offset={i - centerIndex} />
-        ))}
-      </div>
-    </div>
+      {endlessDeck.map((card, i) => (
+        <StageCard
+          key={`track-${card.id}-${i}`}
+          card={card}
+          index={i}
+          totalCards={endlessDeck.length}
+          scrollX={scrollX}
+          isDragging={isDragging}
+        />
+      ))}
+    </motion.div>
   );
 }
