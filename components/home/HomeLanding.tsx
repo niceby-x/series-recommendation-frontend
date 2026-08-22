@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import type { SeriesCardData } from '../shared/SeriesCard';
 import LandingHero from './LandingHero';
+import LandingPosterStage from './LandingPosterStage';
 import LandingStatsBar from './LandingStatsBar';
 import ContinueDiscoveringRow from './ContinueDiscoveringRow';
 import BrowseByMoodGrid from '../shared/BrowseByMoodGrid';
@@ -96,6 +97,7 @@ export default function HomeLanding({
 
   return (
     <main className="min-h-screen bg-background">
+      <LandingPosterStage deck={heroDeck} />
       <LandingHero deck={heroDeck} />
 
       <div className="bg-background">
