@@ -9,6 +9,7 @@ import { useAuthModal } from '../../../lib/AuthModalContext';
 import { useAdminPageHeader } from '../../../components/admin/AdminPageHeaderContext';
 import ImportHistoryTable from '../../../components/admin/ImportHistoryTable';
 import ImportScheduleSettings from '../../../components/admin/ImportScheduleSettings';
+import ImportAddByTitle from '../../../components/admin/ImportAddByTitle';
 
 type AccessState = 'checking' | 'signed_out' | 'forbidden' | 'ok' | 'error';
 // IMP3-03: a separate tab rather than appending the history list below
@@ -18,7 +19,11 @@ type AccessState = 'checking' | 'signed_out' | 'forbidden' | 'ok' | 'error';
 // IMP4-01: same reasoning extends to a third 'schedule' tab -- the
 // schedule settings form has nothing to do with monitoring a live run or
 // browsing history, so it gets its own uncluttered view too.
-type PageTab = 'run' | 'history' | 'schedule';
+// IMP5-01: and a fourth 'add' tab -- manually searching/adding a single
+// title by name is a different task from any of the above (not
+// monitoring a run, not auditing history, not configuring the
+// scheduler), so it gets its own uncluttered view for the same reason.
+type PageTab = 'run' | 'history' | 'schedule' | 'add';
 
 interface ImportStatus {
   running: boolean;
@@ -320,12 +325,28 @@ export default function AdminImportPage() {
             >
               Schedule
             </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === 'add'}
+              onClick={() => setActiveTab('add')}
+              className={
+                'px-3.5 py-2 text-[13.5px] font-semibold whitespace-nowrap border-b-2 transition-colors ' +
+                (activeTab === 'add'
+                  ? 'text-primary border-primary'
+                  : 'text-muted-foreground border-transparent hover:text-foreground')
+              }
+            >
+              Add by Title
+            </button>
           </div>
 
           {activeTab === 'history' ? (
             <ImportHistoryTable />
           ) : activeTab === 'schedule' ? (
             <ImportScheduleSettings />
+          ) : activeTab === 'add' ? (
+            <ImportAddByTitle />
           ) : (
           <>
 

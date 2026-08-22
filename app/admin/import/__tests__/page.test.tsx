@@ -24,6 +24,10 @@ vi.mock('@/components/admin/ImportScheduleSettings', () => ({
   default: () => <div data-testid="import-schedule-stub">schedule tab content</div>,
 }));
 
+vi.mock('@/components/admin/ImportAddByTitle', () => ({
+  default: () => <div data-testid="import-add-by-title-stub">add by title tab content</div>,
+}));
+
 const getSession = vi.fn();
 vi.mock('@/lib/supabase', () => ({
   supabase: { auth: { getSession: () => getSession() } },
@@ -119,6 +123,18 @@ describe('AdminImportPage tabs (IMP3-03)', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('import-schedule-stub')).toBeInTheDocument();
+    });
+    expect(screen.queryByLabelText(/limit per media type/i)).not.toBeInTheDocument();
+  });
+
+  it('switches to the Add by Title tab and hides the Run Import content', async () => {
+    render(<AdminImportPage />);
+
+    await screen.findByLabelText(/limit per media type/i);
+    await userEvent.click(screen.getByRole('tab', { name: /add by title/i }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('import-add-by-title-stub')).toBeInTheDocument();
     });
     expect(screen.queryByLabelText(/limit per media type/i)).not.toBeInTheDocument();
   });
