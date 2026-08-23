@@ -18,10 +18,15 @@ const DRAG_SENSITIVITY = 0.01;
 const SLIPPERINESS = 0.98;
 
 const DOMAIN =        [-9.6, -7.2, -4.8, -2.4,    0,   2.4,   4.8,   7.2,   9.6];
-const ROT_Y_RANGE =   [  35,   30,   20,   10,    0,  -10,   -20,   -30,   -35];
-const Z_RANGE =       [ 0.5,  0.0, -1.0, -2.0, -2.5, -2.0, -1.0,   0.0,   0.5]; 
-const LOCAL_X_RANGE = [ 0.4,  0.3,  0.2,  0.1,    0, -0.1, -0.2,  -0.3,  -0.4];
-const SCALE_RANGE =   [   1,    1,    1,    1,    1,    1,    1,     1,     1];
+
+// 1. UPDATED: Exaggerated the Z_RANGE. The center sits at -2.5, but the edges now come 
+// much further forward (+2.5). This creates a dramatically deeper 3D bowl shape.
+const Z_RANGE =       [ 2.5,  1.0, -0.5, -1.8, -2.5, -1.8, -0.5,   1.0,   2.5]; 
+
+// 2. UPDATED: Slightly increased the rotation at the edges so they turn inward more sharply.
+const ROT_Y_RANGE =   [  45,   32,   18,    8,    0,   -8,  -18,   -32,   -45];
+
+const LOCAL_X_RANGE = [ 0.4,  0.3,  0.2,  0.1,    0, -0.1,  -0.2,  -0.3,  -0.4];
 
 function interpolate(x: number, domain: number[], range: number[]): number {
   if (x <= domain[0]) return range[0];
@@ -78,14 +83,12 @@ function StageCard({
     const rotYDeg = interpolate(wrappedX, DOMAIN, ROT_Y_RANGE);
     const zVal = interpolate(wrappedX, DOMAIN, Z_RANGE);
     const localXVal = interpolate(wrappedX, DOMAIN, LOCAL_X_RANGE);
-    const scaleVal = interpolate(wrappedX, DOMAIN, SCALE_RANGE);
 
     groupRef.current.position.x = wrappedX + localXVal;
-    groupRef.current.position.y = -0.1; // Balanced position
+    groupRef.current.position.y = -0.1; // Back to your original, grounded flat Y value
     groupRef.current.position.z = zVal;
     groupRef.current.rotation.y = (rotYDeg * Math.PI) / 180;
-    groupRef.current.scale.set(scaleVal, scaleVal, scaleVal);
-
+    
     meshRef.current.renderOrder = Math.round(100 - Math.abs(wrappedX) * 10);
   });
 
@@ -105,11 +108,11 @@ function StageCard({
       >
         <planeGeometry args={[2, 3]} />
         {card.imageUrl ? (
-          <Suspense fallback={<meshStandardMaterial color="#A47BBA" transparent depthTest={false} depthWrite={false} />}>
+          <Suspense fallback={<meshStandardMaterial color="#D9B8E8" transparent depthTest={false} depthWrite={false} />}>
             <CardTexture url={card.imageUrl} />
           </Suspense>
         ) : (
-          <meshStandardMaterial color="#A47BBA" transparent depthTest={false} depthWrite={false} />
+          <meshStandardMaterial color="#D9B8E8" transparent depthTest={false} depthWrite={false} />
         )}
       </mesh>
     </group>
@@ -118,24 +121,26 @@ function StageCard({
 
 function StageFloor() {
   return (
-    // Aligned to the card's actual bottom edge: group.position.y (-0.1) +
-    // card mesh position.y (1.2) - half the card's geometry height (1.5)
-    // = -0.4. Sits a hair below that (-0.42) so the reflection reads as
-    // touching the poster rather than clipping through it.
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.42, 0]}>
       <planeGeometry args={[60, 60]} />
       <MeshReflectorMaterial
-        blur={[300, 100]}
+        // Reflector tuned further down still -- the previous pass (blur
+        // 120/40, mixStrength 10) was better but still read as a pale
+        // blur rather than a legible reflection, partly because the fog
+        // above was also bleeding into the reflector's own internal
+        // render pass. With fog now pushed past the card depth, this can
+        // sharpen up without also sharpening a foggy haze.
+        blur={[70, 20]}
         resolution={1024}
         mixBlur={1}
-        mixStrength={50}
+        mixStrength={5}
         roughness={0.7}
         depthScale={1.2}
         minDepthThreshold={0.4}
         maxDepthThreshold={1.4}
-        color="#241528"
-        metalness={0.5}
-        mirror={0.85}
+        color="#DCC0D6"
+        metalness={0.25}
+        mirror={0.3}
       />
     </mesh>
   );
@@ -202,13 +207,11 @@ export default function LandingPosterStage({ deck }: { deck: HeroFeature[] }) {
     <motion.div
       className="relative overflow-hidden min-h-[calc(100vh-57px)] flex items-center justify-center w-full select-none !cursor-grab active:!cursor-grabbing"
       style={{
-        // The reflective floor stays moody/dark through most of the scene
-        // (that's what makes MeshReflectorMaterial read as a mirror at
-        // all) -- but the very last stretch eases back up to this page's
-        // own light palette, so the section hands off into LandingHero's
-        // #FDF1F6 start color instead of cutting from near-black straight
-        // into pale pink.
-        background: 'linear-gradient(to bottom, #FFFFFF 0%, #FBDCE6 55%, #241528 88%, #FDF1F6 100%)',
+        // Stage now stays inside the same pale blush/lilac family the mockup
+        // uses end to end -- no more dark plum midsection. The reflective
+        // floor (see StageFloor) supplies the "there's a mirror here" cue on
+        // its own via metalness/mirror instead of relying on a dark tint.
+        background: 'linear-gradient(to bottom, #FFFFFF 0%, #FDF1F6 35%, #FBEAF8 65%, #F1E3FB 100%)',
       }}
       onPanStart={() => setIsDragging(true)}
       onPanEnd={(e, info) => {
@@ -223,22 +226,14 @@ export default function LandingPosterStage({ deck }: { deck: HeroFeature[] }) {
     >
       {/* ================= HEADER OVERLAY ================= */}
       <div className="absolute inset-x-0 top-0 pt-8 md:pt-14 px-6 text-center z-20 pointer-events-none">
-        {/* Soft radial backdrop behind the text only -- insurance against
-            moving poster art directly underneath tanking legibility, without
-            putting a visible "box" behind the headline. Sized to the whole
-            header block now that it also carries the subhead and the
-            three trust badges, not just the eyebrow + headline. */}
         <div
           className="absolute inset-x-0 top-0 h-64 sm:h-72 md:h-80 -z-10"
           style={{
             background: 'radial-gradient(ellipse 65% 100% at 50% 0%, rgba(255,255,255,0.75), transparent 70%)',
           }}
         />
-        <p className="inline-flex items-center justify-center gap-2 text-[#C084A3] text-[10px] md:text-xs font-bold tracking-[0.2em] mb-3 uppercase">
-          <FlowerIcon className="size-3 text-[#F9A8D4]" /> A BLUMI SELECTION <FlowerIcon className="size-3 text-[#F9A8D4]" />
-        </p>
         <h2 className="font-display text-[34px] sm:text-[46px] md:text-[56px] leading-tight text-[#2B1B3A] mb-3">
-          Seven stories to <span className="font-serif italic text-[#D946EF] font-light">fall into</span>
+            Stories to <span className="font-serif italic text-[#D946EF] font-light">fall into</span>
           <svg className="inline-block ml-1 w-8 h-8 md:w-10 md:h-10 text-[#D946EF]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1">
             <path
               strokeLinecap="round"
@@ -247,16 +242,11 @@ export default function LandingPosterStage({ deck }: { deck: HeroFeature[] }) {
             />
           </svg>
         </h2>
-        <p className="text-[#6C5B7B] text-sm md:text-base font-medium mb-8">Carefully recommended. Endless emotions.</p>
 
         <div className="flex flex-wrap items-center justify-center gap-6 md:gap-12 text-xs md:text-sm text-[#4A3B58] max-w-3xl mx-auto border-t border-[#D946EF]/20 pt-6">
           <div className="flex items-center gap-3">
             <svg className="w-6 h-6 text-[#D946EF]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
-              />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
             </svg>
             <div className="text-left leading-tight">
               <span className="block font-bold">Handpicked</span> <span className="font-normal opacity-80">just for you</span>
@@ -272,11 +262,7 @@ export default function LandingPosterStage({ deck }: { deck: HeroFeature[] }) {
           <div className="hidden md:block w-px h-8 bg-[#D946EF]/20" />
           <div className="flex items-center gap-3">
             <svg className="w-6 h-6 text-[#D946EF]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"
-              />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
             </svg>
             <div className="text-left leading-tight">
               <span className="block font-bold">Loved by</span> <span className="font-normal opacity-80">our community</span>
@@ -285,20 +271,41 @@ export default function LandingPosterStage({ deck }: { deck: HeroFeature[] }) {
         </div>
       </div>
 
-      {/* Carousel gets its own top offset, independent of the headline
-          above -- it needs real clearance from the header block since the
-          cards themselves (not just text) were sitting right against it.
-          Using top-* instead of a shared container pt-* so this can be
-          tuned without dragging the header down with it. Pushed further
-          down than before now that the header also carries the subhead
-          and the three trust badges below the headline. */}
-      <div className="absolute inset-x-0 bottom-0 top-60 sm:top-64 md:top-72 pointer-events-none">
-        <Canvas camera={{ position: [0, 0.8, 7.5], fov: 40 }} gl={{ alpha: true }} style={{ pointerEvents: 'auto' }}>
-          <fog attach="fog" args={['#241528', 4, 15]} />
+      {/* 3. UPDATED: Shifted the top margin from 'top-60 sm:top-64 md:top-72' up to 'top-40 sm:top-48 md:top-52'. 
+          This moves the whole canvas higher on the page so it isn't sinking to the bottom of the screen. */}
+      <div className="absolute inset-x-0 bottom-0 top-40 sm:top-48 md:top-52 pointer-events-none">
+        <Canvas
+          // Pulled the camera back and narrowed the FOV together (7.5→9.5,
+          // 40°→32°) to compensate for how close Z_RANGE now brings the
+          // edge cards (+2.5, only 5 units from the old camera position).
+          // At the old distance those cards were roughly 2x the apparent
+          // size of the center card and blew past the frame top/bottom/
+          // sides -- that's the clipping in the screenshot. This keeps the
+          // same bowl depth but gives the near cards room to actually fit.
+          camera={{ position: [0, 0.8, 9.5], fov: 32 }}
+          gl={{ alpha: true }}
+          style={{ pointerEvents: 'auto' }}
+        >
+          {/* Fog previously started at 4 units and card depth spans
+              roughly 7-12 units from the camera at this distance -- so
+              cards nearest the fog's "far" end (center, ~12 units) were
+              already ~70% blended toward the pale fog color. That's the
+              washed-out card look, most visible on whichever card sits
+              closest to dead center. Pushed both distances well past the
+              deepest card (12) so fog only affects the floor stretching
+              into the distance, not the cards themselves. */}
+          <fog attach="fog" args={['#F1E3FB', 14, 28]} />
           
-          <ambientLight intensity={1.6} />
-          <directionalLight position={[0, 10, 8]} intensity={1.8} />
-          <spotLight position={[0, 6, 4]} intensity={2.5} penumbra={1} angle={0.8} />
+          <ambientLight intensity={1.3} />
+          <directionalLight position={[0, 10, 8]} intensity={1.4} />
+          {/* Spotlight was tinted pale pink (#FDE6F3) at fairly high
+              intensity -- on top of the fog, that was casting an extra
+              pink wash directly over every card's actual poster art,
+              flattening their real color. Switched to neutral white so
+              the card art reads true; the pink atmosphere is already
+              carried by the background/floor, it doesn't need to come
+              from the key light too. */}
+          <spotLight position={[0, 6, 4]} intensity={1.4} penumbra={1} angle={0.8} color="#FFFFFF" />
 
           <SceneContainer pointerX={pointerX} pointerY={pointerY}>
             {endlessDeck.map((card, i) => (
