@@ -81,6 +81,31 @@ export default function Navbar() {
   // every admin route either way.
   const [isAdmin, setIsAdmin] = useState(false);
 
+  // Reversed from the usual pattern on purpose: hidden by default (so it
+  // doesn't compete with the big centered logo in the hero on load),
+  // appears while actively scrolling down, hides again on scroll up or
+  // once back near the top. lastScrollY is a ref (not state) since it's
+  // written on every scroll tick and doesn't need to trigger a re-render
+  // itself -- only `hidden` flipping does that.
+  const [hidden, setHidden] = useState(true);
+  const lastScrollY = useRef(0);
+
+  useEffect(() => {
+    lastScrollY.current = window.scrollY;
+
+    function handleScroll() {
+      const currentY = window.scrollY;
+      const goingDown = currentY > lastScrollY.current;
+      // Visible only while actively scrolling down past the bar's own
+      // height; scrolling up (or sitting still near the top) hides it.
+      setHidden(!goingDown || currentY <= 80);
+      lastScrollY.current = currentY;
+    }
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   if (pathname !== lastPathname) {
     setLastPathname(pathname);
     setMenuOpen(false);
@@ -228,7 +253,20 @@ export default function Navbar() {
         glass over the page rather than a separate flat layer pasted on
         top of it. `relative` here is just so the gradient rule below can
         anchor to this element instead of the page. */}
-    <nav className="sticky top-0 z-50 bg-background/70 backdrop-blur-lg border-b border-transparent relative px-6 py-3 flex items-center gap-6">
+    {/* fixed (not sticky) is what actually matters here: a sticky element
+        still reserves its own height in normal document flow even while
+        transformed off-screen, which was leaving a blank gap the size of
+        the navbar at the top of the page. fixed removes it from flow
+        entirely, so page content starts right at the very top and this
+        just overlays on top of it once it's visible -- inset-x-0 stands
+        in for the width sticky/static block layout used to give it for
+        free. */}
+    <nav
+      className={
+        'fixed top-0 inset-x-0 z-50 bg-background/70 backdrop-blur-lg border-b border-transparent px-6 py-3 flex items-center gap-6 transition-transform duration-300 ' +
+        (hidden ? '-translate-y-full' : 'translate-y-0')
+      }
+    >
       {/* Replaces the old flat border-b border-border. A plain gray 1px
           line read as a generic app-header divider; this thin brand
           gradient (transparent -> pink-vivid -> transparent) reads more
