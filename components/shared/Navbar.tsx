@@ -221,7 +221,25 @@ export default function Navbar() {
 
   return (
     <>
-    <nav className="sticky top-0 z-50 bg-background/90 backdrop-blur-md border-b border-border px-6 py-3 flex items-center gap-6">
+    {/* bg-background/70 + backdrop-blur-lg (up from /90 + blur-md) -- the
+        old values read as an opaque flat bar, which clashed with the
+        moody, depth-heavy poster stage on the homepage. This lets more of
+        whatever's underneath show through, so the nav reads as a pane of
+        glass over the page rather than a separate flat layer pasted on
+        top of it. `relative` here is just so the gradient rule below can
+        anchor to this element instead of the page. */}
+    <nav className="sticky top-0 z-50 bg-background/70 backdrop-blur-lg border-b border-transparent relative px-6 py-3 flex items-center gap-6">
+      {/* Replaces the old flat border-b border-border. A plain gray 1px
+          line read as a generic app-header divider; this thin brand
+          gradient (transparent -> pink-vivid -> transparent) reads more
+          like the edge of a stage curtain rail, which fits the "theater"
+          framing the homepage's poster deck already leans into ("A BLUMI
+          SELECTION", the card deck itself). Subtle enough to still work
+          as a plain divider on pages without the 3D stage. */}
+      <div
+        aria-hidden
+        className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-brand-pink-vivid/60 to-transparent"
+      />
       <Link href="/" className="shrink-0">
         <Logo variant="full" theme="brand" size={30} />
       </Link>
