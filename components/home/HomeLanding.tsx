@@ -98,7 +98,7 @@ export default function HomeLanding({
   return (
     <main className="min-h-screen bg-background">
       <LandingPosterStage deck={heroDeck} />
-      <LandingHero deck={heroDeck} />
+      <LandingHero />
 
       <div className="bg-background">
         {/* Stats bar + Curator's Picks */}

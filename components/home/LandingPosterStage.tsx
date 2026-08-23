@@ -202,7 +202,13 @@ export default function LandingPosterStage({ deck }: { deck: HeroFeature[] }) {
     <motion.div
       className="relative overflow-hidden min-h-[calc(100vh-57px)] flex items-center justify-center w-full select-none !cursor-grab active:!cursor-grabbing"
       style={{
-        background: 'linear-gradient(to bottom, #FFFFFF 0%, #FBDCE6 55%, #241528 100%)',
+        // The reflective floor stays moody/dark through most of the scene
+        // (that's what makes MeshReflectorMaterial read as a mirror at
+        // all) -- but the very last stretch eases back up to this page's
+        // own light palette, so the section hands off into LandingHero's
+        // #FDF1F6 start color instead of cutting from near-black straight
+        // into pale pink.
+        background: 'linear-gradient(to bottom, #FFFFFF 0%, #FBDCE6 55%, #241528 88%, #FDF1F6 100%)',
       }}
       onPanStart={() => setIsDragging(true)}
       onPanEnd={(e, info) => {
@@ -215,30 +221,78 @@ export default function LandingPosterStage({ deck }: { deck: HeroFeature[] }) {
       onMouseMove={handlePointerMove}
       onMouseLeave={handlePointerLeave}
     >
-      <div className="absolute inset-x-0 top-0 pt-8 sm:pt-10 md:pt-12 px-6 text-center z-20 pointer-events-none">
+      {/* ================= HEADER OVERLAY ================= */}
+      <div className="absolute inset-x-0 top-0 pt-8 md:pt-14 px-6 text-center z-20 pointer-events-none">
         {/* Soft radial backdrop behind the text only -- insurance against
             moving poster art directly underneath tanking legibility, without
-            putting a visible "box" behind the headline. */}
+            putting a visible "box" behind the headline. Sized to the whole
+            header block now that it also carries the subhead and the
+            three trust badges, not just the eyebrow + headline. */}
         <div
-          className="absolute inset-x-0 top-0 h-24 sm:h-28 -z-10"
+          className="absolute inset-x-0 top-0 h-64 sm:h-72 md:h-80 -z-10"
           style={{
-            background: 'radial-gradient(ellipse 60% 100% at 50% 0%, rgba(255,255,255,0.75), transparent 70%)',
+            background: 'radial-gradient(ellipse 65% 100% at 50% 0%, rgba(255,255,255,0.75), transparent 70%)',
           }}
         />
-        <p className="inline-flex items-center gap-1.5 text-brand-mauve/70 text-[11px] font-bold tracking-[0.18em] mb-1">
-          <FlowerIcon className="size-3 text-brand-pink-vivid" /> A BLUMI SELECTION
+        <p className="inline-flex items-center justify-center gap-2 text-[#C084A3] text-[10px] md:text-xs font-bold tracking-[0.2em] mb-3 uppercase">
+          <FlowerIcon className="size-3 text-[#F9A8D4]" /> A BLUMI SELECTION <FlowerIcon className="size-3 text-[#F9A8D4]" />
         </p>
-        <h2 className="font-display italic text-[24px] sm:text-[28px] md:text-[34px] leading-tight text-brand-mauve">
-          Seven stories to fall into
+        <h2 className="font-display text-[34px] sm:text-[46px] md:text-[56px] leading-tight text-[#2B1B3A] mb-3">
+          Seven stories to <span className="font-serif italic text-[#D946EF] font-light">fall into</span>
+          <svg className="inline-block ml-1 w-8 h-8 md:w-10 md:h-10 text-[#D946EF]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
+            />
+          </svg>
         </h2>
+        <p className="text-[#6C5B7B] text-sm md:text-base font-medium mb-8">Carefully recommended. Endless emotions.</p>
+
+        <div className="flex flex-wrap items-center justify-center gap-6 md:gap-12 text-xs md:text-sm text-[#4A3B58] max-w-3xl mx-auto border-t border-[#D946EF]/20 pt-6">
+          <div className="flex items-center gap-3">
+            <svg className="w-6 h-6 text-[#D946EF]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
+              />
+            </svg>
+            <div className="text-left leading-tight">
+              <span className="block font-bold">Handpicked</span> <span className="font-normal opacity-80">just for you</span>
+            </div>
+          </div>
+          <div className="hidden md:block w-px h-8 bg-[#D946EF]/20" />
+          <div className="flex items-center gap-3">
+            <FlowerIcon className="w-6 h-6 text-[#D946EF]" />
+            <div className="text-left leading-tight">
+              <span className="block font-bold">Based on what</span> <span className="font-normal opacity-80">you love</span>
+            </div>
+          </div>
+          <div className="hidden md:block w-px h-8 bg-[#D946EF]/20" />
+          <div className="flex items-center gap-3">
+            <svg className="w-6 h-6 text-[#D946EF]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"
+              />
+            </svg>
+            <div className="text-left leading-tight">
+              <span className="block font-bold">Loved by</span> <span className="font-normal opacity-80">our community</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Carousel gets its own top offset, independent of the headline
-          above -- it needs real clearance from the navbar since the cards
-          themselves (not just text) were sitting right against it. Using
-          top-* instead of a shared container pt-* so this can be tuned
-          without dragging the headline down with it. */}
-      <div className="absolute inset-x-0 bottom-0 top-28 sm:top-32 md:top-36 pointer-events-none">
+          above -- it needs real clearance from the header block since the
+          cards themselves (not just text) were sitting right against it.
+          Using top-* instead of a shared container pt-* so this can be
+          tuned without dragging the header down with it. Pushed further
+          down than before now that the header also carries the subhead
+          and the three trust badges below the headline. */}
+      <div className="absolute inset-x-0 bottom-0 top-60 sm:top-64 md:top-72 pointer-events-none">
         <Canvas camera={{ position: [0, 0.8, 7.5], fov: 40 }} gl={{ alpha: true }} style={{ pointerEvents: 'auto' }}>
           <fog attach="fog" args={['#241528', 4, 15]} />
           
