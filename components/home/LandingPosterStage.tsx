@@ -58,7 +58,7 @@ function StageCard({
   const middleGroupRef = useRef<THREE.Group>(null);
   const innerGroupRef = useRef<THREE.Group>(null);
   
-  const meshRef = useRef<any>(null);
+  const meshRef = useRef<THREE.Mesh>(null);
 
   useFrame(() => {
     if (!outerGroupRef.current || !middleGroupRef.current || !innerGroupRef.current || !meshRef.current) return;
@@ -85,10 +85,15 @@ function StageCard({
     
     meshRef.current.renderOrder = Math.round(100 - Math.abs(wrappedX) * 10);
     
-    // Apply opacity fade out to the material
-    if (meshRef.current.material) {
-        meshRef.current.material.transparent = true;
-        meshRef.current.material.opacity = opacVal;
+    // Apply opacity fade out to the material. mesh.material's type allows
+    // Material | Material[] even though this component only ever assigns
+    // a single material (via FallbackMesh's <meshStandardMaterial> or
+    // drei Image's internal shaderMaterial) -- narrowing out the array
+    // case satisfies the type without changing behavior.
+    const material = meshRef.current.material;
+    if (material && !Array.isArray(material)) {
+        material.transparent = true;
+        material.opacity = opacVal;
     }
   });
 
@@ -112,8 +117,6 @@ function StageCard({
                 scale={[2, 3]}
                 radius={0.08}
                 transparent
-                depthTest={false}
-                depthWrite={false}
                 onClick={handleClick}
                 onPointerOver={() => (document.body.style.cursor = 'pointer')}
                 onPointerOut={() => (document.body.style.cursor = 'auto')}
@@ -128,7 +131,7 @@ function StageCard({
   );
 }
 
-const FallbackMesh = forwardRef<any, { onClick: () => void }>(({ onClick }, ref) => (
+const FallbackMesh = forwardRef<THREE.Mesh, { onClick: () => void }>(({ onClick }, ref) => (
   <mesh
     ref={ref}
     position={[0, 0, 0]}
