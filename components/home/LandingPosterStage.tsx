@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useLayoutEffect, Suspense, forwardRef } from 'react';
+import { useState, useRef, useLayoutEffect, useEffect, Suspense, forwardRef } from 'react';
 import { useRouter } from 'next/navigation';
 import * as THREE from 'three';
 import { motion, useAnimationFrame, useMotionValue, useReducedMotion, MotionValue } from 'framer-motion';
@@ -17,6 +17,8 @@ import type { HeroFeature } from '../../lib/landingContent';
 const STRIDE = 2.2;              
 const AUTOPLAY_SPEED = 0.00035;    
 const DRAG_SENSITIVITY = 0.01;    
+const WHEEL_SENSITIVITY = 0.01; // matches DRAG_SENSITIVITY as a starting point; needs live trackpad tuning
+const WHEEL_IDLE_MS = 150; // how long to wait after the last wheel tick before resuming autoplay
 const SLIPPERINESS = 0.98;
 
 const DOMAIN =        [-8.8, -6.6, -4.4, -2.2,    0,  2.2,  4.4,  6.6,  8.8];
@@ -43,12 +45,14 @@ function StageCard({
   totalCards,
   scrollX,
   isDragging,
+  onCardHoverChange,
 }: {
   card: HeroFeature;
   index: number;
   totalCards: number;
   scrollX: MotionValue<number>;
   isDragging: boolean;
+  onCardHoverChange: (hovering: boolean) => void;
 }) {
   const router = useRouter();
   const TRACK_WIDTH = totalCards * STRIDE;
@@ -109,7 +113,9 @@ function StageCard({
       <group ref={middleGroupRef}>
         <group ref={innerGroupRef}>
           {card.imageUrl ? (
-            <Suspense fallback={<FallbackMesh ref={meshRef} onClick={handleClick} />}>
+            <Suspense
+              fallback={<FallbackMesh ref={meshRef} onClick={handleClick} onHoverChange={onCardHoverChange} />}
+            >
               <Image
                 ref={meshRef}
                 url={card.imageUrl.includes('?') ? `${card.imageUrl}&3d=true` : `${card.imageUrl}?3d=true`}
@@ -118,12 +124,12 @@ function StageCard({
                 radius={0.08}
                 transparent
                 onClick={handleClick}
-                onPointerOver={() => (document.body.style.cursor = 'pointer')}
-                onPointerOut={() => (document.body.style.cursor = 'auto')}
+                onPointerOver={() => onCardHoverChange(true)}
+                onPointerOut={() => onCardHoverChange(false)}
               />
             </Suspense>
           ) : (
-            <FallbackMesh ref={meshRef} onClick={handleClick} />
+            <FallbackMesh ref={meshRef} onClick={handleClick} onHoverChange={onCardHoverChange} />
           )}
         </group>
       </group>
@@ -131,13 +137,16 @@ function StageCard({
   );
 }
 
-const FallbackMesh = forwardRef<THREE.Mesh, { onClick: () => void }>(({ onClick }, ref) => (
+const FallbackMesh = forwardRef<
+  THREE.Mesh,
+  { onClick: () => void; onHoverChange: (hovering: boolean) => void }
+>(({ onClick, onHoverChange }, ref) => (
   <mesh
     ref={ref}
     position={[0, 0, 0]}
     onClick={onClick}
-    onPointerOver={() => (document.body.style.cursor = 'pointer')}
-    onPointerOut={() => (document.body.style.cursor = 'auto')}
+    onPointerOver={() => onHoverChange(true)}
+    onPointerOut={() => onHoverChange(false)}
   >
     <planeGeometry args={[2, 3]} />
     <meshStandardMaterial color="#D9B8E8" transparent depthTest={false} depthWrite={false} />
@@ -192,6 +201,27 @@ export default function LandingPosterStage({ deck }: { deck: HeroFeature[] }) {
   const prefersReducedMotion = useReducedMotion();
   const [isDragging, setIsDragging] = useState(false);
 
+  // Tracks how many cards currently report a pointer-over (a card's inner
+  // Suspense/fallback swap can momentarily overlap, so this is a count
+  // rather than a boolean to avoid a stray onPointerOut clobbering a still-
+  // active hover on the replacement mesh).
+  const hoveredCardCount = useRef(0);
+  const [isHoveringCard, setIsHoveringCard] = useState(false);
+
+  function handleCardHoverChange(hovering: boolean) {
+    hoveredCardCount.current = Math.max(0, hoveredCardCount.current + (hovering ? 1 : -1));
+    setIsHoveringCard(hoveredCardCount.current > 0);
+  }
+
+  // Grab hand only over cards (or while actively dragging); default arrow
+  // everywhere else on the stage.
+  useLayoutEffect(() => {
+    document.body.style.cursor = isDragging ? 'grabbing' : isHoveringCard ? 'grab' : 'auto';
+    return () => {
+      document.body.style.cursor = 'auto';
+    };
+  }, [isDragging, isHoveringCard]);
+
   const [hasFinePointer] = useState(
     () => typeof window !== 'undefined' && window.matchMedia('(pointer: fine)').matches
   );
@@ -239,9 +269,43 @@ export default function LandingPosterStage({ deck }: { deck: HeroFeature[] }) {
     velocity.current = velocity.current * SLIPPERINESS + AUTOPLAY_SPEED * (1 - SLIPPERINESS);
   });
 
+  // Touchpad support: framer-motion's onPan only fires for pointer-drag
+  // gestures, so a two-finger trackpad swipe (a wheel event, not a pointer
+  // drag) never reached scrollX. Attached as a native listener with
+  // { passive: false } because React's onWheel prop is passive by default,
+  // which would silently ignore preventDefault().
+  const stageRef = useRef<HTMLDivElement>(null);
+  const wheelResumeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    const el = stageRef.current;
+    if (!el || prefersReducedMotion) return;
+
+    function handleWheel(e: WheelEvent) {
+      // Only hijack gestures that read as a horizontal swipe (spinning the
+      // carousel); leave vertical scroll alone so the page can still scroll
+      // normally over the hero.
+      if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return;
+
+      e.preventDefault();
+      setIsDragging(true);
+      scrollX.set(scrollX.get() + e.deltaX * WHEEL_SENSITIVITY);
+
+      if (wheelResumeTimeout.current) clearTimeout(wheelResumeTimeout.current);
+      wheelResumeTimeout.current = setTimeout(() => setIsDragging(false), WHEEL_IDLE_MS);
+    }
+
+    el.addEventListener('wheel', handleWheel, { passive: false });
+    return () => {
+      el.removeEventListener('wheel', handleWheel);
+      if (wheelResumeTimeout.current) clearTimeout(wheelResumeTimeout.current);
+    };
+  }, [prefersReducedMotion, scrollX]);
+
   return (
     <motion.div
-      className="relative overflow-hidden min-h-screen flex items-center justify-center w-full select-none !cursor-grab active:!cursor-grabbing"
+      ref={stageRef}
+      className="relative overflow-hidden min-h-screen flex items-center justify-center w-full select-none"
       style={{
         background: 'linear-gradient(to bottom, #FFFFFF 0%, #FDF1F6 35%, #FBEAF8 65%, #F1E3FB 100%)',
       }}
@@ -329,6 +393,7 @@ export default function LandingPosterStage({ deck }: { deck: HeroFeature[] }) {
                 totalCards={endlessDeck.length}
                 scrollX={scrollX}
                 isDragging={isDragging}
+                onCardHoverChange={handleCardHoverChange}
               />
             ))}
             <StageFloor />
