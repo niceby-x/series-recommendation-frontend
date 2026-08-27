@@ -57,7 +57,11 @@ export interface DiscoverCard {
   country: string;
   mediaType: 'Series' | 'Anime';
   year: number;
-  rating: number;
+  // Real aggregation from SeriesCardData.average_rating on real cards --
+  // null/absent hides the rating badge instead of showing a fabricated
+  // score, same convention as SeriesCard.tsx. Mock cards keep a fixed
+  // number since they don't back onto a real ratings table.
+  rating: number | null;
   badge: string;
   tags: string[];
   imageUrl: string | null;
@@ -132,8 +136,12 @@ export interface HeroFeature {
   title: string;
   country: string;
   year: number;
-  rating: number;
-  tags: string[];
+  // Optional: LandingPosterStage's 3D carousel only ever reads id/imageUrl
+  // off this shape today, so real cards don't need to fabricate a rating
+  // or tag list just to satisfy the type. Kept for the fallback deck below
+  // in case a future overlay design surfaces them.
+  rating?: number;
+  tags?: string[];
   imageUrl: string | null;
 }
 

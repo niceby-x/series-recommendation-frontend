@@ -55,9 +55,11 @@ function Card({ card }: { card: DiscoverCard }) {
           <h3 className="text-white text-[14px] font-semibold leading-snug line-clamp-2 mb-1">{card.title}</h3>
           <p className="text-white/75 text-[11px] flex items-center gap-1">
             {card.country} · {card.mediaType}
-            <span className="inline-flex items-center gap-0.5 text-brand-gold ml-1">
-              <Star className="size-3" fill="currentColor" /> {card.rating.toFixed(1)}
-            </span>
+            {card.rating != null && (
+              <span className="inline-flex items-center gap-0.5 text-brand-gold ml-1">
+                <Star className="size-3" fill="currentColor" /> {card.rating.toFixed(1)}
+              </span>
+            )}
           </p>
         </div>
       </div>
