@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useRef, useLayoutEffect, useEffect, Suspense, forwardRef } from 'react';
+import { useState, useRef, useLayoutEffect, useEffect, useMemo, Suspense, forwardRef } from 'react';
 import { useRouter } from 'next/navigation';
 import * as THREE from 'three';
-import { motion, useAnimationFrame, useMotionValue, useReducedMotion, MotionValue } from 'framer-motion';
+import { motion, useAnimationFrame, useMotionValue, useReducedMotion, useScroll, MotionValue } from 'framer-motion';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { Image, MeshReflectorMaterial } from '@react-three/drei';
+import { Image, MeshReflectorMaterial, Points, PointMaterial } from '@react-three/drei';
 import FlowerIcon from '../shared/FlowerIcon';
 import Logo from '../shared/Logo';
 import type { HeroFeature } from '../../lib/landingContent';
@@ -197,8 +197,103 @@ function StageFloor() {
   );
 }
 
+// Scroll-driven dust: glowing points seeded near the floor that cycle
+// upward through a fixed vertical band, forever recycling rather than
+// draining out once scrolled past -- like PetalDecoration/BloomLayers
+// elsewhere on this page, but living inside the WebGL scene instead of
+// as a DOM overlay, so it shares the same depth/fog/lighting as the
+// poster cards instead of sitting flatly on top of them.
+//
+// Two inputs combine into each particle's y each frame: a slow constant
+// idle drift (so the dust reads as alive even at scroll top) plus a
+// scrollYProgress-scaled lift (so scrolling perceptibly speeds the climb
+// and "pulls" the eye toward the next section) -- both wrapped by modulo
+// into DUST_BAND_HEIGHT so particles loop endlessly instead of the whole
+// cloud simply translating off-screen after one pass.
+//
+// Mutates the position buffer directly in useFrame (matching StageCard's
+// existing pattern in this file) rather than storing position in React
+// state, since this needs to update every rendered frame without
+// triggering React re-renders.
+const DUST_COUNT = 220;
+const DUST_BAND_HEIGHT = 3.2;
+const DUST_FLOOR_Y = -1.6;
+const DUST_IDLE_SPEED = 0.045; // units/sec, independent of scroll
+const DUST_SCROLL_RANGE = 6; // extra upward travel mapped across a full page scroll
+
+// Deterministic pseudo-random in [0, 1) from an integer seed -- avoids
+// Math.random() (flagged by react-hooks/purity as impure-during-render;
+// PetalDecoration.tsx sidesteps the same issue by hardcoding its petal
+// array instead of generating one). Math.sin/Math.floor are pure
+// functions of their input, so this satisfies the rule while still
+// giving each particle a scattered, non-repeating-looking position.
+function pseudoRandom(seed: number): number {
+  const x = Math.sin(seed * 12.9898) * 43758.5453;
+  return x - Math.floor(x);
+}
+
+function ScrollDust({ scrollYProgress }: { scrollYProgress: MotionValue<number> }) {
+  const { positions, colors, baseY } = useMemo(() => {
+    const positions = new Float32Array(DUST_COUNT * 3);
+    const colors = new Float32Array(DUST_COUNT * 3);
+    const baseY = new Float32Array(DUST_COUNT);
+    const gold = new THREE.Color('#FFD97A');
+    const blush = new THREE.Color('#F7B6C8');
+    for (let i = 0; i < DUST_COUNT; i++) {
+      const x = (pseudoRandom(i * 3 + 1) - 0.5) * 12;
+      const z = -3.2 + pseudoRandom(i * 3 + 2) * 4.2;
+      const y0 = pseudoRandom(i * 3 + 3) * DUST_BAND_HEIGHT;
+      baseY[i] = y0;
+      positions[i * 3] = x;
+      positions[i * 3 + 1] = DUST_FLOOR_Y + y0;
+      positions[i * 3 + 2] = z;
+      const c = gold.clone().lerp(blush, pseudoRandom(i * 3 + 4));
+      colors[i * 3] = c.r;
+      colors[i * 3 + 1] = c.g;
+      colors[i * 3 + 2] = c.b;
+    }
+    return { positions, colors, baseY };
+  }, []);
+
+  const pointsRef = useRef<THREE.Points>(null);
+  const elapsed = useRef(0);
+
+  useFrame((_, delta) => {
+    elapsed.current += delta;
+    const points = pointsRef.current;
+    if (!points) return;
+    const positionAttr = points.geometry.attributes.position as THREE.BufferAttribute | undefined;
+    if (!positionAttr) return;
+
+    const scrollLift = scrollYProgress.get() * DUST_SCROLL_RANGE;
+    for (let i = 0; i < DUST_COUNT; i++) {
+      const wrapped = (baseY[i] + elapsed.current * DUST_IDLE_SPEED + scrollLift) % DUST_BAND_HEIGHT;
+      positionAttr.setY(i, DUST_FLOOR_Y + wrapped);
+    }
+    positionAttr.needsUpdate = true;
+  });
+
+  return (
+    <Points ref={pointsRef} positions={positions} colors={colors} stride={3}>
+      <PointMaterial
+        transparent
+        vertexColors
+        size={0.045}
+        sizeAttenuation
+        depthWrite={false}
+        blending={THREE.AdditiveBlending}
+        opacity={0.75}
+      />
+    </Points>
+  );
+}
+
 export default function LandingPosterStage({ deck }: { deck: HeroFeature[] }) {
   const prefersReducedMotion = useReducedMotion();
+  // Whole-page scroll progress (no target/container option), since the
+  // dust trail should respond to how far the visitor has scrolled down
+  // the entire landing page, not just this hero section.
+  const { scrollYProgress } = useScroll();
   const [isDragging, setIsDragging] = useState(false);
 
   // Tracks how many cards currently report a pointer-over (a card's inner
@@ -397,6 +492,7 @@ export default function LandingPosterStage({ deck }: { deck: HeroFeature[] }) {
               />
             ))}
             <StageFloor />
+            {!prefersReducedMotion && <ScrollDust scrollYProgress={scrollYProgress} />}
           </SceneContainer>
         </Canvas>
       </div>
