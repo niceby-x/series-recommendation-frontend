@@ -30,17 +30,30 @@ function Echo({
   // something that tracks the whole scroll range at constant opacity.
   const opacity = useTransform(scrollYProgress, [0, 0.2, 0.5, 0.85, 1], [0, 0.5, 0.6, 0.22, 0]);
 
-  if (!imageUrl) return null;
+  // Was: `if (!imageUrl) return null`, which silently dropped an echo
+  // whenever this deck slot fell back to HERO_DECK_FALLBACK (imageUrl is
+  // intentionally null there -- see landingContent.ts). With a thin
+  // catalog that's most/all of the 5 slots, which made the whole effect
+  // read as "nothing renders." A soft brand-gradient blob keeps the echo
+  // count and drift/fade timing consistent regardless of catalog depth,
+  // without fabricating a poster image that doesn't exist.
+  const background = imageUrl
+    ? `url(${imageUrl})`
+    : 'radial-gradient(circle, var(--color-brand-lilac), var(--color-brand-blush))';
 
   return (
     <motion.div
-      className="absolute top-0 rounded-2xl bg-cover bg-center grayscale"
+      className="absolute top-0 rounded-2xl bg-cover bg-center"
       style={{
         left: layout.left,
         width: layout.width,
         height: layout.width * 1.5,
-        backgroundImage: `url(${imageUrl})`,
-        filter: `blur(${layout.blur}px)`,
+        backgroundImage: background,
+        // grayscale composed directly into the filter string here --
+        // Tailwind's `grayscale` class and this inline `filter` would
+        // otherwise fight over the same CSS property, with the inline
+        // style winning and silently discarding the class entirely.
+        filter: `grayscale(1) blur(${layout.blur}px)`,
         y,
         opacity,
       }}

@@ -55,14 +55,22 @@ export default function GuidingThread() {
         {/* Soft blurred duplicate painted first (underneath) for the glow --
             cheaper and more consistent across browsers than an SVG filter
             (feGaussianBlur) here, which can clip against the loose
-            viewBox/overflow-visible combination this path relies on. */}
+            viewBox/overflow-visible combination this path relies on.
+            No vector-effect here (or on the line below): the viewBox is
+            intentionally stretched non-uniformly via
+            preserveAspectRatio="none" to span the full container, and
+            vector-effect="non-scaling-stroke" would opt this stroke OUT of
+            that scaling entirely -- rendering strokeWidth 0.5/2.2 as
+            literal near-invisible screen pixels instead of viewBox units.
+            Letting the stroke scale with the viewBox (some width variance
+            along the curve from the non-uniform stretch) is the tradeoff
+            that keeps the line actually visible. */}
         <motion.path
           d="M50 0 C 40 12, 58 20, 48 34 S 34 54, 50 62 S 60 82, 50 100"
           fill="none"
           stroke="url(#guiding-thread-gradient)"
           strokeWidth="2.2"
           strokeLinecap="round"
-          vectorEffect="non-scaling-stroke"
           pathLength={1}
           strokeDasharray={1}
           style={{
@@ -77,7 +85,6 @@ export default function GuidingThread() {
           stroke="url(#guiding-thread-gradient)"
           strokeWidth="0.5"
           strokeLinecap="round"
-          vectorEffect="non-scaling-stroke"
           pathLength={1}
           strokeDasharray={1}
           style={{ strokeDashoffset: dashOffset, opacity: glowOpacity }}
