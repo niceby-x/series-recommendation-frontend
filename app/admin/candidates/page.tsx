@@ -561,6 +561,12 @@ function CandidateRow({
           </p>
           <div className="flex flex-wrap gap-1 mt-1">
             <Chip tone="slate">{candidate.media_type === 'movie' ? 'Movie' : 'TV'}</Chip>
+            {/* IMP7-03: only manual adds get a badge -- absence of one
+                means "came from a bulk discovery run", the common case,
+                so this stays legible without a chip on every single
+                card. The exact-match string mirrors the one the backend
+                writes in POST /admin/import/add-by-tmdb-id. */}
+            {candidate.source_keyword === 'manual: title search' && <Chip tone="blue">Manual add</Chip>}
             {candidate.is_animated && <Chip tone="violet">Animated</Chip>}
             {isLongRunning && <Chip tone="amber">{edited.episode_count} eps</Chip>}
             {!edited.synopsis && <Chip tone="rose">No synopsis</Chip>}
@@ -644,6 +650,7 @@ export default function AdminCandidatesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [countryFilter, setCountryFilter] = useState('All');
   const [mediaTypeFilter, setMediaTypeFilter] = useState('All');
+  const [sourceFilter, setSourceFilter] = useState('All');
   const [hideAnimated, setHideAnimated] = useState(false);
   const [sortBy, setSortBy] = useState<'default' | 'episodes_asc' | 'episodes_desc' | 'year_desc' | 'year_asc'>('default');
 
@@ -658,6 +665,7 @@ export default function AdminCandidatesPage() {
   const filteredCandidates = candidates
     .filter((c) => countryFilter === 'All' || c.country === countryFilter)
     .filter((c) => mediaTypeFilter === 'All' || c.media_type === mediaTypeFilter)
+    .filter((c) => sourceFilter === 'All' || c.source_keyword === sourceFilter)
     .filter((c) => !hideAnimated || !c.is_animated)
     .filter((c) => !searchQuery || c.title.toLowerCase().includes(searchQuery.toLowerCase()))
     .sort((a, b) => {
@@ -667,6 +675,24 @@ export default function AdminCandidatesPage() {
       if (sortBy === 'year_asc') return (a.year ?? 0) - (b.year ?? 0);
       return 0;
     });
+
+  // IMP7-03: derived from whatever's actually in the currently-fetched
+  // batch, not a fixed list like COUNTRY_OPTIONS -- source_keyword is
+  // free text (any real discovery keyword, plus the fixed
+  // 'manual: title search' string IMP5-01 writes), so there's no enum to
+  // hardcode here. Filtered client-side against the already-fetched
+  // candidates, the same way country/media-type filtering already works
+  // on this page. The backend's new GET /admin/candidates?source= filter
+  // exists for a future paginated view of this page, where fetching the
+  // whole queue up front to filter client-side wouldn't scale -- today's
+  // page still fetches the full unpaginated queue on every tab change,
+  // so there's nothing to gain yet from a second round-trip just for
+  // this filter.
+  const sourceOptions = Array.from(new Set(candidates.map((c) => c.source_keyword).filter(Boolean))).sort();
+
+  function sourceLabel(value: string): string {
+    return value === 'manual: title search' ? 'Manual add' : value;
+  }
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -946,6 +972,16 @@ export default function AdminCandidatesPage() {
               <option value="All">TV + Movies</option>
               <option value="tv">TV only</option>
               <option value="movie">Movies only</option>
+            </select>
+            <select
+              value={sourceFilter}
+              onChange={(e) => setSourceFilter(e.target.value)}
+              className="bg-muted/60 border border-border rounded-lg px-3 py-1.5 text-sm text-foreground focus:outline-none focus:border-primary/60"
+            >
+              <option value="All">All sources</option>
+              {sourceOptions.map((s) => (
+                <option key={s} value={s}>{sourceLabel(s)}</option>
+              ))}
             </select>
             <select
               value={sortBy}
