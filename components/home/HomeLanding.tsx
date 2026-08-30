@@ -11,7 +11,6 @@ import { useSeriesSearch, SEARCH_MIN_QUERY_LENGTH } from '../../lib/useSeriesSea
 import SeriesSearchResults from '../shared/SeriesSearchResults';
 import LandingPosterStage from './LandingPosterStage';
 import GuidingThread from './GuidingThread';
-import GhostEchoes from './GhostEchoes';
 import LandingStatsBar from './LandingStatsBar';
 import ContinueDiscoveringRow from './ContinueDiscoveringRow';
 import BrowseByMoodGrid from '../shared/BrowseByMoodGrid';
@@ -126,11 +125,13 @@ export default function HomeLanding({
   return (
     <main className="min-h-screen bg-background">
       {/* Shared positioning context for the poster stage + search section
-          seam. GuidingThread and GhostEchoes are absolutely positioned
-          against THIS wrapper (viewport-relative top/height, see each
-          component) rather than against either section individually,
-          since both effects are meant to sit visually on top of the
-          boundary between the two, not belong to one or the other. */}
+          seam. GuidingThread is absolutely positioned against THIS wrapper
+          (viewport-relative top/height) rather than against either section
+          individually, since the effect is meant to sit visually on top of
+          the boundary between the two, not belong to one or the other.
+          GhostEchoes rendered here too until it was pulled (temporarily --
+          see GhostEchoes.tsx, still in the repo, just not wired in) while
+          its dark-band-over-the-cards issue gets sorted out. */}
       <div className="relative">
         <LandingPosterStage deck={heroDeck} />
 
@@ -207,7 +208,6 @@ export default function HomeLanding({
         </div>
 
         <GuidingThread />
-        <GhostEchoes imageUrls={heroDeck.slice(0, 5).map((card) => card.imageUrl)} />
       </div>
 
       <div className="bg-background">
@@ -220,7 +220,16 @@ export default function HomeLanding({
             sizes="100vw"
             className="object-cover object-top pointer-events-none -z-10"
           />
-          <div className="absolute inset-0 bg-background/40 -z-10" aria-hidden="true" />
+          {/* Carries the search seam's ending color (#F1E3FB, see the
+              bg-gradient-to-b above LandingPosterStage/GuidingThread) into
+              this section instead of hard-cutting straight to a flat
+              bg-background tint -- the seam color eases out over the top of
+              this block, then settles to background by the time Stats/
+              Curator's Picks are on screen. */}
+          <div
+            className="absolute inset-0 bg-gradient-to-b from-[#F1E3FB]/70 via-background/55 to-background -z-10"
+            aria-hidden="true"
+          />
 
           <LandingStatsBar seriesCount={allSeries.length} curatorPicksCount={curatorPicks.length} />
 

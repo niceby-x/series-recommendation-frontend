@@ -17,9 +17,10 @@ import type { HeroFeature } from '../../lib/landingContent';
 const STRIDE = 2.2;              
 const AUTOPLAY_SPEED = 0.00035;    
 const DRAG_SENSITIVITY = 0.01;    
-const WHEEL_SENSITIVITY = 0.01; // matches DRAG_SENSITIVITY as a starting point; needs live trackpad tuning
-const WHEEL_IDLE_MS = 150; // how long to wait after the last wheel tick before resuming autoplay
+const WHEEL_SENSITIVITY = 0.01; 
+const WHEEL_IDLE_MS = 150; 
 const SLIPPERINESS = 0.98;
+const HEADER_GAP = -25;
 
 const DOMAIN =        [-8.8, -6.6, -4.4, -2.2,    0,  2.2,  4.4,  6.6,  8.8];
 const ROT_Y_RANGE =   [  40,   40,   30,   15,    0,  -15,  -30,  -40,  -40];
@@ -57,7 +58,6 @@ function StageCard({
   const router = useRouter();
   const TRACK_WIDTH = totalCards * STRIDE;
   
-  // Three nested groups to recreate the CSS transform order of operations
   const outerGroupRef = useRef<THREE.Group>(null);
   const middleGroupRef = useRef<THREE.Group>(null);
   const innerGroupRef = useRef<THREE.Group>(null);
@@ -76,24 +76,13 @@ function StageCard({
     const localXVal = interpolate(wrappedX, DOMAIN, LOCAL_X_RANGE);
     const opacVal = interpolate(wrappedX, DOMAIN, OPAC_RANGE);
 
-    // 1. TranslateX(wrappedX)
     outerGroupRef.current.position.x = wrappedX;
     outerGroupRef.current.position.y = 0; 
-
-    // 2. RotateY(rotateY)
     middleGroupRef.current.rotation.y = (rotYDeg * Math.PI) / 180;
-
-    // 3 & 4. Translate along the newly rotated local axes (Z depth, then local X offset)
     innerGroupRef.current.position.x = localXVal;
     innerGroupRef.current.position.z = zVal;
-    
     meshRef.current.renderOrder = Math.round(100 - Math.abs(wrappedX) * 10);
     
-    // Apply opacity fade out to the material. mesh.material's type allows
-    // Material | Material[] even though this component only ever assigns
-    // a single material (via FallbackMesh's <meshStandardMaterial> or
-    // drei Image's internal shaderMaterial) -- narrowing out the array
-    // case satisfies the type without changing behavior.
     const material = meshRef.current.material;
     if (material && !Array.isArray(material)) {
         material.transparent = true;
@@ -113,9 +102,8 @@ function StageCard({
       <group ref={middleGroupRef}>
         <group ref={innerGroupRef}>
           {card.imageUrl ? (
-            <Suspense
-              fallback={<FallbackMesh ref={meshRef} onClick={handleClick} onHoverChange={onCardHoverChange} />}
-            >
+            <Suspense fallback={<FallbackMesh ref={meshRef} onClick={handleClick} onHoverChange={onCardHoverChange} />}>
+              {/* eslint-disable-next-line jsx-a11y/alt-text */}
               <Image
                 ref={meshRef}
                 url={card.imageUrl.includes('?') ? `${card.imageUrl}&3d=true` : `${card.imageUrl}?3d=true`}
@@ -180,53 +168,35 @@ function StageFloor() {
   return (
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -1.55, 0]}>
       <planeGeometry args={[60, 60]} />
+      {/* Reflection intensity toned down from the original mixStrength=5/
+          mirror=0.3 -- with several dark posters in the deck (e.g.
+          Revenged Love, I Told Sunset About You), that combination blended
+          the blurred reflection into a muddy gray band across the floor
+          instead of reading as a soft glossy surface. Needs eyeballing in
+          the browser -- these are reasoned estimates, not measured values. */}
       <MeshReflectorMaterial
-        blur={[70, 20]}
+        blur={[45, 12]}
         resolution={1024}
         mixBlur={1}
-        mixStrength={5}
-        roughness={0.7}
+        mixStrength={1.3}
+        roughness={0.85}
         depthScale={1.2}
         minDepthThreshold={0.4}
         maxDepthThreshold={1.4}
         color="#FBEAF8" 
-        metalness={0.25}
-        mirror={0.3}
+        metalness={0.12}
+        mirror={0.08}
       />
     </mesh>
   );
 }
 
-// Scroll-driven dust: glowing points seeded near the floor that cycle
-// upward through a fixed vertical band, forever recycling rather than
-// draining out once scrolled past -- like PetalDecoration/BloomLayers
-// elsewhere on this page, but living inside the WebGL scene instead of
-// as a DOM overlay, so it shares the same depth/fog/lighting as the
-// poster cards instead of sitting flatly on top of them.
-//
-// Two inputs combine into each particle's y each frame: a slow constant
-// idle drift (so the dust reads as alive even at scroll top) plus a
-// scrollYProgress-scaled lift (so scrolling perceptibly speeds the climb
-// and "pulls" the eye toward the next section) -- both wrapped by modulo
-// into DUST_BAND_HEIGHT so particles loop endlessly instead of the whole
-// cloud simply translating off-screen after one pass.
-//
-// Mutates the position buffer directly in useFrame (matching StageCard's
-// existing pattern in this file) rather than storing position in React
-// state, since this needs to update every rendered frame without
-// triggering React re-renders.
 const DUST_COUNT = 220;
 const DUST_BAND_HEIGHT = 3.2;
 const DUST_FLOOR_Y = -1.6;
-const DUST_IDLE_SPEED = 0.045; // units/sec, independent of scroll
-const DUST_SCROLL_RANGE = 6; // extra upward travel mapped across a full page scroll
+const DUST_IDLE_SPEED = 0.045; 
+const DUST_SCROLL_RANGE = 6; 
 
-// Deterministic pseudo-random in [0, 1) from an integer seed -- avoids
-// Math.random() (flagged by react-hooks/purity as impure-during-render;
-// PetalDecoration.tsx sidesteps the same issue by hardcoding its petal
-// array instead of generating one). Math.sin/Math.floor are pure
-// functions of their input, so this satisfies the rule while still
-// giving each particle a scattered, non-repeating-looking position.
 function pseudoRandom(seed: number): number {
   const x = Math.sin(seed * 12.9898) * 43758.5453;
   return x - Math.floor(x);
@@ -290,16 +260,8 @@ function ScrollDust({ scrollYProgress }: { scrollYProgress: MotionValue<number> 
 
 export default function LandingPosterStage({ deck }: { deck: HeroFeature[] }) {
   const prefersReducedMotion = useReducedMotion();
-  // Whole-page scroll progress (no target/container option), since the
-  // dust trail should respond to how far the visitor has scrolled down
-  // the entire landing page, not just this hero section.
   const { scrollYProgress } = useScroll();
   const [isDragging, setIsDragging] = useState(false);
-
-  // Tracks how many cards currently report a pointer-over (a card's inner
-  // Suspense/fallback swap can momentarily overlap, so this is a count
-  // rather than a boolean to avoid a stray onPointerOut clobbering a still-
-  // active hover on the replacement mesh).
   const hoveredCardCount = useRef(0);
   const [isHoveringCard, setIsHoveringCard] = useState(false);
 
@@ -308,8 +270,6 @@ export default function LandingPosterStage({ deck }: { deck: HeroFeature[] }) {
     setIsHoveringCard(hoveredCardCount.current > 0);
   }
 
-  // Grab hand only over cards (or while actively dragging); default arrow
-  // everywhere else on the stage.
   useLayoutEffect(() => {
     document.body.style.cursor = isDragging ? 'grabbing' : isHoveringCard ? 'grab' : 'auto';
     return () => {
@@ -337,7 +297,6 @@ export default function LandingPosterStage({ deck }: { deck: HeroFeature[] }) {
 
   const headerRef = useRef<HTMLDivElement>(null);
   const [canvasTop, setCanvasTop] = useState(320); 
-  const HEADER_GAP = -25; 
 
   useLayoutEffect(() => {
     const el = headerRef.current;
@@ -364,11 +323,6 @@ export default function LandingPosterStage({ deck }: { deck: HeroFeature[] }) {
     velocity.current = velocity.current * SLIPPERINESS + AUTOPLAY_SPEED * (1 - SLIPPERINESS);
   });
 
-  // Touchpad support: framer-motion's onPan only fires for pointer-drag
-  // gestures, so a two-finger trackpad swipe (a wheel event, not a pointer
-  // drag) never reached scrollX. Attached as a native listener with
-  // { passive: false } because React's onWheel prop is passive by default,
-  // which would silently ignore preventDefault().
   const stageRef = useRef<HTMLDivElement>(null);
   const wheelResumeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -377,11 +331,7 @@ export default function LandingPosterStage({ deck }: { deck: HeroFeature[] }) {
     if (!el || prefersReducedMotion) return;
 
     function handleWheel(e: WheelEvent) {
-      // Only hijack gestures that read as a horizontal swipe (spinning the
-      // carousel); leave vertical scroll alone so the page can still scroll
-      // normally over the hero.
       if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return;
-
       e.preventDefault();
       setIsDragging(true);
       scrollX.set(scrollX.get() + e.deltaX * WHEEL_SENSITIVITY);
@@ -400,10 +350,8 @@ export default function LandingPosterStage({ deck }: { deck: HeroFeature[] }) {
   return (
     <motion.div
       ref={stageRef}
+      // REMOVED BACKGROUND HERE: It is now handled by HomeLanding to ensure seamless blending
       className="relative overflow-hidden min-h-screen flex items-center justify-center w-full select-none"
-      style={{
-        background: 'linear-gradient(to bottom, #FFFFFF 0%, #FDF1F6 35%, #FBEAF8 65%, #F1E3FB 100%)',
-      }}
       onPanStart={() => setIsDragging(true)}
       onPanEnd={(e, info) => {
         setIsDragging(false);
@@ -415,7 +363,7 @@ export default function LandingPosterStage({ deck }: { deck: HeroFeature[] }) {
       onMouseMove={handlePointerMove}
       onMouseLeave={handlePointerLeave}
     >
-      <div ref={headerRef} className="absolute inset-x-0 top-0 pt-8 md:pt-14 px-6 text-center z-20 pointer-events-none">
+      <div ref={headerRef} className="absolute inset-x-0 top-0 pt-8 md:pt-14 px-6 text-center z-30 pointer-events-none">
         <div
           className="absolute inset-x-0 top-0 h-64 sm:h-72 md:h-80 -z-10"
           style={{
@@ -431,11 +379,7 @@ export default function LandingPosterStage({ deck }: { deck: HeroFeature[] }) {
         <h2 className="font-display text-[34px] sm:text-[46px] md:text-[56px] leading-tight text-[#2B1B3A] mb-1">
             Stories to <span className="font-serif italic text-[#D946EF] font-light">fall into</span>
           <svg className="inline-block ml-1 w-8 h-8 md:w-10 md:h-10 text-[#D946EF]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
-            />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
           </svg>
         </h2>
 
@@ -467,14 +411,21 @@ export default function LandingPosterStage({ deck }: { deck: HeroFeature[] }) {
         </div>
       </div>
 
-      <div className="absolute inset-x-0 bottom-0 pointer-events-none" style={{ top: canvasTop }}>
+      <div 
+        className="absolute inset-x-0 bottom-0 pointer-events-none z-20" 
+        style={{ 
+          top: canvasTop,
+          // PIXEL-BASED FADE: Leaves the posters 100% visible, only fades the bottom 250px of the reflections
+          WebkitMaskImage: 'linear-gradient(to bottom, black calc(100% - 250px), transparent 100%)',
+          maskImage: 'linear-gradient(to bottom, black calc(100% - 250px), transparent 100%)',
+        }}
+      >
         <Canvas
           camera={{ position: [0, 0, 6.0], fov: 32 }}
           gl={{ alpha: true }}
           style={{ pointerEvents: 'auto' }}
         >
           <fog attach="fog" args={['#F1E3FB', 14, 28]} />
-          
           <ambientLight intensity={1.3} />
           <directionalLight position={[0, 10, 8]} intensity={1.4} />
           <spotLight position={[0, 6, 4]} intensity={1.4} penumbra={1} angle={0.8} color="#FFFFFF" />

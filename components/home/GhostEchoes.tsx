@@ -28,7 +28,10 @@ function Echo({
   const y = useTransform(scrollYProgress, [0, 1], [0, -layout.driftPx]);
   // Rises in, holds briefly, fades out -- a "brief" echo rather than
   // something that tracks the whole scroll range at constant opacity.
-  const opacity = useTransform(scrollYProgress, [0, 0.2, 0.5, 0.85, 1], [0, 0.5, 0.6, 0.22, 0]);
+  // Peak opacity cut from 0.6/0.5 -- fine for the old CSS grayscale filter
+  // on a sometimes-null image, too heavy now that every slot always
+  // renders a real (often dark) poster (see 913ea06).
+  const opacity = useTransform(scrollYProgress, [0, 0.2, 0.5, 0.85, 1], [0, 0.28, 0.34, 0.12, 0]);
 
   // Was: `if (!imageUrl) return null`, which silently dropped an echo
   // whenever this deck slot fell back to HERO_DECK_FALLBACK (imageUrl is
@@ -80,7 +83,13 @@ export default function GhostEchoes({ imageUrls }: { imageUrls: (string | null)[
     <div
       ref={containerRef}
       className="pointer-events-none absolute inset-x-0 overflow-hidden hidden md:block"
-      style={{ top: '52vh', height: '62vh' }}
+      // Was top: 52vh -- with canvasTop defaulting to ~320px, that landed
+      // inside the card zone itself rather than past it, so once 913ea06
+      // made every echo render a real (often dark) grayscaled poster
+      // instead of sometimes returning null, it read as a band across the
+      // card tops instead of a trailing haze in the seam below the stage.
+      // Pushed down so the effect starts after the cards.
+      style={{ top: '80vh', height: '55vh' }}
       aria-hidden="true"
     >
       {ECHO_LAYOUT.map((layout, i) => (

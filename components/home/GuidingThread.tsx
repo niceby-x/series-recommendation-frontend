@@ -36,7 +36,7 @@ export default function GuidingThread() {
     <div
       ref={containerRef}
       className="pointer-events-none absolute inset-x-0 z-10 hidden sm:block"
-      style={{ top: '36vh', height: '70vh' }}
+      style={{ top: '52vh', height: '70vh' }}
       aria-hidden="true"
     >
       <svg
