@@ -34,6 +34,7 @@ function scheduleResponse(overrides: Partial<Record<string, unknown>> = {}) {
         limitPerType: null,
         lastTriggeredAt: null,
         updatedAt: '2026-08-19T00:00:00.000Z',
+        missedLastScheduled: false,
         ...overrides,
       },
     }),
@@ -83,6 +84,35 @@ describe('ImportScheduleSettings', () => {
     render(<ImportScheduleSettings />);
 
     expect(await screen.findByText(/last triggered/i)).toBeInTheDocument();
+  });
+
+  // IMP7-02
+  it('shows a missed-run warning when the backend reports missedLastScheduled: true', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        scheduleResponse({ enabled: true, lastTriggeredAt: '2026-08-20T03:00:00.000Z', missedLastScheduled: true })
+      )
+    );
+
+    render(<ImportScheduleSettings />);
+
+    expect(await screen.findByText(/missed/i)).toBeInTheDocument();
+  });
+
+  // IMP7-02
+  it('does not show a missed-run warning when missedLastScheduled is false', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        scheduleResponse({ enabled: true, lastTriggeredAt: '2026-08-20T03:00:00.000Z', missedLastScheduled: false })
+      )
+    );
+
+    render(<ImportScheduleSettings />);
+    await screen.findByText(/last triggered/i);
+
+    expect(screen.queryByText(/missed/i)).not.toBeInTheDocument();
   });
 
   it('shows a sign-in error instead of fetching when there is no session', async () => {

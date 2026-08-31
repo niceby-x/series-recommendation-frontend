@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { CalendarClock, Loader2, Save } from 'lucide-react';
+import { CalendarClock, Loader2, Save, AlertTriangle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
 // IMP4-01: the "Schedule" tab on the Import & Sync page -- lets an admin
@@ -27,6 +27,12 @@ interface ScheduleConfig {
   limitPerType: number | null;
   lastTriggeredAt: string | null;
   updatedAt: string;
+  // IMP7-02: computed fresh by the backend on every GET/PUT, not stored --
+  // true once the most recent scheduled slot has come and gone (server
+  // downtime, a crash, etc.) without a fresh trigger since. See
+  // computeMissedLastScheduled's own comment in services/importSchedule.ts
+  // for the exact day-math.
+  missedLastScheduled: boolean;
 }
 
 // Mirrors the backend's own MAX_IMPORT_LIMIT/MAX_KEYWORD_LENGTH
@@ -257,6 +263,18 @@ export default function ImportScheduleSettings() {
 
       {saveError && <p className="text-rose-500 text-[13px] mb-2">{saveError}</p>}
       {saveSuccess && !saveError && <p className="text-emerald-600 text-[13px] mb-2">Schedule saved.</p>}
+
+      {/* IMP7-02: config reflects the last fetch/save response, not the
+          form's in-progress draft edits (enabledInput etc.) -- so toggling
+          "Enabled" without saving can't make this banner flicker on/off
+          before there's actually a new persisted state to reflect. */}
+      {config.missedLastScheduled && (
+        <div className="flex items-center gap-1.5 text-amber-600 text-[12.5px] mb-2">
+          <AlertTriangle className="size-3.5" />
+          The last scheduled run appears to have been missed (e.g. the server was down at the scheduled time).
+          It will try again on the next check.
+        </div>
+      )}
 
       <div className="flex items-center gap-1.5 text-muted-foreground text-[12.5px]">
         <CalendarClock className="size-3.5" />
