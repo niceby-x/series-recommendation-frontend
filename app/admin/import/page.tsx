@@ -93,6 +93,18 @@ interface ImportRunSummary {
   added: number;
   mediaTypeTally: Record<string, number>;
   countryTally: Record<string, number>;
+  // Optional: only present on runs completed after the backend started
+  // emitting it -- a persisted summary from an older run predates this
+  // field and won't have it.
+  titles?: ImportRunSummaryTitle[];
+}
+
+interface ImportRunSummaryTitle {
+  title: string;
+  mediaType: 'tv' | 'movie';
+  country: string;
+  year: number | null;
+  tmdbId: number;
 }
 
 const POLL_INTERVAL_MS = 3000;
@@ -528,14 +540,17 @@ export default function AdminImportPage() {
 
               {status?.startedAt && <RunMeta status={status} />}
 
+              {status?.summary && status.dryRun && <DryRunPreview summary={status.summary} />}
+
               {/* IMP3-01/IMP2-02: queued-summary and the jump to the
                   Editorial Queue share one row -- what happened, and where
                   to go look at it, read together rather than as two
                   separately-positioned blocks. */}
-              {(status?.summary || (!running && status?.exitCode === 0 && !status?.cancelled && !status?.dryRun)) && (
+              {((status?.summary && !status.dryRun) ||
+                (!running && status?.exitCode === 0 && !status?.cancelled && !status?.dryRun)) && (
                 <div className="flex flex-wrap items-center justify-between gap-3 mt-5">
-                  {status?.summary ? (
-                    <StatBreakdown summary={status.summary} dryRun={status.dryRun} />
+                  {status?.summary && !status.dryRun ? (
+                    <StatBreakdown summary={status.summary} />
                   ) : (
                     <span />
                   )}
@@ -741,16 +756,17 @@ function StatusPill({ status }: { status: ImportStatus }) {
 // order the backend's countryTally object has -- the script only ever
 // builds it by encountering countries as it goes, so this isn't sorted
 // by count, just left as the backend reports it.
-function StatBreakdown({ summary, dryRun }: { summary: ImportRunSummary; dryRun?: boolean }) {
+//
+// The real (non-dry-run) queued-summary row: a quiet inline line, since a
+// completed real run is routine after-the-fact reporting.
+function StatBreakdown({ summary }: { summary: ImportRunSummary }) {
   const tv = summary.mediaTypeTally.tv ?? 0;
   const movie = summary.mediaTypeTally.movie ?? 0;
   const countries = Object.entries(summary.countryTally);
 
   return (
     <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[12.5px]">
-      <span className="font-semibold text-primary">
-        {summary.added} {dryRun ? 'would be queued' : 'queued'}
-      </span>
+      <span className="font-semibold text-primary">{summary.added} queued</span>
       <span className="text-muted-foreground">·</span>
       <span className="text-muted-foreground">
         {tv} TV, {movie} Movies
@@ -766,6 +782,78 @@ function StatBreakdown({ summary, dryRun }: { summary: ImportRunSummary; dryRun?
           </>
         )}
       </span>
+    </div>
+  );
+}
+
+// A dry run's whole purpose is answering "how many would this add" --
+// that number shouldn't blend into the page as the same quiet inline
+// text a completed real run gets. A distinct callout, with the count set
+// large, makes it the thing your eye lands on for a dry run specifically.
+// The title list itself stays collapsed by default (it can run to
+// hundreds of rows for a large limit) and is only offered at all once
+// summary.titles is actually present -- a persisted run from before the
+// backend started emitting it just shows the counts, same as before.
+function DryRunPreview({ summary }: { summary: ImportRunSummary }) {
+  const [expanded, setExpanded] = useState(false);
+  const tv = summary.mediaTypeTally.tv ?? 0;
+  const movie = summary.mediaTypeTally.movie ?? 0;
+  const countries = Object.entries(summary.countryTally);
+  const titles = summary.titles ?? [];
+
+  return (
+    <div className="rounded-2xl bg-violet-50 mt-5 overflow-hidden">
+      <div className="flex items-center gap-3.5 px-4 py-3.5">
+        <span className="flex items-center justify-center size-10 rounded-full bg-violet-100 text-violet-700 font-bold text-[17px] shrink-0">
+          {summary.added}
+        </span>
+        <div className="text-[12.5px] min-w-0 flex-1">
+          <p className="font-semibold text-violet-700">
+            Would queue {summary.added} title{summary.added === 1 ? '' : 's'}
+            <span className="font-normal text-violet-700/70"> — preview only, nothing was added</span>
+          </p>
+          <p className="text-violet-700/70 mt-0.5">
+            {tv} TV, {movie} Movies
+            {countries.length > 0 && (
+              <>
+                {' · '}
+                {countries.map(([country, count], i) => (
+                  <span key={country}>
+                    {country}: {count}
+                    {i < countries.length - 1 ? ', ' : ''}
+                  </span>
+                ))}
+              </>
+            )}
+          </p>
+        </div>
+        {titles.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setExpanded((v) => !v)}
+            className="flex items-center gap-1 text-violet-700 text-[12.5px] font-semibold shrink-0 hover:opacity-80 transition-opacity"
+          >
+            {expanded ? 'Hide titles' : 'Show titles'}
+            <ChevronDown className={'size-3.5 transition-transform ' + (expanded ? 'rotate-180' : '')} />
+          </button>
+        )}
+      </div>
+      {expanded && titles.length > 0 && (
+        <div className="border-t border-violet-200/70 max-h-64 overflow-y-auto">
+          {titles.map((t, i) => (
+            <div
+              key={t.tmdbId + '-' + i}
+              className="flex items-center justify-between gap-3 px-4 py-2 text-[12.5px] border-b border-violet-200/40 last:border-b-0"
+            >
+              <span className="text-violet-900 font-medium truncate">{t.title}</span>
+              <span className="text-violet-700/70 shrink-0">
+                {t.mediaType === 'tv' ? 'TV' : 'Movie'} · {t.country}
+                {t.year ? ' · ' + t.year : ''}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
