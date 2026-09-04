@@ -209,11 +209,12 @@ function SearchResultRow({
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2 flex-wrap">
           <p className="text-foreground text-[14px] font-semibold">{result.title}</p>
-          <span className="text-[10.5px] font-semibold uppercase tracking-wide text-muted-foreground bg-muted rounded-full px-1.5 py-0.5">
+          <span className="text-[11px] font-medium text-muted-foreground bg-muted rounded-full px-2 py-0.5">
             {result.mediaType === 'tv' ? 'TV' : 'Movie'}
           </span>
           {result.alreadyExists && addState !== 'added' && (
-            <span className="text-[10.5px] font-semibold uppercase tracking-wide text-amber-700 bg-amber-100 rounded-full px-1.5 py-0.5">
+            <span className="flex items-center gap-1 text-amber-700 text-[12px] font-medium">
+              <span className="size-1.5 rounded-full bg-amber-500" aria-hidden="true" />
               Already in catalog
             </span>
           )}

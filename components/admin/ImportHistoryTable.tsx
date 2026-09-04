@@ -199,7 +199,8 @@ function ImportHistoryRowView({ row }: { row: ImportHistoryRow }) {
         <div className="flex items-center gap-1.5 flex-wrap">
           <HistoryStatusBadge row={row} />
           {row.dryRun && (
-            <span className="text-[10.5px] font-semibold uppercase tracking-wide text-violet-600 bg-violet-100 rounded-full px-1.5 py-0.5">
+            <span className="flex items-center gap-1 text-violet-600 text-[12px] font-medium">
+              <span className="size-1.5 rounded-full bg-violet-500" aria-hidden="true" />
               Dry run
             </span>
           )}

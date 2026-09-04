@@ -78,6 +78,14 @@
   --color-scrollbar-thumb: #FEE5EB;
   --color-scrollbar-thumb-hover: var(--color-brand-blush);
 
+  /* Console ink -- the dark surface for admin monitoring panels (import
+     log output and similar). Deepened from brand-mauve rather than a
+     stock near-black hex, so a "dark panel" still reads as this product's
+     dark rather than a generic terminal borrowed from any dashboard. */
+  --color-console-ink: #241A2E;
+  --color-console-ink-text: #D8CCE6;
+  --color-console-ink-muted: #8A7398;
+
   /* Soft elevated shadow — per spec, used on the hero carousel and other
      prominent raised surfaces. */
   --shadow-brand: 0 20px 60px rgba(88, 54, 99, 0.12);
