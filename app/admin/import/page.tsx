@@ -548,7 +548,7 @@ export default function AdminImportPage() {
                   separately-positioned blocks. */}
               {((status?.summary && !status.dryRun) ||
                 (!running && status?.exitCode === 0 && !status?.cancelled && !status?.dryRun)) && (
-                <div className="flex flex-wrap items-center justify-between gap-3 mt-5">
+                <div className="flex flex-wrap items-start justify-between gap-3 mt-5">
                   {status?.summary && !status.dryRun ? (
                     <StatBreakdown summary={status.summary} />
                   ) : (
@@ -760,28 +760,61 @@ function StatusPill({ status }: { status: ImportStatus }) {
 // The real (non-dry-run) queued-summary row: a quiet inline line, since a
 // completed real run is routine after-the-fact reporting.
 function StatBreakdown({ summary }: { summary: ImportRunSummary }) {
+  const [expanded, setExpanded] = useState(false);
   const tv = summary.mediaTypeTally.tv ?? 0;
   const movie = summary.mediaTypeTally.movie ?? 0;
   const countries = Object.entries(summary.countryTally);
+  const titles = summary.titles ?? [];
 
   return (
-    <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[12.5px]">
-      <span className="font-semibold text-primary">{summary.added} queued</span>
-      <span className="text-muted-foreground">·</span>
-      <span className="text-muted-foreground">
-        {tv} TV, {movie} Movies
-        {countries.length > 0 && (
-          <>
-            {' · '}
-            {countries.map(([country, count], i) => (
-              <span key={country}>
-                {country}: {count}
-                {i < countries.length - 1 ? ', ' : ''}
-              </span>
-            ))}
-          </>
+    <div className="min-w-0">
+      <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[12.5px]">
+        <span className="font-semibold text-primary">{summary.added} queued</span>
+        <span className="text-muted-foreground">·</span>
+        <span className="text-muted-foreground">
+          {tv} TV, {movie} Movies
+          {countries.length > 0 && (
+            <>
+              {' · '}
+              {countries.map(([country, count], i) => (
+                <span key={country}>
+                  {country}: {count}
+                  {i < countries.length - 1 ? ', ' : ''}
+                </span>
+              ))}
+            </>
+          )}
+        </span>
+        {/* Only offered once summary.titles is actually present -- a
+            persisted run from before the backend started emitting it
+            just shows the counts, same as before this existed. */}
+        {titles.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setExpanded((v) => !v)}
+            className="flex items-center gap-1 text-primary font-semibold hover:opacity-80 transition-opacity"
+          >
+            {expanded ? 'Hide titles' : 'Show titles'}
+            <ChevronDown className={'size-3 transition-transform ' + (expanded ? 'rotate-180' : '')} />
+          </button>
         )}
-      </span>
+      </div>
+      {expanded && titles.length > 0 && (
+        <div className="mt-2 rounded-xl border border-border/60 max-h-64 overflow-y-auto">
+          {titles.map((t, i) => (
+            <div
+              key={t.tmdbId + '-' + i}
+              className="flex items-center justify-between gap-3 px-3.5 py-2 text-[12.5px] border-b border-border/60 last:border-b-0"
+            >
+              <span className="text-foreground font-medium truncate">{t.title}</span>
+              <span className="text-muted-foreground shrink-0">
+                {t.mediaType === 'tv' ? 'TV' : 'Movie'} · {t.country}
+                {t.year ? ' · ' + t.year : ''}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

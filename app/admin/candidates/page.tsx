@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Check, X, Pencil, Tag as TagIcon } from 'lucide-react';
+import { Check, X, Pencil, Tag as TagIcon, Search, Filter, ArrowUpDown, AlertTriangle } from 'lucide-react';
 import { useAuthModal } from '../../../lib/AuthModalContext';
 import { supabase } from '../../../lib/supabase';
 import type { User } from '@supabase/supabase-js';
@@ -105,7 +105,7 @@ function curationBadgeTone(level: 0 | 1 | 2 | 3): 'rose' | 'amber' | 'blue' | 'e
   return 'emerald';
 }
 
-function Chip({ tone, children }: { tone: 'blue' | 'slate' | 'violet' | 'amber' | 'rose' | 'emerald'; children: React.ReactNode }) {
+function Chip({ tone, emphasis, children }: { tone: 'blue' | 'slate' | 'violet' | 'amber' | 'rose' | 'emerald'; emphasis?: boolean; children: React.ReactNode }) {
   const tones: Record<string, string> = {
     blue: 'bg-sky-100 text-sky-700',
     slate: 'bg-muted text-muted-foreground',
@@ -115,9 +115,37 @@ function Chip({ tone, children }: { tone: 'blue' | 'slate' | 'violet' | 'amber' 
     emerald: 'bg-emerald-100 text-emerald-700',
   };
   return (
-    <span className={'text-[11px] font-medium px-2 py-0.5 rounded-full whitespace-nowrap ' + tones[tone]}>
+    <span
+      className={
+        'text-[11px] font-medium px-2 py-0.5 rounded-full whitespace-nowrap ' +
+        tones[tone] +
+        (emphasis ? ' ring-1 ring-inset ring-rose-300' : '')
+      }
+    >
       {children}
     </span>
+  );
+}
+
+function GhostIconButton({
+  onClick,
+  label,
+  children,
+}: {
+  onClick: () => void;
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={label}
+      aria-label={label}
+      className="flex items-center justify-center size-7 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+    >
+      {children}
+    </button>
   );
 }
 
@@ -146,20 +174,6 @@ function IconButton({
     >
       {children}
     </button>
-  );
-}
-
-function StatCard({ label, value, tone }: { label: string; value: number; tone: 'blue' | 'emerald' | 'rose' }) {
-  const tones: Record<string, string> = {
-    blue: 'text-primary',
-    emerald: 'text-emerald-600',
-    rose: 'text-rose-600',
-  };
-  return (
-    <div className="bg-card border border-border/60 shadow-sm rounded-xl px-5 py-4 flex-1 min-w-[140px]">
-      <p className="text-muted-foreground text-xs font-medium uppercase tracking-wide mb-1">{label}</p>
-      <p className={'text-2xl font-bold tabular-nums ' + tones[tone]}>{value.toLocaleString()}</p>
-    </div>
   );
 }
 
@@ -569,11 +583,23 @@ function CandidateRow({
             {candidate.source_keyword === 'manual: title search' && <Chip tone="blue">Manual add</Chip>}
             {candidate.is_animated && <Chip tone="violet">Animated</Chip>}
             {isLongRunning && <Chip tone="amber">{edited.episode_count} eps</Chip>}
-            {!edited.synopsis && <Chip tone="rose">No synopsis</Chip>}
-            {(!candidate.genre_names || candidate.genre_names.length === 0) && <Chip tone="rose">No genres</Chip>}
-            {(!candidate.cast_json || candidate.cast_json.length === 0) && <Chip tone="rose">No cast</Chip>}
             {isPending && <Chip tone={curationBadgeTone(curation.level)}>Taxonomy L{curation.level}</Chip>}
           </div>
+
+          {/* Ad hoc: genuine content gaps get their own line with an
+              emphasis ring, separated from the routine identity/status
+              chips above -- these are the ones that actually determine
+              whether a reviewer should think twice before approving,
+              and they were previously mixed into the same undifferentiated
+              row as "this is a TV show". */}
+          {(!edited.synopsis || !candidate.genre_names?.length || !candidate.cast_json?.length) && (
+            <div className="flex flex-wrap items-center gap-1 mt-1">
+              <AlertTriangle className="size-3 text-rose-500" aria-hidden="true" />
+              {!edited.synopsis && <Chip tone="rose" emphasis>No synopsis</Chip>}
+              {(!candidate.genre_names || candidate.genre_names.length === 0) && <Chip tone="rose" emphasis>No genres</Chip>}
+              {(!candidate.cast_json || candidate.cast_json.length === 0) && <Chip tone="rose" emphasis>No cast</Chip>}
+            </div>
+          )}
         </div>
 
         <div className="min-w-0 hidden md:block">
@@ -602,12 +628,13 @@ function CandidateRow({
               <IconButton onClick={() => onReject(candidate.id)} disabled={actioning} tone="reject">
                 <X className="inline size-3 -mt-0.5 mr-1" /> Reject{isActive ? ' (R)' : ''}
               </IconButton>
-              <IconButton onClick={() => setModalOpen(true)} tone="neutral">
-                <Pencil className="inline size-3 -mt-0.5 mr-1" /> Edit
-              </IconButton>
-              <IconButton onClick={() => setTaxonomyModalOpen(true)} tone="neutral">
-                <TagIcon className="inline size-3 -mt-0.5 mr-1" /> Taxonomy
-              </IconButton>
+              <div className="w-px h-5 bg-border mx-0.5" aria-hidden="true" />
+              <GhostIconButton onClick={() => setModalOpen(true)} label="Edit">
+                <Pencil className="size-3.5" />
+              </GhostIconButton>
+              <GhostIconButton onClick={() => setTaxonomyModalOpen(true)} label="Taxonomy">
+                <TagIcon className="size-3.5" />
+              </GhostIconButton>
             </>
           ) : (
             <IconButton onClick={() => onRestore(candidate.id)} disabled={actioning} tone="restore">
@@ -654,13 +681,24 @@ export default function AdminCandidatesPage() {
   const [hideAnimated, setHideAnimated] = useState(false);
   const [sortBy, setSortBy] = useState<'default' | 'episodes_asc' | 'episodes_desc' | 'year_desc' | 'year_asc'>('default');
 
-  // No subtitle: unlike every other admin page, Editorial Queue's search
-  // isn't a standalone filter box -- it's one field in a multi-control
-  // toolbar (search + country + media-type + animated + sort), with its
-  // own sticky positioning scoped to this page's own scroll region. That
-  // toolbar stays where it is rather than being squeezed into the top
-  // bar's compact search slot alongside four other controls.
-  useAdminPageHeader({ title: 'Editorial Queue' });
+  // No subtitle beyond the total count: unlike every other admin page,
+  // Editorial Queue's search isn't a standalone filter box -- it's one
+  // field in a multi-control toolbar (search + country + media-type +
+  // animated + sort), with its own sticky positioning scoped to this
+  // page's own scroll region. That toolbar stays where it is rather than
+  // being squeezed into the top bar's compact search slot alongside four
+  // other controls.
+  //
+  // Ad hoc: the subtitle carries "Total Submissions" as plain text now --
+  // it used to be its own stat card, but Pending/Approved/Rejected
+  // already render as the tab badges just below, so a fourth card next
+  // to them was the same three numbers shown a second time, added
+  // together. This is the one fact among the four that wasn't already
+  // visible anywhere else on the page.
+  useAdminPageHeader({
+    title: 'Editorial Queue',
+    subtitle: (counts.pending + counts.approved + counts.rejected).toLocaleString() + ' total submissions',
+  });
 
   const filteredCandidates = candidates
     .filter((c) => countryFilter === 'All' || c.country === countryFilter)
@@ -919,13 +957,6 @@ export default function AdminCandidatesPage() {
 
   return (
     <div className="max-w-[1400px] mx-auto p-6 md:p-8">
-        <div className="flex flex-wrap gap-3 mb-6">
-          <StatCard label="Pending" value={counts.pending} tone="blue" />
-          <StatCard label="Approved" value={counts.approved} tone="emerald" />
-          <StatCard label="Rejected" value={counts.rejected} tone="rose" />
-          <StatCard label="Total Submissions" value={counts.pending + counts.approved + counts.rejected} tone="blue" />
-        </div>
-
         <div className="border-b border-border flex gap-6 mb-4">
           {(['pending', 'approved', 'rejected'] as Tab[]).map((tab) => (
             <button
@@ -947,57 +978,73 @@ export default function AdminCandidatesPage() {
         </div>
 
         <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm pt-2 pb-3 -mt-2">
-          <div className="bg-muted/40 border border-border/60 rounded-xl p-3 flex flex-wrap gap-2">
-            <input
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search title..."
-              className="bg-muted/60 border border-border rounded-lg px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/60"
-            />
-            <select
-              value={countryFilter}
-              onChange={(e) => setCountryFilter(e.target.value)}
-              className="bg-muted/60 border border-border rounded-lg px-3 py-1.5 text-sm text-foreground focus:outline-none focus:border-primary/60"
-            >
-              <option value="All">All countries</option>
-              {COUNTRY_OPTIONS.map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
-            <select
-              value={mediaTypeFilter}
-              onChange={(e) => setMediaTypeFilter(e.target.value)}
-              className="bg-muted/60 border border-border rounded-lg px-3 py-1.5 text-sm text-foreground focus:outline-none focus:border-primary/60"
-            >
-              <option value="All">TV + Movies</option>
-              <option value="tv">TV only</option>
-              <option value="movie">Movies only</option>
-            </select>
-            <select
-              value={sourceFilter}
-              onChange={(e) => setSourceFilter(e.target.value)}
-              className="bg-muted/60 border border-border rounded-lg px-3 py-1.5 text-sm text-foreground focus:outline-none focus:border-primary/60"
-            >
-              <option value="All">All sources</option>
-              {sourceOptions.map((s) => (
-                <option key={s} value={s}>{sourceLabel(s)}</option>
-              ))}
-            </select>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-              className="bg-muted/60 border border-border rounded-lg px-3 py-1.5 text-sm text-foreground focus:outline-none focus:border-primary/60"
-            >
-              <option value="default">Default order</option>
-              <option value="episodes_asc">Episodes: low to high</option>
-              <option value="episodes_desc">Episodes: high to low</option>
-              <option value="year_desc">Year: newest first</option>
-              <option value="year_asc">Year: oldest first</option>
-            </select>
-            <label className="flex items-center gap-2 bg-muted/60 border border-border rounded-lg px-3 py-1.5 text-sm text-foreground/80 cursor-pointer">
-              <input type="checkbox" checked={hideAnimated} onChange={(e) => setHideAnimated(e.target.checked)} />
-              Hide animated
-            </label>
+          <div className="bg-muted/40 border border-border/60 rounded-xl p-3 flex flex-wrap items-center gap-x-4 gap-y-2">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
+              <input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search title..."
+                className="w-48 bg-muted/60 border border-border rounded-lg pl-8 pr-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/60"
+              />
+            </div>
+
+            <div className="hidden sm:block w-px h-6 bg-border" aria-hidden="true" />
+
+            <div className="flex flex-wrap items-center gap-2">
+              <Filter className="size-3.5 text-muted-foreground/70 hidden sm:block" aria-hidden="true" />
+              <select
+                value={countryFilter}
+                onChange={(e) => setCountryFilter(e.target.value)}
+                className="bg-muted/60 border border-border rounded-lg px-3 py-1.5 text-sm text-foreground focus:outline-none focus:border-primary/60"
+              >
+                <option value="All">All countries</option>
+                {COUNTRY_OPTIONS.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+              <select
+                value={mediaTypeFilter}
+                onChange={(e) => setMediaTypeFilter(e.target.value)}
+                className="bg-muted/60 border border-border rounded-lg px-3 py-1.5 text-sm text-foreground focus:outline-none focus:border-primary/60"
+              >
+                <option value="All">TV + Movies</option>
+                <option value="tv">TV only</option>
+                <option value="movie">Movies only</option>
+              </select>
+              <select
+                value={sourceFilter}
+                onChange={(e) => setSourceFilter(e.target.value)}
+                className="bg-muted/60 border border-border rounded-lg px-3 py-1.5 text-sm text-foreground focus:outline-none focus:border-primary/60"
+              >
+                <option value="All">All sources</option>
+                {sourceOptions.map((s) => (
+                  <option key={s} value={s}>{sourceLabel(s)}</option>
+                ))}
+              </select>
+              <label className="flex items-center gap-2 bg-muted/60 border border-border rounded-lg px-3 py-1.5 text-sm text-foreground/80 cursor-pointer">
+                <input type="checkbox" checked={hideAnimated} onChange={(e) => setHideAnimated(e.target.checked)} />
+                Hide animated
+              </label>
+            </div>
+
+            <div className="hidden sm:block w-px h-6 bg-border" aria-hidden="true" />
+
+            <div className="flex items-center gap-2">
+              <ArrowUpDown className="size-3.5 text-muted-foreground/70 hidden sm:block" aria-hidden="true" />
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                className="bg-muted/60 border border-border rounded-lg px-3 py-1.5 text-sm text-foreground focus:outline-none focus:border-primary/60"
+              >
+                <option value="default">Default order</option>
+                <option value="episodes_asc">Episodes: low to high</option>
+                <option value="episodes_desc">Episodes: high to low</option>
+                <option value="year_desc">Year: newest first</option>
+                <option value="year_asc">Year: oldest first</option>
+              </select>
+            </div>
+
             <span className="ml-auto self-center text-xs text-muted-foreground">
               {filteredCandidates.length} of {candidates.length} shown
               {activeTab === 'pending' ? ' · A / R shortcuts active' : ''}
