@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 const navItems = [
   {
     name: "Discover",
-    href: "/discover",
+    href: "/series",
     gradient: "bg-gradient-to-tr from-pink-300 to-rose-400",
     borderColor: "border-pink-200 group-hover:border-pink-300",
     glow: "group-hover:shadow-[0_0_12px_rgba(244,114,182,0.4)]"

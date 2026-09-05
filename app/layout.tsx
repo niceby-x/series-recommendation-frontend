@@ -4,6 +4,7 @@ import "./globals.css";
 import Navbar from "../components/shared/Navbar";
 import { AuthModalProvider } from "../lib/AuthModalContext";
 import { SITE_URL } from "../lib/siteConfig";
+import { getServerSession } from "../lib/getServerSession";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -50,11 +51,13 @@ export const metadata: Metadata = {
     "Discover, curate, and track your next favorite BL series, movies, and anime — handpicked with love.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const { user } = await getServerSession();
+
   return (
     <html
       lang="en"
@@ -62,7 +65,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <AuthModalProvider>
-          <Navbar />
+          {!user && <Navbar />}
           {children}
         </AuthModalProvider>
       </body>
