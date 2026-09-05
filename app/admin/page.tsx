@@ -88,11 +88,17 @@ async function loadAdminData(accessToken: string): Promise<AdminData> {
     // returns an exact total in the response envelope whenever it's
     // used, so requesting exactly the 6 rows this page actually renders
     // gets both the preview rows *and* the real total in one lightweight
-    // query -- no separate count-only endpoint needed. Same default
-    // (unsorted -> id ascending) order as before, so which 6 rows show
-    // up here is unchanged, just fetched without the other however-many
-    // thousand rows.
-    fetch(process.env.NEXT_PUBLIC_API_URL + '/series?page=1&limit=' + RECENT_SERIES_PREVIEW_SIZE, { cache: 'no-store' }),
+    // query -- no separate count-only endpoint needed.
+    //
+    // Ad hoc fix: this used to stop there, with no sort param -- which
+    // meant id-ascending, the backend's stable default for pagination
+    // (D2-04 in series.ts), not a recency signal. That made "Recently
+    // Published" actually show the 6 *oldest* series in the whole
+    // catalog, forever, never reflecting what had just been approved
+    // through the Editorial Queue. sort=recently_added orders by id
+    // descending instead -- a fresh approval is a fresh INSERT into
+    // series, so newest id really is most-recently-published here.
+    fetch(process.env.NEXT_PUBLIC_API_URL + '/series?page=1&limit=' + RECENT_SERIES_PREVIEW_SIZE + '&sort=recently_added', { cache: 'no-store' }),
     fetch(process.env.NEXT_PUBLIC_API_URL + '/admin/users', { headers: authHeader, cache: 'no-store' }),
     // D2-01: RecentActivityCard/TopMoodsCard's real data, fetched
     // alongside everything else this page already needs rather than as

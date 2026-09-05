@@ -923,7 +923,7 @@ export default function AdminCandidatesPage() {
           <StatCard label="Pending" value={counts.pending} tone="blue" />
           <StatCard label="Approved" value={counts.approved} tone="emerald" />
           <StatCard label="Rejected" value={counts.rejected} tone="rose" />
-          <StatCard label="Total" value={counts.pending + counts.approved + counts.rejected} tone="blue" />
+          <StatCard label="Total Submissions" value={counts.pending + counts.approved + counts.rejected} tone="blue" />
         </div>
 
         <div className="border-b border-border flex gap-6 mb-4">
