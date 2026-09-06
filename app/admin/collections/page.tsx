@@ -5,6 +5,7 @@ import { Search, Trash2, FolderOpen, Plus, X, Pencil } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
 import { supabase } from '../../../lib/supabase';
 import { useAuthModal } from '../../../lib/AuthModalContext';
+import { useConfirmDialog } from '../../../lib/ConfirmDialogContext';
 import type { SeriesCardData } from '../../../components/shared/SeriesCard';
 import { useAdminPageHeader } from '../../../components/admin/AdminPageHeaderContext';
 
@@ -40,6 +41,7 @@ async function authHeader() {
 // POST/PATCH/DELETE /collections/*).
 export default function AdminCollectionsPage() {
   const { open: openAuthModal } = useAuthModal();
+  const { confirm } = useConfirmDialog();
   const [user, setUser] = useState<User | null>(null);
   const [access, setAccess] = useState<AccessState>('checking');
   const [collections, setCollections] = useState<AdminCollection[]>([]);
@@ -197,7 +199,7 @@ export default function AdminCollectionsPage() {
   }
 
   async function handleDeleteCollection(collection: AdminCollection) {
-    const confirmed = window.confirm('Permanently delete "' + collection.title + '"? This cannot be undone.');
+    const confirmed = await confirm('Permanently delete "' + collection.title + '"? This cannot be undone.', { confirmLabel: 'Delete' });
     if (!confirmed) return;
 
     const header = await authHeader();

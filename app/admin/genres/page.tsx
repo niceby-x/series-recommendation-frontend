@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { supabase } from '../../../lib/supabase';
 import { useAuthModal } from '../../../lib/AuthModalContext';
+import { useConfirmDialog } from '../../../lib/ConfirmDialogContext';
 import GenreManager, { type AdminGenre } from '../../../components/admin/GenreManager';
 import { useAdminPageHeader } from '../../../components/admin/AdminPageHeaderContext';
 
@@ -11,6 +12,7 @@ type AccessState = 'checking' | 'signed_out' | 'forbidden' | 'ok' | 'error';
 
 export default function AdminGenresPage() {
   const { open: openAuthModal } = useAuthModal();
+  const { confirm } = useConfirmDialog();
   const [user, setUser] = useState<User | null>(null);
   const [access, setAccess] = useState<AccessState>('checking');
   const [genres, setGenres] = useState<AdminGenre[]>([]);
@@ -109,8 +111,9 @@ export default function AdminGenresPage() {
   }
 
   async function handleDelete(genre: AdminGenre) {
-    const confirmed = window.confirm(
-      'Permanently delete "' + genre.name + '"? This un-tags it from ' + genre.series_count + ' series. This cannot be undone.'
+    const confirmed = await confirm(
+      'Permanently delete "' + genre.name + '"? This un-tags it from ' + genre.series_count + ' series. This cannot be undone.',
+      { confirmLabel: 'Delete' }
     );
     if (!confirmed) return;
 

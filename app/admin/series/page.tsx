@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import type { User } from '@supabase/supabase-js';
 import { supabase } from '../../../lib/supabase';
 import { useAuthModal } from '../../../lib/AuthModalContext';
+import { useConfirmDialog } from '../../../lib/ConfirmDialogContext';
 import type { AdminSeries } from '../../../components/admin/adminSeriesTypes';
 import AdminSeriesTable, {
   type SeriesSortKey,
@@ -64,6 +65,7 @@ function buildAdminSeriesUrl(params: {
 
 export default function AdminSeriesPage() {
   const { open: openAuthModal } = useAuthModal();
+  const { confirm } = useConfirmDialog();
   const [user, setUser] = useState<User | null>(null);
   const [access, setAccess] = useState<AccessState>('checking');
 
@@ -293,8 +295,9 @@ export default function AdminSeriesPage() {
     if (ids.length === 0) return;
 
     if (action === 'delete') {
-      const confirmed = window.confirm(
-        'Permanently delete ' + ids.length + ' title(s)? This removes them from every watchlist and deletes their ratings too. This cannot be undone.'
+      const confirmed = await confirm(
+        'Permanently delete ' + ids.length + ' title(s)? This removes them from every watchlist and deletes their ratings too. This cannot be undone.',
+        { confirmLabel: 'Delete' }
       );
       if (!confirmed) return;
     }
@@ -388,8 +391,9 @@ export default function AdminSeriesPage() {
   }
 
   async function handleDelete(target: AdminSeries) {
-    const confirmed = window.confirm(
-      'Permanently delete "' + target.title + '"? This removes it from every watchlist and deletes its ratings too. This cannot be undone.'
+    const confirmed = await confirm(
+      'Permanently delete "' + target.title + '"? This removes it from every watchlist and deletes its ratings too. This cannot be undone.',
+      { confirmLabel: 'Delete' }
     );
     if (!confirmed) return;
 

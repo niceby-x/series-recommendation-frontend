@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Check, X, Pencil, Tag as TagIcon, Search, Filter, ArrowUpDown, AlertTriangle } from 'lucide-react';
 import { useAuthModal } from '../../../lib/AuthModalContext';
+import { useConfirmDialog } from '../../../lib/ConfirmDialogContext';
 import { supabase } from '../../../lib/supabase';
 import type { User } from '@supabase/supabase-js';
 import type { Tag, TagDimension, RomancePace, EmotionalIntensity, EndingType, ContentLevel } from '../../../lib/taxonomy';
@@ -662,6 +663,7 @@ function CandidateRow({
 
 export default function AdminCandidatesPage() {
   const { open: openAuthModal } = useAuthModal();
+  const { confirm } = useConfirmDialog();
   const [user, setUser] = useState<User | null>(null);
   const [access, setAccess] = useState<AccessState>('checking');
   const [activeTab, setActiveTab] = useState<Tab>('pending');
@@ -889,8 +891,9 @@ export default function AdminCandidatesPage() {
   async function handleBulkReject(targets: Candidate[], label: string) {
     if (targets.length === 0) return;
 
-    const confirmed = window.confirm(
-      'Reject all ' + targets.length + ' candidates that are ' + label + '? This cannot be undone.'
+    const confirmed = await confirm(
+      'Reject all ' + targets.length + ' candidates that are ' + label + '? This cannot be undone.',
+      { confirmLabel: 'Reject' }
     );
 
     if (!confirmed) return;

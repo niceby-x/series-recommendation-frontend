@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { ChevronDown, Plus } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { useConfirmDialog } from '../../lib/ConfirmDialogContext';
 import { usePaginatedCollections } from '../../lib/usePaginatedCollections';
 import LoadMoreSeriesButton from '../shared/LoadMoreSeriesButton';
 import DashboardShell from '../dashboard/DashboardShell';
@@ -47,6 +48,7 @@ async function authHeader() {
 // reorder whatever happened to already be loaded instead of the true
 // full-catalog order (see the backend handoff on this item).
 export default function CollectionsAuthed() {
+  const { confirm } = useConfirmDialog();
   const [selectedFilter, setSelectedFilter] = useState('all');
   const [sort, setSort] = useState<SortKey>('updated');
   const [modalOpen, setModalOpen] = useState(false);
@@ -150,7 +152,7 @@ export default function CollectionsAuthed() {
   }
 
   async function handleDelete(collection: RealCollection) {
-    const confirmed = window.confirm('Delete "' + collection.title + '"? This cannot be undone.');
+    const confirmed = await confirm('Delete "' + collection.title + '"? This cannot be undone.', { confirmLabel: 'Delete' });
     if (!confirmed) return;
 
     const header = await authHeader();

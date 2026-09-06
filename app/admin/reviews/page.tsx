@@ -5,6 +5,7 @@ import { Search, ChevronDown } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
 import { supabase } from '../../../lib/supabase';
 import { useAuthModal } from '../../../lib/AuthModalContext';
+import { useConfirmDialog } from '../../../lib/ConfirmDialogContext';
 import ReviewsList, { type ReviewRow } from '../../../components/admin/ReviewsList';
 import { useAdminPageHeader } from '../../../components/admin/AdminPageHeaderContext';
 
@@ -18,6 +19,7 @@ const FILTER_LABELS: Record<FilterKey, string> = {
 
 export default function AdminReviewsPage() {
   const { open: openAuthModal } = useAuthModal();
+  const { confirm } = useConfirmDialog();
   const [user, setUser] = useState<User | null>(null);
   const [access, setAccess] = useState<AccessState>('checking');
   const [reviews, setReviews] = useState<ReviewRow[]>([]);
@@ -129,8 +131,9 @@ export default function AdminReviewsPage() {
   }, [reviews, search, filter]);
 
   async function handleRemove(review: ReviewRow) {
-    const confirmed = window.confirm(
-      'Remove this review' + (review.users ? ' from ' + review.users.username : '') + '? This cannot be undone.'
+    const confirmed = await confirm(
+      'Remove this review' + (review.users ? ' from ' + review.users.username : '') + '? This cannot be undone.',
+      { confirmLabel: 'Remove' }
     );
     if (!confirmed) return;
 

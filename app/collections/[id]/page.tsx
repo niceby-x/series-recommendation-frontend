@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Search, X, Pencil, Trash2, Sparkles, FolderOpen } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import { useAuthModal } from '../../../lib/AuthModalContext';
+import { useConfirmDialog } from '../../../lib/ConfirmDialogContext';
 import SeriesCard, { type SeriesCardData } from '../../../components/shared/SeriesCard';
 
 type LoadState = 'checking' | 'not_found' | 'forbidden' | 'ok' | 'error';
@@ -35,6 +36,7 @@ export default function CollectionDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { open: openAuthModal } = useAuthModal();
+  const { confirm } = useConfirmDialog();
   const id = Number(params.id);
   const validId = Number.isFinite(id);
 
@@ -128,7 +130,7 @@ export default function CollectionDetailPage() {
 
   async function handleDeleteCollection() {
     if (!detail) return;
-    const confirmed = window.confirm('Delete "' + detail.title + '"? This cannot be undone.');
+    const confirmed = await confirm('Delete "' + detail.title + '"? This cannot be undone.', { confirmLabel: 'Delete' });
     if (!confirmed) return;
 
     const header = await authHeader();

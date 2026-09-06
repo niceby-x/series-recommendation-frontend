@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { supabase } from '../../../lib/supabase';
 import { useAuthModal } from '../../../lib/AuthModalContext';
+import { useConfirmDialog } from '../../../lib/ConfirmDialogContext';
 import TagDimensionSection, { type AdminTag } from '../../../components/admin/TagDimensionSection';
 import type { TagDimension } from '../../../lib/taxonomy';
 import { useAdminPageHeader } from '../../../components/admin/AdminPageHeaderContext';
@@ -24,6 +25,7 @@ const DIMENSION_SECTIONS: { dimension: TagDimension; label: string; helperText: 
 
 export default function AdminTagsPage() {
   const { open: openAuthModal } = useAuthModal();
+  const { confirm } = useConfirmDialog();
   const [user, setUser] = useState<User | null>(null);
   const [access, setAccess] = useState<AccessState>('checking');
   const [tagsByDimension, setTagsByDimension] = useState<Record<string, AdminTag[]>>({});
@@ -178,8 +180,9 @@ export default function AdminTagsPage() {
   }
 
   async function handleDelete(tag: AdminTag) {
-    const confirmed = window.confirm(
-      'Permanently delete "' + tag.display_label + '"? This removes it from every series and candidate that has it. This cannot be undone.'
+    const confirmed = await confirm(
+      'Permanently delete "' + tag.display_label + '"? This removes it from every series and candidate that has it. This cannot be undone.',
+      { confirmLabel: 'Delete' }
     );
     if (!confirmed) return;
 

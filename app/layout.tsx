@@ -3,6 +3,7 @@ import { Poppins, Inter, Geist_Mono, Fraunces } from "next/font/google";
 import "./globals.css";
 import Navbar from "../components/shared/Navbar";
 import { AuthModalProvider } from "../lib/AuthModalContext";
+import { ConfirmDialogProvider } from "../lib/ConfirmDialogContext";
 import { SITE_URL } from "../lib/siteConfig";
 import { getServerSession } from "../lib/getServerSession";
 import { Toaster } from "sonner";
@@ -66,8 +67,10 @@ export default async function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <AuthModalProvider>
-          {!user && <Navbar />}
-          {children}
+          <ConfirmDialogProvider>
+            {!user && <Navbar />}
+            {children}
+          </ConfirmDialogProvider>
         </AuthModalProvider>
         <Toaster position="bottom-right" closeButton />
       </body>

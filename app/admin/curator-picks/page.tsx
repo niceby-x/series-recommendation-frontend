@@ -5,6 +5,7 @@ import { Search, Star, Trash2 } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
 import { supabase } from '../../../lib/supabase';
 import { useAuthModal } from '../../../lib/AuthModalContext';
+import { useConfirmDialog } from '../../../lib/ConfirmDialogContext';
 import type { SeriesCardData } from '../../../components/shared/SeriesCard';
 import { useAdminPageHeader } from '../../../components/admin/AdminPageHeaderContext';
 
@@ -33,6 +34,7 @@ async function authHeader() {
 
 export default function AdminCuratorPicksPage() {
   const { open: openAuthModal } = useAuthModal();
+  const { confirm } = useConfirmDialog();
   const [user, setUser] = useState<User | null>(null);
   const [access, setAccess] = useState<AccessState>('checking');
   const [picks, setPicks] = useState<CuratorPickRow[]>([]);
@@ -198,7 +200,7 @@ export default function AdminCuratorPicksPage() {
   }
 
   async function handleRemove(pick: CuratorPickRow) {
-    const confirmed = window.confirm('Remove "' + pick.title + '" from Curator Picks?');
+    const confirmed = await confirm('Remove "' + pick.title + '" from Curator Picks?', { confirmLabel: 'Remove', tone: 'neutral' });
     if (!confirmed) return;
 
     setBusyIds((prev) => new Set(prev).add(pick.pick_id));

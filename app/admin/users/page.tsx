@@ -5,6 +5,7 @@ import { Search, ChevronDown } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
 import { supabase } from '../../../lib/supabase';
 import { useAuthModal } from '../../../lib/AuthModalContext';
+import { useConfirmDialog } from '../../../lib/ConfirmDialogContext';
 import UsersTable, { type UserRow } from '../../../components/admin/UsersTable';
 import { useAdminPageHeader } from '../../../components/admin/AdminPageHeaderContext';
 
@@ -20,6 +21,7 @@ const SORT_LABELS: Record<SortKey, string> = {
 
 export default function AdminUsersPage() {
   const { open: openAuthModal } = useAuthModal();
+  const { confirm } = useConfirmDialog();
   const [user, setUser] = useState<User | null>(null);
   const [access, setAccess] = useState<AccessState>('checking');
   const [users, setUsers] = useState<UserRow[]>([]);
@@ -160,7 +162,7 @@ export default function AdminUsersPage() {
   async function handleToggleBan(target: UserRow) {
     const confirmed = target.is_banned
       ? true
-      : window.confirm('Ban "' + target.username + '"? They\'ll be signed out and unable to sign back in until unbanned.');
+      : await confirm('Ban "' + target.username + '"? They\'ll be signed out and unable to sign back in until unbanned.', { confirmLabel: 'Ban' });
     if (!confirmed) return;
 
     setBusyIds((prev) => new Set(prev).add(target.id));
@@ -185,8 +187,9 @@ export default function AdminUsersPage() {
   }
 
   async function handleDelete(target: UserRow) {
-    const confirmed = window.confirm(
-      'Permanently delete "' + target.username + '"? This removes their account, ratings, and watchlist. This cannot be undone.'
+    const confirmed = await confirm(
+      'Permanently delete "' + target.username + '"? This removes their account, ratings, and watchlist. This cannot be undone.',
+      { confirmLabel: 'Delete' }
     );
     if (!confirmed) return;
 
