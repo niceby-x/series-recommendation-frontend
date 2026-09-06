@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Search, Plus } from 'lucide-react';
+import { toast } from 'sonner';
 import type { User } from '@supabase/supabase-js';
 import { supabase } from '../../../lib/supabase';
 import { useAuthModal } from '../../../lib/AuthModalContext';
@@ -378,7 +379,7 @@ export default function AdminSeriesPage() {
     setLoadingEditId(null);
 
     if (!result?.ok) {
-      window.alert('Could not load this title\u2019s full details. Try again.');
+      toast.error("Couldn't load this title's full details", { description: 'Try again.' });
       return;
     }
 

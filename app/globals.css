@@ -463,6 +463,34 @@ html {
   background-clip: content-box;
 }
 
+/* sonner (toast notifications) -- themed via its documented CSS-variable
+   API rather than left at default styling. --color-card/--color-border/
+   --color-foreground match every other card on the site; the four
+   semantic colors match the emerald/rose/amber/sky palette StatusPill,
+   Notice, and IconButton already use elsewhere, so a toast doesn't read
+   as a different app's success/error colors. --border-radius mirrors the
+   site's own --radius (20px) rather than sonner's own default. */
+[data-sonner-toaster] {
+  --normal-bg: var(--color-card);
+  --normal-border: var(--color-border);
+  --normal-text: var(--color-foreground);
+  --success-bg: #ECFDF5;
+  --success-border: #A7F3D0;
+  --success-text: #047857;
+  --error-bg: #FFF1F2;
+  --error-border: #FECDD3;
+  --error-text: #E11D48;
+  --warning-bg: #FFFBEB;
+  --warning-border: #FDE68A;
+  --warning-text: #B45309;
+  --border-radius: 20px;
+}
+
+[data-sonner-toast] {
+  font-family: var(--font-sans);
+  box-shadow: 0 12px 32px -8px rgba(30, 15, 40, 0.18);
+}
+
 ::-webkit-scrollbar-thumb:hover {
   background-color: var(--color-scrollbar-thumb-hover);
 }

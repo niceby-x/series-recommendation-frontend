@@ -5,6 +5,7 @@ import Navbar from "../components/shared/Navbar";
 import { AuthModalProvider } from "../lib/AuthModalContext";
 import { SITE_URL } from "../lib/siteConfig";
 import { getServerSession } from "../lib/getServerSession";
+import { Toaster } from "sonner";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -68,6 +69,7 @@ export default async function RootLayout({
           {!user && <Navbar />}
           {children}
         </AuthModalProvider>
+        <Toaster position="bottom-right" closeButton />
       </body>
     </html>
   );
