@@ -1,4 +1,4 @@
-import { CheckCircle2, XCircle, RefreshCw, ShieldCheck, ShieldOff, Ban, Trash2, TrendingUp, type LucideIcon } from 'lucide-react';
+import { CheckCircle2, XCircle, RefreshCw, ShieldCheck, ShieldOff, Ban, Trash2, TrendingUp, Play, Square, CalendarClock, Plus, type LucideIcon } from 'lucide-react';
 import { formatTimeAgo } from '../../lib/formatTime';
 
 // D2-01: real data now (GET /admin/activity, see the backend handoff),
@@ -14,20 +14,24 @@ export interface RealActivityItem {
   created_at: string;
 }
 
-// The nine action strings logAdminAction() (A2-02) actually writes --
-// these are the only ones that will ever come back from GET
-// /admin/activity, so an unrecognized action falls through to a generic
-// fallback below rather than crashing on a future action type this map
-// hasn't been updated for yet.
+// The thirteen action strings logAdminAction() actually writes -- these
+// are the only ones that will ever come back from GET /admin/activity,
+// so an unrecognized action falls through to a generic fallback below
+// rather than crashing on a future action type this map hasn't been
+// updated for yet.
 const ACTIVITY_META: Record<string, { icon: LucideIcon; iconClass: string; verb: string }> = {
   'candidate.approve': { icon: CheckCircle2, iconClass: 'bg-emerald-100 text-emerald-600', verb: 'was approved' },
   'candidate.reject': { icon: XCircle, iconClass: 'bg-rose-100 text-rose-600', verb: 'was rejected' },
   'candidate.restore': { icon: RefreshCw, iconClass: 'bg-sky-100 text-sky-600', verb: 'was restored to the queue' },
+  'candidate.manual_add': { icon: Plus, iconClass: 'bg-sky-100 text-sky-600', verb: 'was added manually' },
   'user.promote': { icon: ShieldCheck, iconClass: 'bg-violet-100 text-violet-600', verb: 'was promoted to admin' },
   'user.demote': { icon: ShieldOff, iconClass: 'bg-slate-100 text-slate-600', verb: 'was demoted from admin' },
   'user.ban': { icon: Ban, iconClass: 'bg-rose-100 text-rose-600', verb: 'was banned' },
   'user.unban': { icon: CheckCircle2, iconClass: 'bg-emerald-100 text-emerald-600', verb: 'was unbanned' },
   'user.delete': { icon: Trash2, iconClass: 'bg-rose-100 text-rose-600', verb: 'was deleted' },
+  'import_run.start': { icon: Play, iconClass: 'bg-amber-100 text-amber-600', verb: 'was started' },
+  'import_run.stop': { icon: Square, iconClass: 'bg-amber-100 text-amber-600', verb: 'was stopped' },
+  'import_schedule.update': { icon: CalendarClock, iconClass: 'bg-violet-100 text-violet-600', verb: 'was updated' },
 };
 
 // rank_snapshot.run's target is a date (see the backend's target_label
