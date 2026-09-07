@@ -364,7 +364,7 @@ export default function AdminSeriesTable({
         // view's editable dropdown) -- unchanged behavior from before this
         // pass, just restyled; changing it to published/draft/archived
         // still happens via the Edit modal or the list view's StatusMenu.
-        <div className="grid grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
           {rows.map((row) => {
             const status = row.publish_status ?? 'published';
             const busy = busyIds.has(row.id);
@@ -376,7 +376,13 @@ export default function AdminSeriesTable({
                 className="group relative w-full max-w-[180px] aspect-[2/3] mx-auto rounded-[10px] bg-muted shadow-md overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
               >
                 {row.poster_url ? (
-                  <Image src={row.poster_url} alt={row.title} fill sizes="(max-width: 640px) 18vw, 180px" className="object-cover transition-transform duration-500 group-hover:scale-105" />
+                  <Image
+                    src={row.poster_url}
+                    alt={row.title}
+                    fill
+                    sizes="(max-width: 640px) 45vw, (max-width: 768px) 30vw, (max-width: 1024px) 22vw, 180px"
+                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-brand-blush/25 to-brand-lilac/25 px-2 text-center">
                     <span className="text-muted-foreground text-[11px] font-medium">{row.title}</span>
@@ -388,13 +394,18 @@ export default function AdminSeriesTable({
                     never blocks the checkbox/badge/scrim controls above it. */}
                 <div className="pointer-events-none absolute inset-0 -translate-x-full skew-x-12 bg-gradient-to-r from-transparent via-white/40 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full" />
 
-                <span className="absolute top-2 left-2 flex items-center justify-center size-6 rounded-full bg-black/40 backdrop-blur-sm">
+                {/* Chip and controls sized up on narrow viewports (size-7/size-4)
+                    and stepped back down at sm+ (size-6/size-3.5) where the grid
+                    packs more columns and the original tighter density fits --
+                    touch targets on mobile stay close to the ~44px guideline
+                    without ballooning the desktop 5-up layout. */}
+                <span className="absolute top-2 left-2 flex items-center justify-center size-7 sm:size-6 rounded-full bg-black/40 backdrop-blur-sm">
                   <input
                     type="checkbox"
                     checked={selectedIds.has(row.id)}
                     onChange={() => onToggleRow(row.id)}
                     aria-label={'Select ' + row.title}
-                    className="size-3.5 rounded border-white/70 text-primary focus:ring-ring cursor-pointer"
+                    className="size-4 sm:size-3.5 rounded border-white/70 text-primary focus:ring-ring cursor-pointer"
                   />
                 </span>
 
@@ -419,7 +430,7 @@ export default function AdminSeriesTable({
                         disabled={busy}
                         onClick={() => onEdit(row)}
                         aria-label={'Edit ' + row.title}
-                        className="flex items-center justify-center size-7 rounded-full text-white/85 hover:text-white hover:bg-white/15 transition-colors disabled:opacity-40"
+                        className="flex items-center justify-center size-8 sm:size-7 rounded-full text-white/85 hover:text-white hover:bg-white/15 transition-colors disabled:opacity-40"
                       >
                         <Pencil className="size-3.5" />
                       </button>
