@@ -4,6 +4,10 @@ import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import {
   ChevronDown,
+  Pencil,
+  Trash2,
+  Eye,
+  EyeOff,
   MoreVertical,
   List as ListIcon,
   LayoutGrid,
@@ -65,6 +69,13 @@ const STATUS_GLASS_ICON: Record<PublishStatus, typeof BadgeCheck> = {
   archived: Archive,
 };
 
+// Shared box styling for all three admin dropdowns (status, row actions,
+// bulk actions) -- a tighter radius and softer shadow than the old
+// rounded-xl/shadow-xl read as more "designed" at this small a size, and
+// keeping it in one place means the three stay visually identical rather
+// than drifting apart over time.
+const MENU_BOX = 'w-40 bg-popover border border-border/70 rounded-lg shadow-lg shadow-black/[0.06] overflow-hidden py-1';
+
 function formatUpdated(iso: string | null | undefined): string {
   if (!iso) return '—';
   return new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
@@ -117,27 +128,27 @@ function StatusMenu({
         <ChevronDown className="size-3" />
       </button>
 
-      <FloatingMenu
-        open={open}
-        anchorRef={triggerRef}
-        menuRef={menuRef}
-        align="start"
-        className="w-36 bg-popover border border-border rounded-xl shadow-xl overflow-hidden py-1"
-      >
-        {(Object.keys(STATUS_LABEL) as PublishStatus[]).map((s) => (
-          <button
-            key={s}
-            type="button"
-            onMouseDown={() => {
-              setOpen(false);
-              if (s !== status) onChange(s);
-            }}
-            className="w-full flex items-center justify-between gap-2 text-left px-3 py-1.5 text-[12.5px] font-medium text-foreground hover:bg-muted transition-colors"
-          >
-            {STATUS_LABEL[s]}
-            {s === status && <Check className="size-3.5 text-primary" />}
-          </button>
-        ))}
+      <FloatingMenu open={open} anchorRef={triggerRef} menuRef={menuRef} align="start" className={MENU_BOX}>
+        {(Object.keys(STATUS_LABEL) as PublishStatus[]).map((s) => {
+          const OptionIcon = STATUS_GLASS_ICON[s];
+          return (
+            <button
+              key={s}
+              type="button"
+              onMouseDown={() => {
+                setOpen(false);
+                if (s !== status) onChange(s);
+              }}
+              className="w-full flex items-center justify-between gap-2 text-left px-3 py-1.5 text-[12.5px] font-medium text-foreground hover:bg-muted transition-colors"
+            >
+              <span className="flex items-center gap-2">
+                <OptionIcon className="size-3.5 text-muted-foreground" />
+                {STATUS_LABEL[s]}
+              </span>
+              {s === status && <Check className="size-3.5 text-primary" />}
+            </button>
+          );
+        })}
       </FloatingMenu>
     </>
   );
@@ -182,21 +193,16 @@ function RowActionsMenu({
         <MoreVertical className="size-4" />
       </button>
 
-      <FloatingMenu
-        open={open}
-        anchorRef={triggerRef}
-        menuRef={menuRef}
-        align="end"
-        className="w-36 bg-popover border border-border rounded-xl shadow-xl overflow-hidden py-1"
-      >
+      <FloatingMenu open={open} anchorRef={triggerRef} menuRef={menuRef} align="end" className={MENU_BOX}>
         <button
           type="button"
           onMouseDown={() => {
             setOpen(false);
             onEdit();
           }}
-          className="w-full text-left px-3.5 py-2 text-[13px] font-medium text-foreground hover:bg-muted transition-colors"
+          className="w-full flex items-center gap-2.5 text-left px-3 py-2 text-[13px] font-medium text-foreground hover:bg-muted transition-colors"
         >
+          <Pencil className="size-3.5 text-muted-foreground" />
           Edit
         </button>
         <button
@@ -205,8 +211,9 @@ function RowActionsMenu({
             setOpen(false);
             onDelete();
           }}
-          className="w-full text-left px-3.5 py-2 text-[13px] font-medium text-rose-600 hover:bg-rose-50 transition-colors"
+          className="w-full flex items-center gap-2.5 text-left px-3 py-2 text-[13px] font-medium text-rose-600 hover:bg-rose-50 transition-colors"
         >
+          <Trash2 className="size-3.5" />
           Delete
         </button>
       </FloatingMenu>
@@ -216,19 +223,21 @@ function RowActionsMenu({
 
 function BulkActionsMenu({ disabled, onAction }: { disabled: boolean; onAction: (action: BulkAction) => void }) {
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  useOutsideClick(ref, ref, () => setOpen(false));
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  useOutsideClick(triggerRef, menuRef, () => setOpen(false));
 
-  const options: { action: BulkAction; label: string; tone?: string }[] = [
-    { action: 'publish', label: 'Publish' },
-    { action: 'unpublish', label: 'Unpublish' },
-    { action: 'archive', label: 'Archive' },
-    { action: 'delete', label: 'Delete', tone: 'text-rose-600' },
+  const options: { action: BulkAction; label: string; tone?: string; icon: typeof Eye }[] = [
+    { action: 'publish', label: 'Publish', icon: Eye },
+    { action: 'unpublish', label: 'Unpublish', icon: EyeOff },
+    { action: 'archive', label: 'Archive', icon: Archive },
+    { action: 'delete', label: 'Delete', tone: 'text-rose-600', icon: Trash2 },
   ];
 
   return (
-    <div className="relative inline-block" ref={ref}>
+    <>
       <button
+        ref={triggerRef}
         type="button"
         disabled={disabled}
         onClick={() => setOpen((o) => !o)}
@@ -238,9 +247,10 @@ function BulkActionsMenu({ disabled, onAction }: { disabled: boolean; onAction: 
         <ChevronDown className="size-3.5" />
       </button>
 
-      {open && !disabled && (
-        <div className="absolute left-0 top-[calc(100%+6px)] z-20 w-36 bg-popover border border-border rounded-xl shadow-xl overflow-hidden py-1">
-          {options.map((opt) => (
+      <FloatingMenu open={open && !disabled} anchorRef={triggerRef} menuRef={menuRef} align="start" className={MENU_BOX}>
+        {options.map((opt) => {
+          const Icon = opt.icon;
+          return (
             <button
               key={opt.action}
               type="button"
@@ -248,14 +258,15 @@ function BulkActionsMenu({ disabled, onAction }: { disabled: boolean; onAction: 
                 setOpen(false);
                 onAction(opt.action);
               }}
-              className={'w-full text-left px-3.5 py-2 text-[13px] font-medium hover:bg-muted transition-colors ' + (opt.tone || 'text-foreground')}
+              className={'w-full flex items-center gap-2.5 text-left px-3 py-2 text-[13px] font-medium hover:bg-muted transition-colors ' + (opt.tone || 'text-foreground')}
             >
+              <Icon className="size-3.5" />
               {opt.label}
             </button>
-          ))}
-        </div>
-      )}
-    </div>
+          );
+        })}
+      </FloatingMenu>
+    </>
   );
 }
 

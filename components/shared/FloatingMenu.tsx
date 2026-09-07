@@ -1,6 +1,6 @@
 'use client';
 
-import { useLayoutEffect, useState, type RefObject, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useState, type RefObject, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 
 // Renders open dropdown/popover content into a portal at document.body,
@@ -30,6 +30,23 @@ export function FloatingMenu({
   children: ReactNode;
 }) {
   const [coords, setCoords] = useState<{ top: number; left: number } | null>(null);
+  // Drives the fade+scale entrance: false on the first paint (so there's a
+  // "closed" state to transition from), flipped true a frame later so the
+  // browser actually animates instead of snapping straight to open.
+  const [entered, setEntered] = useState(false);
+  const [prevOpen, setPrevOpen] = useState(open);
+
+  // Reset back to "not entered" the moment `open` flips to false, so the
+  // next time this menu opens it starts from closed again instead of
+  // skipping straight to the settled state. Adjusting state during render
+  // (rather than inside an effect) is the sanctioned way to respond to a
+  // prop change without an extra render-effect-render round trip --
+  // react-hooks/set-state-in-effect flags a direct setState call in an
+  // effect body for exactly this kind of reset.
+  if (open !== prevOpen) {
+    setPrevOpen(open);
+    if (!open) setEntered(false);
+  }
 
   useLayoutEffect(() => {
     if (!open) return;
@@ -38,7 +55,9 @@ export function FloatingMenu({
       const el = anchorRef.current;
       if (!el) return;
       const rect = el.getBoundingClientRect();
-      setCoords({ top: rect.bottom + 4, left: align === 'end' ? rect.right : rect.left });
+      // +8 (not the trigger-hugging +4 this used before) leaves room for
+      // the connecting arrow below to poke up above the menu box.
+      setCoords({ top: rect.bottom + 8, left: align === 'end' ? rect.right : rect.left });
     }
 
     update();
@@ -53,15 +72,40 @@ export function FloatingMenu({
     };
   }, [open, anchorRef, align]);
 
+  useEffect(() => {
+    if (!open) return;
+    const raf = requestAnimationFrame(() => setEntered(true));
+    return () => cancelAnimationFrame(raf);
+  }, [open]);
+
   if (!open || !coords || typeof document === 'undefined') return null;
 
   return createPortal(
     <div
-      ref={menuRef}
       style={{ position: 'fixed', top: coords.top, left: coords.left, transform: align === 'end' ? 'translateX(-100%)' : undefined }}
-      className={'z-50 ' + className}
+      className="z-50"
     >
-      {children}
+      {/* A small rotated-square "arrow" whose bottom half sits behind the
+          menu box below it (same DOM-order paint layering: both are
+          positioned elements with z-index:auto, so the later one -- the
+          box -- paints over the earlier one -- this arrow). Only the top
+          point pokes out, reading as a caret pointing back at the trigger
+          button instead of the menu looking like an unrelated floating box. */}
+      <span
+        aria-hidden
+        className={'absolute -top-1 size-2.5 rotate-45 bg-popover border-l border-t border-border/70 ' + (align === 'end' ? 'right-3' : 'left-3')}
+      />
+      <div
+        ref={menuRef}
+        className={
+          'relative transition-[opacity,transform] duration-150 ease-out ' +
+          (entered ? 'opacity-100 scale-100' : 'opacity-0 scale-95') +
+          ' ' + (align === 'end' ? 'origin-top-right' : 'origin-top-left') +
+          ' ' + className
+        }
+      >
+        {children}
+      </div>
     </div>,
     document.body
   );
