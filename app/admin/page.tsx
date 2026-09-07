@@ -196,11 +196,6 @@ export default async function AdminDashboardPage() {
     country: c.country,
     year: c.year,
     typeLabel: c.media_type === 'movie' ? 'Movie' : 'Series',
-    // D2-02: real discovery keyword from series_candidates.source_keyword
-    // (already returned by GET /admin/candidates), not a fabricated
-    // curator name. Older rows backfilled before this column existed
-    // fall back to an em dash in the table itself.
-    sourceKeyword: c.source_keyword || '',
     submittedAgo: relativeTime(c.created_at),
     priority: priorityFor(c),
   }));

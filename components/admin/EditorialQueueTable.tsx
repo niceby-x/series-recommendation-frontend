@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { Eye, MoreVertical } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 
 export interface QueueRow {
   id: number;
@@ -9,7 +9,6 @@ export interface QueueRow {
   country: string;
   year: number | null;
   typeLabel: string;
-  sourceKeyword: string;
   submittedAgo: string;
   priority: 'High' | 'Medium' | 'Low';
 }
@@ -39,10 +38,9 @@ export default function EditorialQueueTable({ rows }: { rows: QueueRow[] }) {
               <th className="px-5 py-3 font-bold">Title</th>
               <th className="px-3 py-3 font-bold">Type</th>
               <th className="px-3 py-3 font-bold">Source</th>
-              <th className="px-3 py-3 font-bold">Keyword</th>
               <th className="px-3 py-3 font-bold">Submitted</th>
               <th className="px-3 py-3 font-bold">Priority</th>
-              <th className="px-5 py-3 font-bold text-right">Actions</th>
+              <th className="px-5 py-3 font-bold text-right">Review</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border/60">
@@ -72,9 +70,6 @@ export default function EditorialQueueTable({ rows }: { rows: QueueRow[] }) {
                   </span>
                 </td>
                 <td className="px-3 py-3 text-[13px] text-muted-foreground whitespace-nowrap">TMDB</td>
-                <td className="px-3 py-3 text-[13px] text-foreground whitespace-nowrap">
-                  {row.sourceKeyword || '—'}
-                </td>
                 <td className="px-3 py-3 text-[13px] text-muted-foreground whitespace-nowrap">{row.submittedAgo}</td>
                 <td className="px-3 py-3">
                   <span className={'text-[12px] font-semibold px-2.5 py-1 rounded-full whitespace-nowrap ' + PRIORITY_CLASS[row.priority]}>
@@ -82,20 +77,13 @@ export default function EditorialQueueTable({ rows }: { rows: QueueRow[] }) {
                   </span>
                 </td>
                 <td className="px-5 py-3">
-                  <div className="flex items-center justify-end gap-1.5">
+                  <div className="flex items-center justify-end">
                     <Link
                       href="/admin/candidates"
-                      aria-label={'Review ' + row.title}
-                      className="flex items-center justify-center size-8 rounded-full text-foreground/60 hover:text-primary hover:bg-muted transition-colors"
+                      className="flex items-center gap-1 text-[13px] font-semibold text-primary hover:opacity-80 transition-opacity whitespace-nowrap"
                     >
-                      <Eye className="size-4" />
-                    </Link>
-                    <Link
-                      href="/admin/candidates"
-                      aria-label={'More actions for ' + row.title}
-                      className="flex items-center justify-center size-8 rounded-full text-foreground/60 hover:text-primary hover:bg-muted transition-colors"
-                    >
-                      <MoreVertical className="size-4" />
+                      Review
+                      <ArrowRight className="size-3.5" />
                     </Link>
                   </div>
                 </td>
