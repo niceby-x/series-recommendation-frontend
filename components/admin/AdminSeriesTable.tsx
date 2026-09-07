@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import {
   ChevronDown,
-  Pencil,
   MoreVertical,
   List as ListIcon,
   LayoutGrid,
@@ -14,6 +13,7 @@ import {
   Archive,
 } from 'lucide-react';
 import type { AdminSeries } from './adminSeriesTypes';
+import { FloatingMenu } from '../shared/FloatingMenu';
 
 export type SeriesSortKey = 'updated_desc' | 'updated_asc' | 'title_asc' | 'title_desc' | 'year_desc' | 'year_asc';
 export type PublishStatus = 'draft' | 'published' | 'archived';
@@ -70,16 +70,21 @@ function formatUpdated(iso: string | null | undefined): string {
   return new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
-function useOutsideClick(onOutside: () => void) {
-  const ref = useRef<HTMLDivElement>(null);
+function useOutsideClick(
+  triggerRef: React.RefObject<HTMLElement | null>,
+  menuRef: React.RefObject<HTMLElement | null>,
+  onOutside: () => void
+) {
   useEffect(() => {
     function handle(event: MouseEvent) {
-      if (ref.current && !ref.current.contains(event.target as Node)) onOutside();
+      const target = event.target as Node;
+      const insideTrigger = triggerRef.current?.contains(target);
+      const insideMenu = menuRef.current?.contains(target);
+      if (!insideTrigger && !insideMenu) onOutside();
     }
     document.addEventListener('mousedown', handle);
     return () => document.removeEventListener('mousedown', handle);
-  }, [onOutside]);
-  return ref;
+  }, [triggerRef, menuRef, onOutside]);
 }
 
 function StatusMenu({
@@ -92,11 +97,14 @@ function StatusMenu({
   onChange: (next: PublishStatus) => void;
 }) {
   const [open, setOpen] = useState(false);
-  const ref = useOutsideClick(() => setOpen(false));
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  useOutsideClick(triggerRef, menuRef, () => setOpen(false));
 
   return (
-    <div className="relative inline-block" ref={ref}>
+    <>
       <button
+        ref={triggerRef}
         type="button"
         disabled={busy}
         onClick={() => setOpen((o) => !o)}
@@ -109,25 +117,29 @@ function StatusMenu({
         <ChevronDown className="size-3" />
       </button>
 
-      {open && (
-        <div className="absolute left-0 top-[calc(100%+4px)] z-20 w-36 bg-popover border border-border rounded-xl shadow-xl overflow-hidden py-1">
-          {(Object.keys(STATUS_LABEL) as PublishStatus[]).map((s) => (
-            <button
-              key={s}
-              type="button"
-              onMouseDown={() => {
-                setOpen(false);
-                if (s !== status) onChange(s);
-              }}
-              className="w-full flex items-center justify-between gap-2 text-left px-3 py-1.5 text-[12.5px] font-medium text-foreground hover:bg-muted transition-colors"
-            >
-              {STATUS_LABEL[s]}
-              {s === status && <Check className="size-3.5 text-primary" />}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
+      <FloatingMenu
+        open={open}
+        anchorRef={triggerRef}
+        menuRef={menuRef}
+        align="start"
+        className="w-36 bg-popover border border-border rounded-xl shadow-xl overflow-hidden py-1"
+      >
+        {(Object.keys(STATUS_LABEL) as PublishStatus[]).map((s) => (
+          <button
+            key={s}
+            type="button"
+            onMouseDown={() => {
+              setOpen(false);
+              if (s !== status) onChange(s);
+            }}
+            className="w-full flex items-center justify-between gap-2 text-left px-3 py-1.5 text-[12.5px] font-medium text-foreground hover:bg-muted transition-colors"
+          >
+            {STATUS_LABEL[s]}
+            {s === status && <Check className="size-3.5 text-primary" />}
+          </button>
+        ))}
+      </FloatingMenu>
+    </>
   );
 }
 
@@ -148,11 +160,14 @@ function RowActionsMenu({
   variant?: 'light' | 'dark';
 }) {
   const [open, setOpen] = useState(false);
-  const ref = useOutsideClick(() => setOpen(false));
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  useOutsideClick(triggerRef, menuRef, () => setOpen(false));
 
   return (
-    <div className="relative inline-block" ref={ref}>
+    <>
       <button
+        ref={triggerRef}
         type="button"
         disabled={busy}
         onClick={() => setOpen((o) => !o)}
@@ -167,37 +182,42 @@ function RowActionsMenu({
         <MoreVertical className="size-4" />
       </button>
 
-      {open && (
-        <div className="absolute right-0 top-[calc(100%+4px)] z-20 w-36 bg-popover border border-border rounded-xl shadow-xl overflow-hidden py-1">
-          <button
-            type="button"
-            onMouseDown={() => {
-              setOpen(false);
-              onEdit();
-            }}
-            className="w-full text-left px-3.5 py-2 text-[13px] font-medium text-foreground hover:bg-muted transition-colors"
-          >
-            Edit
-          </button>
-          <button
-            type="button"
-            onMouseDown={() => {
-              setOpen(false);
-              onDelete();
-            }}
-            className="w-full text-left px-3.5 py-2 text-[13px] font-medium text-rose-600 hover:bg-rose-50 transition-colors"
-          >
-            Delete
-          </button>
-        </div>
-      )}
-    </div>
+      <FloatingMenu
+        open={open}
+        anchorRef={triggerRef}
+        menuRef={menuRef}
+        align="end"
+        className="w-36 bg-popover border border-border rounded-xl shadow-xl overflow-hidden py-1"
+      >
+        <button
+          type="button"
+          onMouseDown={() => {
+            setOpen(false);
+            onEdit();
+          }}
+          className="w-full text-left px-3.5 py-2 text-[13px] font-medium text-foreground hover:bg-muted transition-colors"
+        >
+          Edit
+        </button>
+        <button
+          type="button"
+          onMouseDown={() => {
+            setOpen(false);
+            onDelete();
+          }}
+          className="w-full text-left px-3.5 py-2 text-[13px] font-medium text-rose-600 hover:bg-rose-50 transition-colors"
+        >
+          Delete
+        </button>
+      </FloatingMenu>
+    </>
   );
 }
 
 function BulkActionsMenu({ disabled, onAction }: { disabled: boolean; onAction: (action: BulkAction) => void }) {
   const [open, setOpen] = useState(false);
-  const ref = useOutsideClick(() => setOpen(false));
+  const ref = useRef<HTMLDivElement>(null);
+  useOutsideClick(ref, ref, () => setOpen(false));
 
   const options: { action: BulkAction; label: string; tone?: string }[] = [
     { action: 'publish', label: 'Publish' },
@@ -424,16 +444,7 @@ export default function AdminSeriesTable({
                     <p className="text-white/75 text-[10.5px] leading-snug line-clamp-1">
                       {isMovie ? 'Movie' : 'Series'} · {row.year ?? '—'}
                     </p>
-                    <div className="flex items-center -mr-1 shrink-0">
-                      <button
-                        type="button"
-                        disabled={busy}
-                        onClick={() => onEdit(row)}
-                        aria-label={'Edit ' + row.title}
-                        className="flex items-center justify-center size-8 sm:size-7 rounded-full text-white/85 hover:text-white hover:bg-white/15 transition-colors disabled:opacity-40"
-                      >
-                        <Pencil className="size-3.5" />
-                      </button>
+                    <div className="-mr-1 shrink-0">
                       <RowActionsMenu row={row} busy={busy} onEdit={() => onEdit(row)} onDelete={() => onDelete(row)} variant="dark" />
                     </div>
                   </div>
@@ -506,16 +517,7 @@ export default function AdminSeriesTable({
                         {row.updated_by && <p className="text-[11px] text-muted-foreground">by {row.updated_by}</p>}
                       </td>
                       <td className="px-5 py-3">
-                        <div className="flex items-center justify-end gap-1">
-                          <button
-                            type="button"
-                            disabled={busy}
-                            onClick={() => onEdit(row)}
-                            aria-label={'Edit ' + row.title}
-                            className="flex items-center justify-center size-8 rounded-full text-foreground/60 hover:text-primary hover:bg-muted transition-colors disabled:opacity-40"
-                          >
-                            <Pencil className="size-4" />
-                          </button>
+                        <div className="flex items-center justify-end">
                           <RowActionsMenu row={row} busy={busy} onEdit={() => onEdit(row)} onDelete={() => onDelete(row)} />
                         </div>
                       </td>
