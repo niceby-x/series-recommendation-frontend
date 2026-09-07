@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Check, X, Pencil, Tag as TagIcon, Search, Filter, ArrowUpDown, AlertTriangle } from 'lucide-react';
 import { useAuthModal } from '../../../lib/AuthModalContext';
 import { useConfirmDialog } from '../../../lib/ConfirmDialogContext';
@@ -515,6 +516,7 @@ function CandidateRow({
   availableTags,
   actioning,
   isActive,
+  isHighlighted,
 }: {
   candidate: Candidate;
   edited: Candidate;
@@ -526,12 +528,27 @@ function CandidateRow({
   availableTags: Record<TagDimension, Tag[]>;
   actioning: boolean;
   isActive: boolean;
+  isHighlighted: boolean;
 }) {
   const isPending = candidate.review_status === 'pending';
   const isLongRunning = edited.episode_count >= LONG_RUNNING_THRESHOLD;
   const [modalOpen, setModalOpen] = useState(false);
   const [taxonomyModalOpen, setTaxonomyModalOpen] = useState(false);
+  const [flashHighlight, setFlashHighlight] = useState(isHighlighted);
+  const rowRef = useRef<HTMLDivElement>(null);
   const link = tmdbUrl(candidate);
+
+  useEffect(() => {
+    if (!isHighlighted) return;
+    rowRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const timer = setTimeout(() => setFlashHighlight(false), 2500);
+    return () => clearTimeout(timer);
+    // Only ever run once on mount for a row that arrived pre-highlighted --
+    // isHighlighted itself doesn't change after mount (it's derived from
+    // the URL's ?highlight= on initial load, not something that toggles
+    // while the page is open).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const castNames = candidate.cast_json && candidate.cast_json.length > 0
     ? candidate.cast_json.slice(0, 3).map((c) => c.name).join(', ')
@@ -549,10 +566,12 @@ function CandidateRow({
 
   return (
     <div
+      ref={rowRef}
       className={
-        'bg-card border-l-4 px-3.5 py-3 flex gap-3.5 transition-colors hover:bg-muted/40 ' +
+        'bg-card border-l-4 px-3.5 py-3 flex gap-3.5 transition-colors hover:bg-muted/40 transition-shadow duration-700 ' +
         accentColor(candidate) +
-        (isActive ? ' bg-primary/5 ring-1 ring-inset ring-primary/40' : '')
+        (isActive ? ' bg-primary/5 ring-1 ring-inset ring-primary/40' : '') +
+        (flashHighlight ? ' ring-2 ring-inset ring-amber-400' : '')
       }
     >
       <div className="relative w-14 h-20 flex-shrink-0 bg-muted/60 rounded-md overflow-hidden">
@@ -661,7 +680,11 @@ function CandidateRow({
   );
 }
 
-export default function AdminCandidatesPage() {
+function AdminCandidatesPageInner() {
+  const searchParams = useSearchParams();
+  const highlightRaw = searchParams.get('highlight');
+  const highlightParsed = highlightRaw ? parseInt(highlightRaw, 10) : NaN;
+  const highlightId = Number.isNaN(highlightParsed) ? null : highlightParsed;
   const { open: openAuthModal } = useAuthModal();
   const { confirm } = useConfirmDialog();
   const [user, setUser] = useState<User | null>(null);
@@ -1115,10 +1138,21 @@ export default function AdminCandidatesPage() {
                 availableTags={availableTags}
                 actioning={actioningIds.has(candidate.id)}
                 isActive={activeTab === 'pending' && index === 0}
+                isHighlighted={highlightId === candidate.id}
               />
             ))}
           </div>
         )}
       </div>
+  );
+}
+
+// See the comment on AdminCandidatesPageInner above: useSearchParams needs
+// a Suspense boundary above it per Next's own requirement.
+export default function AdminCandidatesPage() {
+  return (
+    <Suspense fallback={null}>
+      <AdminCandidatesPageInner />
+    </Suspense>
   );
 }

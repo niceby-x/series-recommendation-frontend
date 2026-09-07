@@ -79,7 +79,7 @@ export default function EditorialQueueTable({ rows }: { rows: QueueRow[] }) {
                 <td className="px-5 py-3">
                   <div className="flex items-center justify-end">
                     <Link
-                      href="/admin/candidates"
+                      href={'/admin/candidates?highlight=' + row.id}
                       className="flex items-center gap-1 text-[13px] font-semibold text-primary hover:opacity-80 transition-opacity whitespace-nowrap"
                     >
                       Review
