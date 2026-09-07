@@ -35,7 +35,12 @@ export default function ScrollRow({ children }: { children: React.ReactNode }) {
     <div className="relative">
       <div
         ref={scrollerRef}
-        className="flex gap-4 overflow-x-auto pb-1 scroll-smooth snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        // pt-2 gives headroom for cards that lift on hover (group-hover:-translate-y-1)
+        // -- without it, the scroller's overflow-x-auto forces overflow-y to clip too
+        // (a well-known CSS quirk: an element with one overflow axis set to a value
+        // other than 'visible' can't leave the other axis truly 'visible'), so a
+        // hovered card's top edge gets cut off instead of lifting cleanly.
+        className="flex gap-4 overflow-x-auto pt-2 pb-2 scroll-smooth snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {children}
       </div>
