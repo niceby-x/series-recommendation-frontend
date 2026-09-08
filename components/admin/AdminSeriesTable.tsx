@@ -76,6 +76,12 @@ const STATUS_GLASS_ICON: Record<PublishStatus, typeof BadgeCheck> = {
 // than drifting apart over time.
 const MENU_BOX = 'w-40 bg-popover border border-border/70 rounded-lg shadow-lg shadow-black/[0.06] overflow-hidden py-1';
 
+// Same frosted treatment as the bulk-select bar (bg-brand-blush/20 +
+// backdrop-blur + border-primary/20), scoped to RowActionsMenu only --
+// StatusMenu and the bulk-actions dropdown keep the plain MENU_BOX above,
+// since only the three-dot menu was asked to match the bulk-select look.
+const MENU_BOX_GLASS = 'w-40 bg-brand-blush/20 backdrop-blur-md border border-primary/20 rounded-lg shadow-lg overflow-hidden py-1';
+
 function formatUpdated(iso: string | null | undefined): string {
   if (!iso) return '—';
   return new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
@@ -193,14 +199,14 @@ function RowActionsMenu({
         <MoreVertical className="size-4" />
       </button>
 
-      <FloatingMenu open={open} anchorRef={triggerRef} menuRef={menuRef} align="end" className={MENU_BOX}>
+      <FloatingMenu open={open} anchorRef={triggerRef} menuRef={menuRef} align="end" className={MENU_BOX_GLASS}>
         <button
           type="button"
           onMouseDown={() => {
             setOpen(false);
             onEdit();
           }}
-          className="w-full flex items-center gap-2.5 text-left px-3 py-2 text-[13px] font-medium text-foreground hover:bg-muted transition-colors"
+          className="w-full flex items-center gap-2.5 text-left px-3 py-2 text-[13px] font-medium text-foreground hover:bg-white/40 transition-colors"
         >
           <Pencil className="size-3.5 text-muted-foreground" />
           Edit
@@ -211,7 +217,7 @@ function RowActionsMenu({
             setOpen(false);
             onDelete();
           }}
-          className="w-full flex items-center gap-2.5 text-left px-3 py-2 text-[13px] font-medium text-rose-600 hover:bg-rose-50 transition-colors"
+          className="w-full flex items-center gap-2.5 text-left px-3 py-2 text-[13px] font-medium text-rose-600 hover:bg-rose-50/70 transition-colors"
         >
           <Trash2 className="size-3.5" />
           Delete
@@ -430,15 +436,18 @@ export default function AdminSeriesTable({
                     packs more columns and the original tighter density fits --
                     touch targets on mobile stay close to the ~44px guideline
                     without ballooning the desktop 5-up layout. */}
-                <span className="absolute top-2 left-2 flex items-center justify-center size-7 sm:size-6 rounded-full bg-black/40 backdrop-blur-sm">
+                <label className="absolute top-2 left-2 flex items-center justify-center size-7 sm:size-6 rounded-full bg-black/40 backdrop-blur-sm cursor-pointer">
                   <input
                     type="checkbox"
                     checked={selectedIds.has(row.id)}
                     onChange={() => onToggleRow(row.id)}
                     aria-label={'Select ' + row.title}
-                    className="size-4 sm:size-3.5 rounded border-white/70 text-primary focus:ring-ring cursor-pointer"
+                    className="peer sr-only"
                   />
-                </span>
+                  <span className="flex items-center justify-center size-4 sm:size-3.5 rounded-[4px] border border-white/70 bg-white/10 transition-colors peer-checked:bg-primary peer-checked:border-primary peer-focus-visible:ring-2 peer-focus-visible:ring-white/70">
+                    {selectedIds.has(row.id) && <Check className="size-3 sm:size-2.5 text-white" strokeWidth={3} />}
+                  </span>
+                </label>
 
                 <div className={'absolute top-2 right-2 flex items-center h-6 max-w-6 hover:max-w-24 overflow-hidden rounded-full backdrop-blur-md ring-1 ring-inset text-white shadow-sm transition-[max-width] duration-300 ease-out ' + STATUS_GLASS_TONE[status]}>
                   <span className="flex items-center justify-center size-6 shrink-0">
