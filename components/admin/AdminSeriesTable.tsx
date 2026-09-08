@@ -76,11 +76,15 @@ const STATUS_GLASS_ICON: Record<PublishStatus, typeof BadgeCheck> = {
 // than drifting apart over time.
 const MENU_BOX = 'w-40 bg-popover border border-border/70 rounded-lg shadow-lg shadow-black/[0.06] overflow-hidden py-1';
 
-// Same frosted treatment as the bulk-select bar (bg-brand-blush/20 +
-// backdrop-blur + border-primary/20), scoped to RowActionsMenu only --
-// StatusMenu and the bulk-actions dropdown keep the plain MENU_BOX above,
-// since only the three-dot menu was asked to match the bulk-select look.
-const MENU_BOX_GLASS = 'w-40 bg-brand-blush/20 backdrop-blur-md border border-primary/20 rounded-lg shadow-lg overflow-hidden py-1';
+// Same light-pink identity as the bulk-select bar, but mixed lighter with
+// white (rather than just dialing brand-blush's own alpha up) so it stays
+// fully opaque -- Edit/Delete stay legible regardless of what's behind the
+// portaled menu -- without reading as a saturated, "loud" pink block.
+// color-mix (already used the same way in components/ui/button.tsx) keeps
+// this a plain utility class rather than a one-off hex value.
+const MENU_BOX_GLASS =
+  'w-40 bg-[color-mix(in_oklch,var(--color-brand-blush),white_65%)] border border-primary/20 rounded-lg shadow-lg overflow-hidden py-1';
+const MENU_ARROW_GLASS = 'bg-[color-mix(in_oklch,var(--color-brand-blush),white_65%)] border-primary/20';
 
 function formatUpdated(iso: string | null | undefined): string {
   if (!iso) return '—';
@@ -199,7 +203,14 @@ function RowActionsMenu({
         <MoreVertical className="size-4" />
       </button>
 
-      <FloatingMenu open={open} anchorRef={triggerRef} menuRef={menuRef} align="end" className={MENU_BOX_GLASS}>
+      <FloatingMenu
+        open={open}
+        anchorRef={triggerRef}
+        menuRef={menuRef}
+        align="end"
+        className={MENU_BOX_GLASS}
+        arrowClassName={MENU_ARROW_GLASS}
+      >
         <button
           type="button"
           onMouseDown={() => {
@@ -276,6 +287,22 @@ function BulkActionsMenu({ disabled, onAction }: { disabled: boolean; onAction: 
   );
 }
 
+// Custom checkbox matching the grid card's -- same rounded-[4px] square and
+// white checkmark -- rather than the browser's own native checkbox
+// rendering, which varies its corner radius and checkmark glyph by OS/
+// browser and doesn't stay visually consistent between the two views (the
+// native `accent-primary` fix got the color right, but not the shape).
+function Checkbox({ checked, onChange, ariaLabel }: { checked: boolean; onChange: () => void; ariaLabel: string }) {
+  return (
+    <label className="inline-flex items-center justify-center cursor-pointer">
+      <input type="checkbox" checked={checked} onChange={onChange} aria-label={ariaLabel} className="peer sr-only" />
+      <span className="flex items-center justify-center size-4 rounded-[4px] border border-border bg-white transition-colors peer-checked:bg-primary peer-checked:border-primary peer-focus-visible:ring-2 peer-focus-visible:ring-ring">
+        {checked && <Check className="size-3 text-white" strokeWidth={3} />}
+      </span>
+    </label>
+  );
+}
+
 function Poster({ url, title }: { url: string | null; title: string }) {
   return (
     <div className="relative shrink-0 size-11 rounded-[10px] overflow-hidden bg-muted">
@@ -331,13 +358,7 @@ export default function AdminSeriesTable({
       {/* Toolbar: select-all + bulk actions (left), sort + view toggle (right) */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <input
-            type="checkbox"
-            checked={allOnPageSelected}
-            onChange={onToggleAllOnPage}
-            aria-label="Select all titles on this page"
-            className="size-4 rounded border-border text-primary focus:ring-ring cursor-pointer"
-          />
+          <Checkbox checked={allOnPageSelected} onChange={onToggleAllOnPage} ariaLabel="Select all titles on this page" />
           <span className="text-[13px] text-muted-foreground">{selectedCount} selected</span>
           <BulkActionsMenu disabled={selectedCount === 0} onAction={onBulkAction} />
         </div>
@@ -431,12 +452,16 @@ export default function AdminSeriesTable({
                     never blocks the checkbox/badge/scrim controls above it. */}
                 <div className="pointer-events-none absolute inset-0 -translate-x-full skew-x-12 bg-gradient-to-r from-transparent via-white/40 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full" />
 
-                {/* Chip and controls sized up on narrow viewports (size-7/size-4)
-                    and stepped back down at sm+ (size-6/size-3.5) where the grid
-                    packs more columns and the original tighter density fits --
-                    touch targets on mobile stay close to the ~44px guideline
-                    without ballooning the desktop 5-up layout. */}
-                <label className="absolute top-2 left-2 flex items-center justify-center size-7 sm:size-6 rounded-full bg-black/40 backdrop-blur-sm cursor-pointer">
+                {/* Tap-target sized up on narrow viewports (size-7/size-4)
+                    and stepped back down at sm+ (size-6/size-3.5) where the
+                    grid packs more columns and the original tighter density
+                    fits -- touch targets on mobile stay close to the ~44px
+                    guideline without ballooning the desktop 5-up layout.
+                    The label itself has no visible background: the
+                    checkbox square carries its own shadow for contrast
+                    against light or dark poster art, instead of sitting in
+                    a solid circular chip. */}
+                <label className="absolute top-2 left-2 flex items-center justify-center size-7 sm:size-6 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={selectedIds.has(row.id)}
@@ -444,7 +469,7 @@ export default function AdminSeriesTable({
                     aria-label={'Select ' + row.title}
                     className="peer sr-only"
                   />
-                  <span className="flex items-center justify-center size-4 sm:size-3.5 rounded-[4px] border border-white/70 bg-white/10 transition-colors peer-checked:bg-primary peer-checked:border-primary peer-focus-visible:ring-2 peer-focus-visible:ring-white/70">
+                  <span className="flex items-center justify-center size-4 sm:size-3.5 rounded-[4px] border border-white/85 bg-black/25 shadow-[0_1px_4px_rgba(0,0,0,0.55)] backdrop-blur-[1px] transition-colors peer-checked:bg-primary peer-checked:border-primary peer-checked:shadow-[0_1px_4px_rgba(0,0,0,0.35)] peer-focus-visible:ring-2 peer-focus-visible:ring-white/70">
                     {selectedIds.has(row.id) && <Check className="size-3 sm:size-2.5 text-white" strokeWidth={3} />}
                   </span>
                 </label>
@@ -480,13 +505,7 @@ export default function AdminSeriesTable({
               <thead>
                 <tr className="text-[11.5px] font-bold uppercase tracking-wide text-muted-foreground border-b border-border/60">
                   <th className="px-5 py-3 font-bold w-10 text-center">
-                    <input
-                      type="checkbox"
-                      checked={allOnPageSelected}
-                      onChange={onToggleAllOnPage}
-                      aria-label="Select all titles on this page"
-                      className="size-4 rounded border-border text-primary focus:ring-ring cursor-pointer"
-                    />
+                    <Checkbox checked={allOnPageSelected} onChange={onToggleAllOnPage} ariaLabel="Select all titles on this page" />
                   </th>
                   <th className="px-3 py-3 font-bold">Title</th>
                   <th className="px-3 py-3 font-bold">Type</th>
@@ -505,13 +524,7 @@ export default function AdminSeriesTable({
                   return (
                     <tr key={row.id} className="hover:bg-muted/40 transition-colors">
                       <td className="px-5 py-3 text-center align-middle">
-                        <input
-                          type="checkbox"
-                          checked={selectedIds.has(row.id)}
-                          onChange={() => onToggleRow(row.id)}
-                          aria-label={'Select ' + row.title}
-                          className="size-4 rounded border-border text-primary focus:ring-ring cursor-pointer"
-                        />
+                        <Checkbox checked={selectedIds.has(row.id)} onChange={() => onToggleRow(row.id)} ariaLabel={'Select ' + row.title} />
                       </td>
                       <td className="px-3 py-3">
                         <div className="flex items-center gap-3 min-w-[220px]">

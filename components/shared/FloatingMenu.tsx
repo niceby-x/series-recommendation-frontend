@@ -17,6 +17,7 @@ export function FloatingMenu({
   menuRef,
   align = 'end',
   className = '',
+  arrowClassName = 'bg-popover border-border/70',
   children,
 }: {
   open: boolean;
@@ -27,6 +28,11 @@ export function FloatingMenu({
   // left edges (e.g. a status chip near the left of a row).
   align?: 'start' | 'end';
   className?: string;
+  // Background + border-left/border-top classes for the connecting arrow --
+  // needs to match whatever `className` sets as the menu box's own
+  // background, or the arrow reads as a mismatched fragment rather than
+  // part of the same shape. Defaults to the plain menu box's colors.
+  arrowClassName?: string;
   children: ReactNode;
 }) {
   const [coords, setCoords] = useState<{ top: number; left: number } | null>(null);
@@ -93,7 +99,7 @@ export function FloatingMenu({
           button instead of the menu looking like an unrelated floating box. */}
       <span
         aria-hidden
-        className={'absolute -top-1 size-2.5 rotate-45 bg-popover border-l border-t border-border/70 ' + (align === 'end' ? 'right-3' : 'left-3')}
+        className={'absolute -top-1 size-2.5 rotate-45 border-l border-t ' + arrowClassName + ' ' + (align === 'end' ? 'right-3' : 'left-3')}
       />
       <div
         ref={menuRef}
