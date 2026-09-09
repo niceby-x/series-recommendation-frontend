@@ -60,7 +60,9 @@ export default function AdminAccountMenu({ email }: { email: string | null }) {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-[calc(100%+8px)] z-30 w-64 bg-popover border border-border rounded-2xl shadow-xl overflow-hidden">
+        // Same calc()-whitespace fix as AdminShell -- see there for why
+        // the underscores in top-[calc(100%_+_8px)] are load-bearing.
+        <div className="absolute right-0 top-[calc(100%_+_8px)] z-30 w-64 bg-popover border border-border rounded-2xl shadow-xl overflow-hidden">
           <div className="flex items-center gap-2.5 px-3.5 py-3 border-b border-border">
             <span className="flex items-center justify-center size-9 rounded-full bg-brand-gradient text-white text-sm font-semibold font-heading shrink-0">
               {initial}

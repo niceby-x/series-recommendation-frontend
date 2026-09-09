@@ -453,7 +453,7 @@ export default function AdminSeriesPage() {
 
   return (
     <>
-      <div className="px-5 md:px-8 lg:px-10 py-6 md:py-8 flex flex-col gap-4">
+      <div className="min-h-full px-5 md:px-8 lg:px-10 py-6 md:py-8 flex flex-col gap-4">
         <SeriesTabs
           active={tab}
           counts={counts}

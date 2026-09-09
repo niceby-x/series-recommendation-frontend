@@ -64,7 +64,14 @@ export default function ExploreSidebar({
   }
 
   return (
-    <aside className="w-full lg:w-64 shrink-0 space-y-5 lg:sticky lg:top-20 lg:self-start lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto lg:pr-1 no-scrollbar">
+    // lg:max-h-[calc(100vh_-_6rem)]: same fix as AdminShell/DashboardShell
+    // -- calc() needs real whitespace around a minus sign per spec, and
+    // `_` is Tailwind's escape for "space" inside an arbitrary value.
+    // Without it this compiled to invalid CSS that browsers silently
+    // drop, so the sticky sidebar had no effective max-height/scroll at
+    // all: on a short viewport, a long filter list could run past the
+    // bottom of the screen with no internal scrollbar to catch it.
+    <aside className="w-full lg:w-64 shrink-0 space-y-5 lg:sticky lg:top-20 lg:self-start lg:max-h-[calc(100vh_-_6rem)] lg:overflow-y-auto lg:pr-1 no-scrollbar">
       <nav className="space-y-1">
         {NAV_ITEMS.map(({ key, label, icon: Icon }) => (
           <button

@@ -24,7 +24,11 @@ export default function SeriesSearchResults({
   onSelect?: () => void;
 }) {
   return (
-    <div className="absolute left-0 right-0 top-[calc(100%+8px)] bg-popover border border-border rounded-2xl shadow-xl overflow-hidden z-20 max-h-80 overflow-y-auto">
+    // top-[calc(100%_+_8px)]: same calc()-whitespace fix as AdminShell --
+    // `calc(100%+8px)` (no space around +) is invalid CSS per spec, so the
+    // browser drops the whole `top` declaration and this dropdown falls
+    // back to its static position instead of sitting 8px below the input.
+    <div className="absolute left-0 right-0 top-[calc(100%_+_8px)] bg-popover border border-border rounded-2xl shadow-xl overflow-hidden z-20 max-h-80 overflow-y-auto">
       {loading && results.length === 0 && (
         <p className="px-4 py-3 text-sm text-muted-foreground">Searching…</p>
       )}

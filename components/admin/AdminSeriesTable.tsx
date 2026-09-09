@@ -354,7 +354,13 @@ export default function AdminSeriesTable({
   const selectedCount = selectedIds.size;
 
   return (
-    <div className="flex flex-col gap-3">
+    // flex-1 min-h-0: lets this component share the page wrapper's
+    // min-h-full with SeriesTabs/SeriesFilterChips above it (which keep
+    // their natural height) -- min-h-0 is required alongside flex-1 here
+    // because flex items default to a min-height equal to their content
+    // (min-height: auto), which would otherwise stop this from ever
+    // shrinking below the list's natural height and defeat the point.
+    <div className="flex flex-col gap-3 flex-1 min-h-0">
       {/* Toolbar: select-all + bulk actions (left), sort + view toggle (right) */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
@@ -499,8 +505,22 @@ export default function AdminSeriesTable({
           })}
         </div>
       ) : (
-        <div className="rounded-[10px] bg-card border border-border/60 shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
+        // flex-1 so the card's own bg/border/shadow extends to fill
+        // whatever vertical room is left in the page's fixed-height shell
+        // -- a short results page (few rows, or a filtered/narrow tab)
+        // then reads as "table card that reaches the bottom of the
+        // screen" instead of leaving a gap of mismatched page background
+        // below a card that only hugs its own row count. min-h-0 for the
+        // same flex-item min-height:auto reason as the wrapper above; flex
+        // flex-col so the inner scroll region below can itself flex-1.
+        <div className="rounded-[10px] bg-card border border-border/60 shadow-sm overflow-hidden flex-1 min-h-0 flex flex-col">
+          {/* flex-1 + overflow-auto: once there are more rows than fit in
+              the available space, THIS region scrolls (both directions --
+              vertical for rows, horizontal for the min-w-[760px] table on
+              narrow viewports) rather than the whole page, matching how a
+              real data-grid table behaves instead of pushing pagination
+              off toward the bottom of a page-length scroll. */}
+          <div className="flex-1 overflow-auto">
             <table className="w-full text-left border-collapse min-w-[760px]">
               <thead>
                 <tr className="text-[11.5px] font-bold uppercase tracking-wide text-muted-foreground border-b border-border/60">

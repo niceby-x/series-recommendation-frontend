@@ -89,7 +89,10 @@ export default function DashboardShell({
 
   return (
     <div className="min-h-screen bg-[#FED9E8] p-2.5 md:p-4">
-      <div className="mx-auto flex h-[calc(100vh-1.25rem)] md:h-[calc(100vh-2rem)] max-w-[1800px] overflow-hidden rounded-[20px] md:rounded-[26px] border border-border/60 bg-background shadow-[0_1px_2px_rgba(0,0,0,0.04),0_16px_40px_-16px_rgba(0,0,0,0.16)]">
+      {/* See AdminShell.tsx for why the underscores in
+          h-[calc(100vh_-_1.25rem)] are load-bearing, not stylistic --
+          same fix, same root cause, duplicated into this file. */}
+      <div className="mx-auto flex h-[calc(100vh_-_1.25rem)] md:h-[calc(100vh_-_2rem)] max-w-[1800px] overflow-hidden rounded-[20px] md:rounded-[26px] border border-border/60 bg-background shadow-[0_1px_2px_rgba(0,0,0,0.04),0_16px_40px_-16px_rgba(0,0,0,0.16)]">
         <DashboardSidebar collapsed={collapsed} onToggleCollapse={toggleCollapsed} />
         <div className="flex-1 min-w-0 h-full flex flex-col">
           {header && (

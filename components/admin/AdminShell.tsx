@@ -122,7 +122,20 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   return (
     <AdminPageHeaderProvider>
       <div className="min-h-screen bg-[#FED9E8] p-2.5 md:p-4">
-        <div className="mx-auto flex h-[calc(100vh-1.25rem)] md:h-[calc(100vh-2rem)] max-w-[1800px] overflow-hidden rounded-[20px] md:rounded-[26px] border border-border/60 bg-background shadow-[0_1px_2px_rgba(0,0,0,0.04),0_16px_40px_-16px_rgba(0,0,0,0.16)]">
+        {/* h-[calc(100vh_-_1.25rem)] (and the md: variant): the
+            underscores are load-bearing, not stylistic. CSS calc()
+            requires real whitespace around a +/- operator per spec
+            (https://www.w3.org/TR/css-values-4/#calc-syntax) -- Tailwind
+            can't put a literal space inside a class name, so `_` is its
+            escape for "put a space here" in arbitrary values. Writing
+            `calc(100vh-1.25rem)` without it compiles to that exact
+            invalid CSS, which browsers silently drop -- the whole height
+            declaration disappears rather than erroring, so this panel was
+            never actually pinned to viewport height at all; it fell back
+            to auto (hugs its own content) the entire time. That's also
+            why the gap only ever showed up on this one page: it's the
+            only page short enough for the missing height to matter. */}
+        <div className="mx-auto flex h-[calc(100vh_-_1.25rem)] md:h-[calc(100vh_-_2rem)] max-w-[1800px] overflow-hidden rounded-[20px] md:rounded-[26px] border border-border/60 bg-background shadow-[0_1px_2px_rgba(0,0,0,0.04),0_16px_40px_-16px_rgba(0,0,0,0.16)]">
           <AdminSidebar pendingCount={pendingCount} collapsed={collapsed} onToggleCollapse={toggleCollapsed} />
           <div className="flex-1 min-w-0 h-full flex flex-col">
             {/* Glassy treatment: translucent bg-background/70 + backdrop-blur-md

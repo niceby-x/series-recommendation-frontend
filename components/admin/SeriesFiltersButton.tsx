@@ -55,7 +55,9 @@ export default function SeriesFiltersButton({
       </button>
 
       {open && (
-        <div className="absolute right-0 top-[calc(100%+8px)] z-30 w-64 bg-popover border border-border rounded-2xl shadow-xl p-4 flex flex-col gap-3.5">
+        // Same calc()-whitespace fix as AdminShell -- see there for why
+        // the underscores in top-[calc(100%_+_8px)] are load-bearing.
+        <div className="absolute right-0 top-[calc(100%_+_8px)] z-30 w-64 bg-popover border border-border rounded-2xl shadow-xl p-4 flex flex-col gap-3.5">
           <div>
             <label className="text-[11.5px] font-bold uppercase tracking-wide text-muted-foreground">Country</label>
             <div className="relative mt-1.5">
