@@ -9,8 +9,6 @@ import {
   Eye,
   EyeOff,
   MoreVertical,
-  List as ListIcon,
-  LayoutGrid,
   Check,
   BadgeCheck,
   Clock,
@@ -22,7 +20,6 @@ import { FloatingMenu } from '../shared/FloatingMenu';
 export type SeriesSortKey = 'updated_desc' | 'updated_asc' | 'title_asc' | 'title_desc' | 'year_desc' | 'year_asc';
 export type PublishStatus = 'draft' | 'published' | 'archived';
 export type BulkAction = 'publish' | 'unpublish' | 'archive' | 'delete';
-export type ViewMode = 'list' | 'grid';
 
 export interface SeriesPagination {
   page: number;
@@ -38,12 +35,6 @@ const SORT_LABELS: Record<SeriesSortKey, string> = {
   title_desc: 'Title Z–A',
   year_desc: 'Year (newest)',
   year_asc: 'Year (oldest)',
-};
-
-const STATUS_TONE: Record<PublishStatus, string> = {
-  draft: 'bg-muted text-muted-foreground',
-  published: 'bg-emerald-100 text-emerald-700',
-  archived: 'bg-rose-100 text-rose-700',
 };
 
 const STATUS_LABEL: Record<PublishStatus, string> = {
@@ -86,11 +77,6 @@ const MENU_BOX_GLASS =
   'w-40 bg-[color-mix(in_oklch,var(--color-brand-blush),white_65%)] border border-primary/20 rounded-lg shadow-lg overflow-hidden py-1';
 const MENU_ARROW_GLASS = 'bg-[color-mix(in_oklch,var(--color-brand-blush),white_65%)] border-primary/20';
 
-function formatUpdated(iso: string | null | undefined): string {
-  if (!iso) return '—';
-  return new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
-}
-
 function useOutsideClick(
   triggerRef: React.RefObject<HTMLElement | null>,
   menuRef: React.RefObject<HTMLElement | null>,
@@ -106,62 +92,6 @@ function useOutsideClick(
     document.addEventListener('mousedown', handle);
     return () => document.removeEventListener('mousedown', handle);
   }, [triggerRef, menuRef, onOutside]);
-}
-
-function StatusMenu({
-  status,
-  busy,
-  onChange,
-}: {
-  status: PublishStatus;
-  busy: boolean;
-  onChange: (next: PublishStatus) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
-  useOutsideClick(triggerRef, menuRef, () => setOpen(false));
-
-  return (
-    <>
-      <button
-        ref={triggerRef}
-        type="button"
-        disabled={busy}
-        onClick={() => setOpen((o) => !o)}
-        className={
-          'flex items-center gap-1 text-[12px] font-semibold pl-2.5 pr-2 py-1 rounded-full whitespace-nowrap transition-colors disabled:opacity-50 ' +
-          STATUS_TONE[status]
-        }
-      >
-        {STATUS_LABEL[status]}
-        <ChevronDown className="size-3" />
-      </button>
-
-      <FloatingMenu open={open} anchorRef={triggerRef} menuRef={menuRef} align="start" className={MENU_BOX}>
-        {(Object.keys(STATUS_LABEL) as PublishStatus[]).map((s) => {
-          const OptionIcon = STATUS_GLASS_ICON[s];
-          return (
-            <button
-              key={s}
-              type="button"
-              onMouseDown={() => {
-                setOpen(false);
-                if (s !== status) onChange(s);
-              }}
-              className="w-full flex items-center justify-between gap-2 text-left px-3 py-1.5 text-[12.5px] font-medium text-foreground hover:bg-muted transition-colors"
-            >
-              <span className="flex items-center gap-2">
-                <OptionIcon className="size-3.5 text-muted-foreground" />
-                {STATUS_LABEL[s]}
-              </span>
-              {s === status && <Check className="size-3.5 text-primary" />}
-            </button>
-          );
-        })}
-      </FloatingMenu>
-    </>
-  );
 }
 
 function RowActionsMenu({
@@ -303,18 +233,6 @@ function Checkbox({ checked, onChange, ariaLabel }: { checked: boolean; onChange
   );
 }
 
-function Poster({ url, title }: { url: string | null; title: string }) {
-  return (
-    <div className="relative shrink-0 size-11 rounded-[10px] overflow-hidden bg-muted">
-      {url ? (
-        <Image src={url} alt={title} fill sizes="44px" className="object-cover" />
-      ) : (
-        <div className="w-full h-full bg-gradient-to-br from-brand-blush/30 to-brand-lilac/30" />
-      )}
-    </div>
-  );
-}
-
 export default function AdminSeriesTable({
   rows,
   selectedIds,
@@ -322,11 +240,8 @@ export default function AdminSeriesTable({
   onToggleAllOnPage,
   sort,
   onSortChange,
-  view,
-  onViewChange,
   busyIds,
   onEdit,
-  onStatusChange,
   onDelete,
   onBulkAction,
   pagination,
@@ -339,11 +254,8 @@ export default function AdminSeriesTable({
   onToggleAllOnPage: () => void;
   sort: SeriesSortKey;
   onSortChange: (sort: SeriesSortKey) => void;
-  view: ViewMode;
-  onViewChange: (view: ViewMode) => void;
   busyIds: Set<number>;
   onEdit: (row: AdminSeries) => void;
-  onStatusChange: (row: AdminSeries, next: PublishStatus) => void;
   onDelete: (row: AdminSeries) => void;
   onBulkAction: (action: BulkAction) => void;
   pagination: SeriesPagination | null;
@@ -385,27 +297,6 @@ export default function AdminSeriesTable({
             </select>
             <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
           </div>
-
-          <div className="flex items-center gap-1 bg-card border border-border rounded-full p-1 shadow-sm">
-            <button
-              type="button"
-              onClick={() => onViewChange('list')}
-              aria-label="List view"
-              aria-pressed={view === 'list'}
-              className={'flex items-center justify-center size-7 rounded-full transition-colors ' + (view === 'list' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground')}
-            >
-              <ListIcon className="size-4" />
-            </button>
-            <button
-              type="button"
-              onClick={() => onViewChange('grid')}
-              aria-label="Grid view"
-              aria-pressed={view === 'grid'}
-              className={'flex items-center justify-center size-7 rounded-full transition-colors ' + (view === 'grid' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground')}
-            >
-              <LayoutGrid className="size-4" />
-            </button>
-          </div>
         </div>
       </div>
 
@@ -414,7 +305,7 @@ export default function AdminSeriesTable({
           <p className="text-foreground font-semibold mb-1">No titles match these filters</p>
           <p className="text-muted-foreground text-sm">Try a different search, tab, or filter combination.</p>
         </div>
-      ) : view === 'grid' ? (
+      ) : (
         // D3-XX: matches RecentlyPublishedCard's visual language on the
         // admin dashboard -- full-bleed poster, diagonal shine sweep on
         // hover, a glassy status chip that expands to its label on hover,
@@ -503,83 +394,6 @@ export default function AdminSeriesTable({
               </div>
             );
           })}
-        </div>
-      ) : (
-        // flex-1 so the card's own bg/border/shadow extends to fill
-        // whatever vertical room is left in the page's fixed-height shell
-        // -- a short results page (few rows, or a filtered/narrow tab)
-        // then reads as "table card that reaches the bottom of the
-        // screen" instead of leaving a gap of mismatched page background
-        // below a card that only hugs its own row count. min-h-0 for the
-        // same flex-item min-height:auto reason as the wrapper above; flex
-        // flex-col so the inner scroll region below can itself flex-1.
-        <div className="rounded-[10px] bg-card border border-border/60 shadow-sm overflow-hidden flex-1 min-h-0 flex flex-col">
-          {/* flex-1 + overflow-auto: once there are more rows than fit in
-              the available space, THIS region scrolls (both directions --
-              vertical for rows, horizontal for the min-w-[760px] table on
-              narrow viewports) rather than the whole page, matching how a
-              real data-grid table behaves instead of pushing pagination
-              off toward the bottom of a page-length scroll. */}
-          <div className="flex-1 overflow-auto">
-            <table className="w-full text-left border-collapse min-w-[760px]">
-              <thead>
-                <tr className="text-[11.5px] font-bold uppercase tracking-wide text-muted-foreground border-b border-border/60">
-                  <th className="px-5 py-3 font-bold w-10 text-center">
-                    <Checkbox checked={allOnPageSelected} onChange={onToggleAllOnPage} ariaLabel="Select all titles on this page" />
-                  </th>
-                  <th className="px-3 py-3 font-bold">Title</th>
-                  <th className="px-3 py-3 font-bold">Type</th>
-                  <th className="px-3 py-3 font-bold">Year</th>
-                  <th className="px-3 py-3 font-bold">Episodes</th>
-                  <th className="px-3 py-3 font-bold">Status</th>
-                  <th className="px-3 py-3 font-bold">Updated</th>
-                  <th className="px-5 py-3 font-bold text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border/60">
-                {rows.map((row) => {
-                  const status = row.publish_status ?? 'published';
-                  const busy = busyIds.has(row.id);
-                  const isMovie = row.media_type === 'movie';
-                  return (
-                    <tr key={row.id} className="hover:bg-muted/40 transition-colors">
-                      <td className="px-5 py-3 text-center align-middle">
-                        <Checkbox checked={selectedIds.has(row.id)} onChange={() => onToggleRow(row.id)} ariaLabel={'Select ' + row.title} />
-                      </td>
-                      <td className="px-3 py-3">
-                        <div className="flex items-center gap-3 min-w-[220px]">
-                          <Poster url={row.poster_url} title={row.title} />
-                          <div className="min-w-0">
-                            <p className="text-foreground text-[14px] font-semibold truncate">{row.title}</p>
-                            {row.genre_names && row.genre_names.length > 0 && (
-                              <p className="text-muted-foreground text-[12px] truncate">{row.genre_names.join(', ')}</p>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-3 py-3 text-[13px] text-foreground whitespace-nowrap">{isMovie ? 'Movie' : 'Series'}</td>
-                      <td className="px-3 py-3 text-[13px] text-foreground whitespace-nowrap">{row.year ?? '—'}</td>
-                      <td className="px-3 py-3 text-[13px] text-foreground whitespace-nowrap">
-                        {isMovie ? '—' : row.episode_count ?? '—'}
-                      </td>
-                      <td className="px-3 py-3">
-                        <StatusMenu status={status} busy={busy} onChange={(next) => onStatusChange(row, next)} />
-                      </td>
-                      <td className="px-3 py-3 whitespace-nowrap">
-                        <p className="text-[12.5px] text-foreground">{formatUpdated(row.updated_at)}</p>
-                        {row.updated_by && <p className="text-[11px] text-muted-foreground">by {row.updated_by}</p>}
-                      </td>
-                      <td className="px-5 py-3">
-                        <div className="flex items-center justify-end">
-                          <RowActionsMenu row={row} busy={busy} onEdit={() => onEdit(row)} onDelete={() => onDelete(row)} />
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
         </div>
       )}
 

@@ -11,9 +11,7 @@ import { useConfirmDialog } from '../../../lib/ConfirmDialogContext';
 import type { AdminSeries } from '../../../components/admin/adminSeriesTypes';
 import AdminSeriesTable, {
   type SeriesSortKey,
-  type PublishStatus,
   type BulkAction,
-  type ViewMode,
   type SeriesPagination,
 } from '../../../components/admin/AdminSeriesTable';
 import SeriesTabs, { type SeriesTabKey, type SeriesTabCounts } from '../../../components/admin/SeriesTabs';
@@ -32,8 +30,6 @@ const EMPTY_TAGS: Record<TagDimension, Tag[]> = {
   theme: [],
   content_warning: [],
 };
-
-const VIEW_STORAGE_KEY = 'blumi-admin-series-view';
 
 const TAB_PUBLISH_STATUS: Partial<Record<SeriesTabKey, 'draft' | 'published' | 'archived'>> = {
   drafts: 'draft',
@@ -82,11 +78,6 @@ export default function AdminSeriesPage() {
   const [sort, setSort] = useState<SeriesSortKey>('updated_desc');
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
-  // Hydration-safety pattern (same as AdminSidebar/DashboardShell): always
-  // initialize to the default so server and first client render match,
-  // then read localStorage in an effect after mount -- never in the
-  // useState initializer itself.
-  const [view, setView] = useState<ViewMode>('list');
 
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [availableTags, setAvailableTags] = useState<Record<TagDimension, Tag[]>>(EMPTY_TAGS);
@@ -142,18 +133,6 @@ export default function AdminSeriesPage() {
       if (!session?.user) setAccess('signed_out');
     });
   }, []);
-
-  useEffect(() => {
-    const stored = typeof window !== 'undefined' ? window.localStorage.getItem(VIEW_STORAGE_KEY) : null;
-    if (stored === 'grid' || stored === 'list') {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- hydration-safety pattern, see AdminShell's collapsed-state effect for the same convention
-      setView(stored);
-    }
-  }, []);
-
-  useEffect(() => {
-    window.localStorage.setItem(VIEW_STORAGE_KEY, view);
-  }, [view]);
 
   useEffect(() => {
     const handle = setTimeout(() => setDebouncedSearch(searchInput), 300);
@@ -271,23 +250,6 @@ export default function AdminSeriesPage() {
       if (allSelected) return new Set();
       return new Set(rows.map((r) => r.id));
     });
-  }
-
-  async function handleStatusChange(row: AdminSeries, next: PublishStatus) {
-    setBusyIds((prev) => new Set(prev).add(row.id));
-    const result = await withAdminAuth((authHeader) =>
-      fetch(process.env.NEXT_PUBLIC_API_URL + '/admin/series/' + row.id, {
-        method: 'PATCH',
-        headers: { ...authHeader, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ publish_status: next }),
-      })
-    );
-    setBusyIds((prev) => {
-      const n = new Set(prev);
-      n.delete(row.id);
-      return n;
-    });
-    if (result?.ok) await loadRows();
   }
 
   async function handleBulkAction(action: BulkAction) {
@@ -478,11 +440,8 @@ export default function AdminSeriesPage() {
           onToggleAllOnPage={toggleAllOnPage}
           sort={sort}
           onSortChange={setSort}
-          view={view}
-          onViewChange={setView}
           busyIds={rowsLoading ? new Set(rows.map((r) => r.id)) : busyIdsWithEditLoad}
           onEdit={handleEdit}
-          onStatusChange={handleStatusChange}
           onDelete={handleDelete}
           onBulkAction={handleBulkAction}
           pagination={pagination}
