@@ -35,7 +35,7 @@ export default function SeriesTabs({
 }) {
   return (
     <div
-      className="w-full flex items-center justify-between gap-1 overflow-x-auto rounded-full bg-white border border-border/50 shadow-md p-1.5"
+      className="w-full flex items-center justify-between gap-1 overflow-x-auto rounded-[10px] bg-white border border-border/50 shadow-md p-1"
       role="tablist"
       aria-label="Filter by type or publish status"
     >
@@ -54,7 +54,7 @@ export default function SeriesTabs({
               onClick={() => onChange(tab.key)}
               // Note: Added `relative` here so the absolute background stays contained
               className={
-                'relative flex items-center justify-center rounded-full px-3.5 py-2 text-[13.5px] font-semibold whitespace-nowrap transition-colors ' +
+                'relative flex items-center justify-center rounded-[10px] px-3.5 py-1.5 text-[13.5px] font-semibold whitespace-nowrap transition-colors ' +
                 (isActive
                   ? 'text-primary'
                   : 'text-muted-foreground hover:text-foreground hover:bg-muted/60')
@@ -64,7 +64,7 @@ export default function SeriesTabs({
               {isActive && (
                 <motion.div
                   layoutId="active-tab-background"
-                  className="absolute inset-0 rounded-full bg-gradient-to-r from-brand-blush/35 to-brand-lilac/25 shadow-sm"
+                  className="absolute inset-0 rounded-[8px] bg-gradient-to-r from-brand-blush/35 to-brand-lilac/25 shadow-sm"
                   initial={false}
                   transition={{ 
                     type: "spring", 
