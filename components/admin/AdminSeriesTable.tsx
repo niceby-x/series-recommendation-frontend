@@ -343,7 +343,17 @@ export default function AdminSeriesTable({
             return (
               <div
                 key={row.id}
-                className="group relative w-full max-w-[180px] aspect-[2/3] mx-auto rounded-[10px] bg-muted shadow-md overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+                role="button"
+                tabIndex={0}
+                onClick={() => !busy && onEdit(row)}
+                onKeyDown={(e) => {
+                  if ((e.key === 'Enter' || e.key === ' ') && !busy) {
+                    e.preventDefault();
+                    onEdit(row);
+                  }
+                }}
+                aria-label={'Edit ' + row.title}
+                className="group relative w-full max-w-[180px] aspect-[2/3] mx-auto rounded-[10px] bg-muted shadow-md overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
               >
                 {row.poster_url ? (
                   <Image
@@ -373,7 +383,10 @@ export default function AdminSeriesTable({
                     checkbox square carries its own shadow for contrast
                     against light or dark poster art, instead of sitting in
                     a solid circular chip. */}
-                <label className="absolute top-2 left-2 flex items-center justify-center size-7 sm:size-6 cursor-pointer">
+                <label
+                  className="absolute top-2 left-2 flex items-center justify-center size-7 sm:size-6 cursor-pointer"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <input
                     type="checkbox"
                     checked={selectedIds.has(row.id)}
@@ -401,11 +414,35 @@ export default function AdminSeriesTable({
                     <p className="text-white/75 text-[10.5px] leading-snug line-clamp-1">
                       {isMovie ? 'Movie' : 'Series'} · {row.year ?? '—'}
                     </p>
-                    <div className="-mr-1 shrink-0">
+                    <div className="-mr-1 shrink-0" onClick={(e) => e.stopPropagation()}>
                       <RowActionsMenu row={row} busy={busy} onEdit={() => onEdit(row)} onDelete={() => onDelete(row)} variant="dark" />
                     </div>
                   </div>
                 </div>
+
+                {/* Shown while this row's edit-detail fetch (or a bulk
+                    action) is in flight. Elevated from a plain spinner to a 
+                    multi-layered glassy loading state that ties into brand colors. */}
+                {busy && (
+                  <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/50 backdrop-blur-[2.5px]">
+                    {/* Soft pulsating brand glow in the background */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-brand-blush/30 to-brand-lilac/30 animate-pulse opacity-80" />
+
+                    <div className="relative flex items-center justify-center drop-shadow-md">
+                      {/* Ripple effect radiating out from the center */}
+                      <div className="absolute size-10 rounded-full border-2 border-white/30 animate-ping" />
+
+                      {/* Main spinning track with gradient-like transparency */}
+                      <div
+                        aria-hidden="true"
+                        className="relative z-10 size-10 rounded-full border-[3px] border-white/10 border-t-white border-l-white/70 animate-spin"
+                      />
+
+                      {/* Inner anchoring dot to ground the animation */}
+                      <div className="absolute z-10 size-1.5 bg-white rounded-full animate-pulse shadow-[0_0_8px_rgba(255,255,255,0.8)]" />
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })}
