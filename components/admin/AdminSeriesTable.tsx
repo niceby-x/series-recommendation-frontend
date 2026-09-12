@@ -319,7 +319,7 @@ export default function AdminSeriesTable({
         // view's editable dropdown) -- unchanged behavior from before this
         // pass, just restyled; changing it to published/draft/archived
         // still happens via the Edit modal or the list view's StatusMenu.
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
           {rows.map((row) => {
             const status = row.publish_status ?? 'published';
             const busy = busyIds.has(row.id);
@@ -434,7 +434,7 @@ export default function AdminSeriesTable({
                 onChange={(e) => onLimitChange(Number(e.target.value))}
                 className="appearance-none bg-card border border-border rounded-full pl-3 pr-8 py-1.5 text-[12.5px] font-medium text-foreground hover:border-ring focus:outline-none focus:border-ring transition-colors cursor-pointer"
               >
-                {[10, 20, 50].map((n) => (
+                {[12, 24, 48].map((n) => (
                   <option key={n} value={n}>
                     {n} / page
                   </option>

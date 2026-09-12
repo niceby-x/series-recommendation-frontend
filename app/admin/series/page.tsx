@@ -77,7 +77,7 @@ export default function AdminSeriesPage() {
   const [filters, setFilters] = useState<SeriesFilterValue>({ country: null, genre: null });
   const [sort, setSort] = useState<SeriesSortKey>('updated_desc');
   const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
+  const [limit, setLimit] = useState(12);
 
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [availableTags, setAvailableTags] = useState<Record<TagDimension, Tag[]>>(EMPTY_TAGS);
