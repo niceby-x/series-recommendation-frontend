@@ -247,6 +247,7 @@ export default function AdminSeriesTable({
   pagination,
   onPageChange,
   onLimitChange,
+  loading = false,
 }: {
   rows: AdminSeries[];
   selectedIds: Set<number>;
@@ -261,6 +262,11 @@ export default function AdminSeriesTable({
   pagination: SeriesPagination | null;
   onPageChange: (page: number) => void;
   onLimitChange: (limit: number) => void;
+  // True while a new page/tab/filter/sort's rows are in flight -- renders
+  // skeleton cards in place of the grid instead of leaving the previous
+  // tab's rows sitting there for the ~1-2s round trip, which read as a
+  // lag/freeze rather than a page that's actively loading.
+  loading?: boolean;
 }) {
   const allOnPageSelected = rows.length > 0 && rows.every((r) => selectedIds.has(r.id));
   const selectedCount = selectedIds.size;
@@ -300,7 +306,16 @@ export default function AdminSeriesTable({
         </div>
       </div>
 
-      {rows.length === 0 ? (
+      {loading ? (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+          {Array.from({ length: pagination?.limit ?? 12 }).map((_, i) => (
+            <div
+              key={i}
+              className="w-full max-w-[180px] aspect-[2/3] mx-auto rounded-[10px] bg-muted animate-pulse"
+            />
+          ))}
+        </div>
+      ) : rows.length === 0 ? (
         <div className="rounded-[10px] bg-card border border-border/60 p-8 text-center">
           <p className="text-foreground font-semibold mb-1">No titles match these filters</p>
           <p className="text-muted-foreground text-sm">Try a different search, tab, or filter combination.</p>

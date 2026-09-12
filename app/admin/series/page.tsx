@@ -440,7 +440,8 @@ export default function AdminSeriesPage() {
           onToggleAllOnPage={toggleAllOnPage}
           sort={sort}
           onSortChange={setSort}
-          busyIds={rowsLoading ? new Set(rows.map((r) => r.id)) : busyIdsWithEditLoad}
+          busyIds={busyIdsWithEditLoad}
+          loading={rowsLoading}
           onEdit={handleEdit}
           onDelete={handleDelete}
           onBulkAction={handleBulkAction}
