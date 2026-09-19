@@ -121,7 +121,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
 
   return (
     <AdminPageHeaderProvider>
-      <div className="min-h-screen bg-[#FED9E8] p-2.5 md:p-4">
+      <div className="h-[100dvh] overflow-hidden bg-[#FED9E8] p-2.5 md:p-4">
         {/* h-[calc(100vh_-_1.25rem)] (and the md: variant): the
             underscores are load-bearing, not stylistic. CSS calc()
             requires real whitespace around a +/- operator per spec
@@ -180,7 +180,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
             >
               {isDashboard ? <AdminHeader email={email} /> : <AdminPageTopBar email={email} />}
             </div>
-            <main className="flex-1 min-w-0 overflow-y-auto">{children}</main>
+            <main className="relative flex-1 min-w-0 min-h-0 overflow-y-auto">{children}</main>
           </div>
         </div>
       </div>
