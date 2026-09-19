@@ -13,6 +13,8 @@ import {
   BadgeCheck,
   Clock,
   Archive,
+  LayoutGrid,
+  List,
 } from 'lucide-react';
 import type { AdminSeries } from './adminSeriesTypes';
 import { FloatingMenu } from '../shared/FloatingMenu';
@@ -43,11 +45,6 @@ const STATUS_LABEL: Record<PublishStatus, string> = {
   archived: 'Archived',
 };
 
-// Glass-chip variant of the status badge for the grid card (matches
-// RecentlyPublishedCard's "Published" chip) -- draft/archived need their
-// own tone since that card only ever shows one state (published, by
-// definition of what "recently published" means), but the grid shows all
-// three.
 const STATUS_GLASS_TONE: Record<PublishStatus, string> = {
   draft: 'bg-amber-500/30 ring-amber-200/40',
   published: 'bg-emerald-500/30 ring-emerald-200/40',
@@ -60,19 +57,7 @@ const STATUS_GLASS_ICON: Record<PublishStatus, typeof BadgeCheck> = {
   archived: Archive,
 };
 
-// Shared box styling for all three admin dropdowns (status, row actions,
-// bulk actions) -- a tighter radius and softer shadow than the old
-// rounded-xl/shadow-xl read as more "designed" at this small a size, and
-// keeping it in one place means the three stay visually identical rather
-// than drifting apart over time.
 const MENU_BOX = 'w-40 bg-popover border border-border/70 rounded-lg shadow-lg shadow-black/[0.06] overflow-hidden py-1';
-
-// Same light-pink identity as the bulk-select bar, but mixed lighter with
-// white (rather than just dialing brand-blush's own alpha up) so it stays
-// fully opaque -- Edit/Delete stay legible regardless of what's behind the
-// portaled menu -- without reading as a saturated, "loud" pink block.
-// color-mix (already used the same way in components/ui/button.tsx) keeps
-// this a plain utility class rather than a one-off hex value.
 const MENU_BOX_GLASS =
   'w-40 bg-[color-mix(in_oklch,var(--color-brand-blush),white_65%)] border border-primary/20 rounded-lg shadow-lg overflow-hidden py-1';
 const MENU_ARROW_GLASS = 'bg-[color-mix(in_oklch,var(--color-brand-blush),white_65%)] border-primary/20';
@@ -105,9 +90,6 @@ function RowActionsMenu({
   busy: boolean;
   onEdit: () => void;
   onDelete: () => void;
-  // 'dark' is for placement over the poster art (grid card's bottom
-  // scrim) -- same trigger button, just light-on-dark icon color instead
-  // of the default dark-on-light used everywhere else (list view rows).
   variant?: 'light' | 'dark';
 }) {
   const [open, setOpen] = useState(false);
@@ -217,11 +199,6 @@ function BulkActionsMenu({ disabled, onAction }: { disabled: boolean; onAction: 
   );
 }
 
-// Custom checkbox matching the grid card's -- same rounded-[4px] square and
-// white checkmark -- rather than the browser's own native checkbox
-// rendering, which varies its corner radius and checkmark glyph by OS/
-// browser and doesn't stay visually consistent between the two views (the
-// native `accent-primary` fix got the color right, but not the shape).
 function Checkbox({ checked, onChange, ariaLabel }: { checked: boolean; onChange: () => void; ariaLabel: string }) {
   return (
     <label className="inline-flex items-center justify-center cursor-pointer">
@@ -262,24 +239,14 @@ export default function AdminSeriesTable({
   pagination: SeriesPagination | null;
   onPageChange: (page: number) => void;
   onLimitChange: (limit: number) => void;
-  // True while a new page/tab/filter/sort's rows are in flight -- renders
-  // skeleton cards in place of the grid instead of leaving the previous
-  // tab's rows sitting there for the ~1-2s round trip, which read as a
-  // lag/freeze rather than a page that's actively loading.
   loading?: boolean;
 }) {
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const allOnPageSelected = rows.length > 0 && rows.every((r) => selectedIds.has(r.id));
   const selectedCount = selectedIds.size;
 
   return (
-    // flex-1 min-h-0: lets this component share the page wrapper's
-    // min-h-full with SeriesTabs/SeriesFilterChips above it (which keep
-    // their natural height) -- min-h-0 is required alongside flex-1 here
-    // because flex items default to a min-height equal to their content
-    // (min-height: auto), which would otherwise stop this from ever
-    // shrinking below the list's natural height and defeat the point.
     <div className="flex flex-col gap-3 flex-1 min-h-0">
-      {/* Toolbar: select-all + bulk actions (left), sort + view toggle (right) */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <Checkbox checked={allOnPageSelected} onChange={onToggleAllOnPage} ariaLabel="Select all titles on this page" />
@@ -303,37 +270,51 @@ export default function AdminSeriesTable({
             </select>
             <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
           </div>
+
+          <div className="flex items-center bg-card border border-border rounded-full p-1 shadow-sm">
+            <button
+              type="button"
+              onClick={() => setViewMode('list')}
+              className={`p-1.5 rounded-full transition-colors ${viewMode === 'list' ? 'bg-muted text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+              aria-label="List view"
+            >
+              <List className="size-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode('grid')}
+              className={`p-1.5 rounded-full transition-colors ${viewMode === 'grid' ? 'bg-muted text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+              aria-label="Grid view"
+            >
+              <LayoutGrid className="size-4" />
+            </button>
+          </div>
         </div>
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-          {Array.from({ length: pagination?.limit ?? 12 }).map((_, i) => (
-            <div
-              key={i}
-              className="w-full max-w-[180px] aspect-[2/3] mx-auto rounded-[10px] bg-muted animate-pulse"
-            />
-          ))}
-        </div>
+        viewMode === 'grid' ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+            {Array.from({ length: pagination?.limit ?? 12 }).map((_, i) => (
+              <div
+                key={i}
+                className="w-full max-w-[180px] aspect-[2/3] mx-auto rounded-[10px] bg-muted animate-pulse"
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {Array.from({ length: pagination?.limit ?? 12 }).map((_, i) => (
+              <div key={i} className="w-full h-[74px] rounded-[10px] bg-muted animate-pulse" />
+            ))}
+          </div>
+        )
       ) : rows.length === 0 ? (
         <div className="rounded-[10px] bg-card border border-border/60 p-8 text-center">
           <p className="text-foreground font-semibold mb-1">No titles match these filters</p>
           <p className="text-muted-foreground text-sm">Try a different search, tab, or filter combination.</p>
         </div>
-      ) : (
-        // D3-XX: matches RecentlyPublishedCard's visual language on the
-        // admin dashboard -- full-bleed poster, diagonal shine sweep on
-        // hover, a glassy status chip that expands to its label on hover,
-        // and title/meta living on a bottom scrim instead of a separate
-        // white panel below the art (no spare height for one at a fixed
-        // 180x270 tile). Unlike that card this one isn't a whole-tile
-        // <Link> -- it needs a real checkbox plus edit/actions controls,
-        // and nesting those inside an anchor isn't valid HTML -- so
-        // selection/edit/actions are layered on as their own controls
-        // instead. Status chip is a static display here (not the list
-        // view's editable dropdown) -- unchanged behavior from before this
-        // pass, just restyled; changing it to published/draft/archived
-        // still happens via the Edit modal or the list view's StatusMenu.
+      ) : viewMode === 'grid' ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
           {rows.map((row) => {
             const status = row.publish_status ?? 'published';
@@ -369,20 +350,8 @@ export default function AdminSeriesTable({
                   </div>
                 )}
 
-                {/* Diagonal shine sweep on hover, same treatment as
-                    RecentlyPublishedCard -- pointer-events-none so it
-                    never blocks the checkbox/badge/scrim controls above it. */}
                 <div className="pointer-events-none absolute inset-0 -translate-x-full skew-x-12 bg-gradient-to-r from-transparent via-white/40 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full" />
 
-                {/* Tap-target sized up on narrow viewports (size-7/size-4)
-                    and stepped back down at sm+ (size-6/size-3.5) where the
-                    grid packs more columns and the original tighter density
-                    fits -- touch targets on mobile stay close to the ~44px
-                    guideline without ballooning the desktop 5-up layout.
-                    The label itself has no visible background: the
-                    checkbox square carries its own shadow for contrast
-                    against light or dark poster art, instead of sitting in
-                    a solid circular chip. */}
                 <label
                   className="absolute top-2 left-2 flex items-center justify-center size-7 sm:size-6 cursor-pointer"
                   onClick={(e) => e.stopPropagation()}
@@ -420,27 +389,100 @@ export default function AdminSeriesTable({
                   </div>
                 </div>
 
-                {/* Shown while this row's edit-detail fetch (or a bulk
-                    action) is in flight. Elevated from a plain spinner to a 
-                    multi-layered glassy loading state that ties into brand colors. */}
                 {busy && (
                   <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/50 backdrop-blur-[2.5px]">
-                    {/* Soft pulsating brand glow in the background */}
                     <div className="absolute inset-0 bg-gradient-to-br from-brand-blush/30 to-brand-lilac/30 animate-pulse opacity-80" />
-
                     <div className="relative flex items-center justify-center drop-shadow-md">
-                      {/* Ripple effect radiating out from the center */}
                       <div className="absolute size-10 rounded-full border-2 border-white/30 animate-ping" />
-
-                      {/* Main spinning track with gradient-like transparency */}
                       <div
                         aria-hidden="true"
                         className="relative z-10 size-10 rounded-full border-[3px] border-white/10 border-t-white border-l-white/70 animate-spin"
                       />
-
-                      {/* Inner anchoring dot to ground the animation */}
                       <div className="absolute z-10 size-1.5 bg-white rounded-full animate-pulse shadow-[0_0_8px_rgba(255,255,255,0.8)]" />
                     </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {rows.map((row) => {
+            const status = row.publish_status ?? 'published';
+            const busy = busyIds.has(row.id);
+            const isMovie = row.media_type === 'movie';
+            const StatusIcon = STATUS_GLASS_ICON[status];
+            
+            return (
+              <div
+                key={row.id}
+                role="button"
+                tabIndex={0}
+                onClick={() => !busy && onEdit(row)}
+                onKeyDown={(e) => {
+                  if ((e.key === 'Enter' || e.key === ' ') && !busy) {
+                    e.preventDefault();
+                    onEdit(row);
+                  }
+                }}
+                className="group relative flex items-center gap-4 bg-card border border-border/60 hover:border-border rounded-[10px] p-2.5 shadow-sm hover:shadow-md transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+              >
+                <div className="flex items-center justify-center pl-1" onClick={(e) => e.stopPropagation()}>
+                  <Checkbox 
+                    checked={selectedIds.has(row.id)} 
+                    onChange={() => onToggleRow(row.id)} 
+                    ariaLabel={'Select ' + row.title} 
+                  />
+                </div>
+
+                <div className="relative h-14 w-10 shrink-0 rounded bg-muted overflow-hidden">
+                  {row.poster_url ? (
+                    <Image
+                      src={row.poster_url}
+                      alt={row.title}
+                      fill
+                      sizes="40px"
+                      className="object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-brand-blush/25 to-brand-lilac/25" />
+                  )}
+                </div>
+
+                <div className="w-[200px] lg:w-[280px] shrink-0 pr-4">
+                  <h3 className="text-[13.5px] font-semibold text-foreground truncate">
+                    {row.title}
+                  </h3>
+                  <p className="text-[12px] text-muted-foreground truncate mt-0.5">
+                    {isMovie ? 'Movie' : 'Series'} · {row.year ?? '—'}
+                    {row.episode_count ? ` · ${row.episode_count} eps` : ''}
+                  </p>
+                </div>
+
+                <div className="hidden md:flex flex-1 min-w-0 items-center gap-6 pr-4 text-[12.5px] text-muted-foreground">
+                  <div className="flex-1 truncate" title={row.genre_names?.join(', ')}>
+                    {row.genre_names?.length ? row.genre_names.join(', ') : <span className="opacity-50">No genres</span>}
+                  </div>
+                  <div className="w-[100px] shrink-0 truncate">
+                    {row.country ?? '—'}
+                  </div>
+                </div>
+
+                <div className="hidden sm:flex items-center">
+                  <div className={'flex items-center gap-1.5 px-2.5 py-1 rounded-full ' + STATUS_GLASS_TONE[status]}>
+                    <StatusIcon className="size-3.5" />
+                    <span className="text-[11px] font-semibold">{STATUS_LABEL[status]}</span>
+                  </div>
+                </div>
+
+                <div className="pr-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+                  <RowActionsMenu row={row} busy={busy} onEdit={() => onEdit(row)} onDelete={() => onDelete(row)} variant="light" />
+                </div>
+
+                {busy && (
+                  <div className="absolute inset-0 z-20 flex items-center justify-center bg-background/50 backdrop-blur-[1.5px] rounded-[10px]">
+                    <div className="size-6 rounded-full border-[2.5px] border-primary/20 border-t-primary animate-spin" />
                   </div>
                 )}
               </div>
