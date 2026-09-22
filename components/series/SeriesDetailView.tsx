@@ -1,13 +1,11 @@
-import Link from 'next/link';
-import Image from 'next/image';
-import { Bookmark, Check, Clock, Globe, Heart, MoreHorizontal, Play, Sparkles, Star, Tv, type LucideIcon } from 'lucide-react';
+import { Check, Clock, Globe, Sparkles, Star, Tv, type LucideIcon } from 'lucide-react';
 import RatingForm from '@/components/shared/RatingForm';
-import WatchlistButton from '@/components/shared/WatchlistButton';
 import ProgressTracker from '@/components/shared/ProgressTracker';
 import RelatedSeriesRow, { type RelatedSeriesItem } from '@/components/shared/RelatedSeriesRow';
 import type { SeriesTagData } from '@/components/shared/SeriesCard';
 import { SessionProvider } from '@/lib/SessionContext';
 import SeriesDetailTabs from './SeriesDetailTabs';
+import SeriesHero from './SeriesHero';
 
 const TAG_DIMENSION_LABELS: Record<SeriesTagData['dimension'], string> = {
   mood: 'Mood',
@@ -77,7 +75,6 @@ export default function SeriesDetailView({
     }))
     .filter((row) => row.tags.length > 0);
 
-  const heroImage = series.backdrop_url || series.poster_url;
   const language = languageName(series.original_language);
   const stats = [
     { label: 'Episodes', value: String(series.episode_count), Icon: Tv },
@@ -105,66 +102,18 @@ export default function SeriesDetailView({
           {/* Left Column: Hero & Tabs */}
           <div className="min-w-0">
             
-            {/* Hero Image Block */}
-            <section className="relative w-full aspect-[16/10] sm:aspect-[16/9] rounded-[24px] overflow-hidden bg-muted shadow-sm group">
-              {heroImage ? (
-                <Image
-                  src={heroImage}
-                  alt={series.title}
-                  fill
-                  sizes="(max-width: 1280px) 100vw, 800px"
-                  className={series.backdrop_url ? 'object-cover' : 'object-cover object-top'}
-                  priority
-                />
-              ) : (
-                <div className="absolute inset-0 bg-gradient-to-br from-brand-blush to-brand-lilac" />
-              )}
-              
-              {/* Gradient Overlay for Text Legibility */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-
-              {/* Top Right Action Icons */}
-              <div className="absolute top-5 right-5 flex items-center gap-2">
-                <button aria-label="Like" className="flex items-center justify-center size-9 rounded-full bg-white/20 backdrop-blur-md text-white hover:bg-white/30 transition-colors">
-                  <Heart className="size-4" />
-                </button>
-                <WatchlistButton seriesId={series.id} />
-                <button aria-label="More options" className="flex items-center justify-center size-9 rounded-full bg-white/20 backdrop-blur-md text-white hover:bg-white/30 transition-colors">
-                  <MoreHorizontal className="size-4" />
-                </button>
-              </div>
-
-              {/* Bottom Left Content */}
-              <div className="absolute bottom-6 left-6 text-white">
-                <h1 className="font-heading text-4xl sm:text-5xl font-bold mb-4 drop-shadow-md">
-                  {series.title}
-                </h1>
-                
-                <div className="flex flex-wrap items-center gap-2 mb-5">
-                  <span className="px-3.5 py-1.5 text-[13px] font-medium bg-white/20 backdrop-blur-md rounded-full">
-                    {series.country}
-                  </span>
-                  <span className="px-3.5 py-1.5 text-[13px] font-medium bg-white/20 backdrop-blur-md rounded-full">
-                    {series.year}
-                  </span>
-                  <span className="px-3.5 py-1.5 text-[13px] font-medium bg-white/20 backdrop-blur-md rounded-full">
-                    {series.episode_count} Episodes
-                  </span>
-                </div>
-
-                {series.trailer_url && (
-                  <a
-                    href={series.trailer_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-6 py-2.5 bg-white text-brand-purple-vivid rounded-full font-bold text-sm shadow-lg hover:bg-gray-100 transition-colors"
-                  >
-                    <Play className="size-4 fill-current" />
-                    Watch Trailer
-                  </a>
-                )}
-              </div>
-            </section>
+            {/* Hero Image Block -- client component: carries the shared
+                layoutId transition from the clicked SeriesCard poster */}
+            <SeriesHero
+              id={series.id}
+              title={series.title}
+              country={series.country}
+              year={series.year}
+              episodeCount={series.episode_count}
+              backdropUrl={series.backdrop_url ?? null}
+              posterUrl={series.poster_url}
+              trailerUrl={series.trailer_url}
+            />
 
             <div className="mt-6">
               <SeriesDetailTabs

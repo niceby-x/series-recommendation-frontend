@@ -3,7 +3,9 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 import { Bookmark, Star } from 'lucide-react';
+import { seriesPosterLayoutId, writeSeriesTransitionPreview } from '@/lib/seriesTransitionCache';
 
 export interface SeriesTagData {
   id: number;
@@ -86,9 +88,20 @@ export default function SeriesCard({ series, rank, rating }: SeriesCardProps) {
   return (
     <Link
       href={'/series/' + series.id}
+      onClick={() =>
+        writeSeriesTransitionPreview(series.id, {
+          posterUrl: series.poster_url,
+          backdropUrl: series.backdrop_url,
+          title: series.title,
+        })
+      }
       className="group relative block overflow-hidden rounded-lg bg-card border border-border shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:ring-2 hover:ring-primary/30"
     >
-      <div className="relative aspect-[2/3] w-full overflow-hidden bg-muted">
+      <motion.div
+        layoutId={seriesPosterLayoutId(series.id)}
+        transition={{ layout: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } }}
+        className="relative aspect-[2/3] w-full overflow-hidden bg-muted"
+      >
         {series.poster_url ? (
           <Image
             src={series.poster_url}
@@ -144,7 +157,7 @@ export default function SeriesCard({ series, rank, rating }: SeriesCardProps) {
             {series.synopsis || 'No synopsis available yet.'}
           </p>
         </div>
-      </div>
+      </motion.div>
 
       <div className="p-3">
         <div className="flex justify-between items-center mb-1 text-[14px] text-muted-foreground">

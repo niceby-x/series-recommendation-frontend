@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Poppins, Inter, Geist_Mono, Fraunces } from "next/font/google";
+import { MotionConfig } from "framer-motion";
 import "./globals.css";
 import Navbar from "../components/shared/Navbar";
 import { AuthModalProvider } from "../lib/AuthModalContext";
@@ -66,13 +67,19 @@ export default async function RootLayout({
       className={poppins.variable + ' ' + inter.variable + ' ' + geistMono.variable + ' ' + fraunces.variable + ' h-full antialiased'}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
-        <AuthModalProvider>
-          <ConfirmDialogProvider>
-            {!user && <Navbar />}
-            {children}
-          </ConfirmDialogProvider>
-        </AuthModalProvider>
-        <Toaster position="bottom-right" closeButton />
+        {/* reducedMotion="user" makes every layout/layoutId animation in the
+            app (the series-card -> series-hero shared transition included)
+            respect prefers-reduced-motion automatically, without every
+            motion component needing its own check. */}
+        <MotionConfig reducedMotion="user">
+          <AuthModalProvider>
+            <ConfirmDialogProvider>
+              {!user && <Navbar />}
+              {children}
+            </ConfirmDialogProvider>
+          </AuthModalProvider>
+          <Toaster position="bottom-right" closeButton />
+        </MotionConfig>
       </body>
     </html>
   );
