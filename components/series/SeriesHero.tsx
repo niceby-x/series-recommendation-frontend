@@ -14,9 +14,6 @@ import {
 interface SeriesHeroProps {
   id: number;
   title: string;
-  country: string;
-  year: number;
-  episodeCount: number;
   backdropUrl: string | null;
   posterUrl: string | null;
   trailerUrl?: string | null;
@@ -27,9 +24,6 @@ const HERO_LAYOUT_TRANSITION = { duration: 0.5, ease: [0.22, 1, 0.36, 1] as cons
 export default function SeriesHero({
   id,
   title,
-  country,
-  year,
-  episodeCount,
   backdropUrl,
   posterUrl,
   trailerUrl,
@@ -63,15 +57,15 @@ export default function SeriesHero({
     <motion.section
       layoutId={seriesPosterLayoutId(id)}
       transition={{ layout: HERO_LAYOUT_TRANSITION }}
-      className="relative w-full aspect-[16/10] sm:aspect-[16/9] rounded-[24px] overflow-hidden bg-muted shadow-sm group"
+      className="relative w-full h-[clamp(300px,52vh,520px)] overflow-hidden bg-muted"
     >
       {heroImage ? (
         <Image
           src={heroImage}
           alt={title}
           fill
-          sizes="(max-width: 1280px) 100vw, 800px"
-          className={backdropUrl ? 'object-cover' : 'object-cover object-top'}
+          sizes="(max-width: 1280px) 100vw, 1152px"
+          className={backdropUrl ? 'object-cover object-[50%_25%]' : 'object-cover object-top'}
           priority
         />
       ) : (
@@ -93,50 +87,41 @@ export default function SeriesHero({
             alt=""
             aria-hidden
             fill
-            sizes="(max-width: 1280px) 100vw, 800px"
+            sizes="(max-width: 1280px) 100vw, 1152px"
             className="object-cover object-top"
           />
         </motion.div>
       )}
 
-      {/* Gradient Overlay for Text Legibility */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+      {/* Scrims: a soft one up top so the action buttons read on bright art,
+          and a plum-tinted (not pure black) one from the bottom so the title
+          and trailer button read on any art while staying on-brand. */}
+      <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-black/35 to-transparent" />
+      <div className="absolute inset-x-0 bottom-0 h-3/4 bg-gradient-to-t from-[#2b1533]/90 via-[#2b1533]/40 to-transparent" />
 
       {/* Top Right Action Icons */}
       <div className="absolute top-5 right-5 flex items-center gap-2">
-        <button aria-label="Like" className="flex items-center justify-center size-9 rounded-full bg-white/20 backdrop-blur-md text-white hover:bg-white/30 transition-colors">
+        <button aria-label="Like" className="flex items-center justify-center size-9 rounded-full bg-black/30 backdrop-blur-md text-white hover:bg-black/40 transition-colors">
           <Heart className="size-4" />
         </button>
         <WatchlistButton seriesId={id} />
-        <button aria-label="More options" className="flex items-center justify-center size-9 rounded-full bg-white/20 backdrop-blur-md text-white hover:bg-white/30 transition-colors">
+        <button aria-label="More options" className="flex items-center justify-center size-9 rounded-full bg-black/30 backdrop-blur-md text-white hover:bg-black/40 transition-colors">
           <MoreHorizontal className="size-4" />
         </button>
       </div>
 
-      {/* Bottom Left Content */}
-      <div className="absolute bottom-6 left-6 text-white">
-        <h1 className="font-heading text-4xl sm:text-5xl font-bold mb-4 drop-shadow-md">
+      {/* Bottom row: title on the left, Watch Trailer on the right */}
+      <div className="absolute inset-x-8 bottom-7 flex flex-col items-start gap-4 text-white sm:flex-row sm:items-end sm:justify-between">
+        <h1 className="max-w-2xl min-w-0 text-balance font-heading text-4xl sm:text-5xl font-bold tracking-tight drop-shadow-[0_2px_12px_rgba(0,0,0,0.4)]">
           {title}
         </h1>
-
-        <div className="flex flex-wrap items-center gap-2 mb-5">
-          <span className="px-3.5 py-1.5 text-[13px] font-medium bg-white/20 backdrop-blur-md rounded-full">
-            {country}
-          </span>
-          <span className="px-3.5 py-1.5 text-[13px] font-medium bg-white/20 backdrop-blur-md rounded-full">
-            {year}
-          </span>
-          <span className="px-3.5 py-1.5 text-[13px] font-medium bg-white/20 backdrop-blur-md rounded-full">
-            {episodeCount} Episodes
-          </span>
-        </div>
 
         {trailerUrl && (
           <a
             href={trailerUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-6 py-2.5 bg-white text-brand-purple-vivid rounded-full font-bold text-sm shadow-lg hover:bg-gray-100 transition-colors"
+            className="inline-flex shrink-0 items-center gap-2 px-6 py-2.5 bg-white text-brand-purple-vivid rounded-full font-bold text-sm shadow-[0_8px_24px_rgba(0,0,0,0.25)] hover:bg-gray-100 transition-colors"
           >
             <Play className="size-4 fill-current" />
             Watch Trailer

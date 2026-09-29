@@ -2,9 +2,8 @@
 
 // Route-level skeleton for /series/[id] (a single series' detail page).
 // Mirrors the real page's structure (see components/series/SeriesDetailView.tsx):
-// a back-link, a wide hero banner plus tab row on the left, a details
-// card and a "what to expect" card on the right, then a related-series
-// strip. Rendered without the dashboard frame -- loading.tsx can't know
+// a back-link, a full-width hero banner, a tab row and a details block,
+// then a related-series strip. Rendered without the dashboard frame -- loading.tsx can't know
 // yet whether the visitor is signed in, and a plain skeleton is a fine
 // stand-in either way.
 //
@@ -52,37 +51,33 @@ export default function Loading() {
       <div className="mx-auto max-w-6xl">
         <div className="animate-pulse h-4 w-32 rounded-full bg-muted mb-5" />
 
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px] items-start">
-          <div className="min-w-0">
-            <motion.div
-              layoutId={id ? seriesPosterLayoutId(id) : undefined}
-              transition={{ layout: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } }}
-              className="relative aspect-[16/10] sm:aspect-[16/9] w-full rounded-[24px] overflow-hidden bg-muted"
-            >
-              {previewImage ? (
-                <Image
-                  src={previewImage}
-                  alt=""
-                  aria-hidden
-                  fill
-                  sizes="(max-width: 1280px) 100vw, 800px"
-                  className="object-cover object-top"
-                />
-              ) : (
-                <div className="absolute inset-0 animate-pulse" />
-              )}
-            </motion.div>
-            <div className="flex gap-4 mt-6 border-b border-border pb-3">
-              <div className="animate-pulse h-5 w-20 rounded-full bg-muted" />
-              <div className="animate-pulse h-5 w-20 rounded-full bg-muted" />
-            </div>
-            <div className="animate-pulse h-24 rounded-2xl bg-muted mt-6 max-w-[65ch]" />
+        <div className="min-w-0">
+          <motion.div
+            layoutId={id ? seriesPosterLayoutId(id) : undefined}
+            transition={{ layout: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } }}
+            className="relative w-full h-[clamp(300px,52vh,520px)] rounded-[28px] overflow-hidden bg-muted"
+          >
+            {previewImage ? (
+              <Image
+                src={previewImage}
+                alt=""
+                aria-hidden
+                fill
+                sizes="(max-width: 1280px) 100vw, 1152px"
+                className="object-cover object-top"
+              />
+            ) : (
+              <div className="absolute inset-0 animate-pulse" />
+            )}
+          </motion.div>
+          <div className="flex gap-4 mt-6 border-b border-border pb-3">
+            <div className="animate-pulse h-5 w-20 rounded-full bg-muted" />
+            <div className="animate-pulse h-5 w-20 rounded-full bg-muted" />
           </div>
-
-          <aside className="space-y-5">
+          <div className="grid gap-6 lg:grid-cols-2 mt-6">
             <div className="animate-pulse h-64 rounded-3xl bg-muted" />
             <div className="animate-pulse h-40 rounded-3xl bg-muted" />
-          </aside>
+          </div>
         </div>
 
         <div className="mt-10">
